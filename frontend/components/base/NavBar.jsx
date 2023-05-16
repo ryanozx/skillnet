@@ -21,63 +21,32 @@ import ProfileButton from './ProfileButton';
 import NotificationBell from './NotificationBell';
 import Searchbar from './Searchbar';
 
-const Links = ['Dashboard', 'Projects', 'Team'];
-
-const NavLink = (children) => (
-  <Link
-    px={2}
-    py={1}
-    rounded={'md'}
-    _hover={{
-      textDecoration: 'none',
-      bg: 'gray.200'
-    }}
-    href={'#'}>
-    {children}
-  </Link>
-);
-
 export default function NavBar() {
     const { isOpen, onOpen, onClose } = useDisclosure();
 
     return (
         <>
             <Box bg={'gray.100'} px={4}>
-                <Flex h={20} alignItems={'center'} justifyContent={'space-between'}>
+                <Flex h={20} alignItems={'center'} justifyContent={'space-around'}>
                 
-                <HStack spacing={8} alignItems={'center'}>
-                    <Box>SkillNet</Box>
-                    <HStack
-                    as={'nav'}
-                    spacing={4}
-                    display={{ base: 'none', md: 'flex' }}>
-                    {/* {Links.map((link) => (
-                        <NavLink key={link}>{link}</NavLink>
-                    ))} */}
-                    <Link
-                        px={2}
-                        py={1}
-                        rounded={'md'}
-                        _hover={{
-                        textDecoration: 'none',
-                        bg: 'gray.200'
-                        }}
-                        href={'#'}
-                    > t1 </Link>                    
-                </HStack>
+                    <HStack spacing={8} alignItems={'center'}>
+                        <Box>SkillNet</Box>
+                    </HStack>
                 
-                <Searchbar/>
+                    <Searchbar/>
 
-                </HStack>
-                    <Flex alignItems={'center'}>
-                        <HStack
-                            spacing={7}    
-                        >
-                            <NotificationBell></NotificationBell>
-                            <ProfileButton></ProfileButton>
-                        </HStack>
-                    </Flex>
+                    <HStack>
+                        <Flex alignItems={'center'}>
+                            <HStack
+                                spacing={7}    
+                            >
+                                <NotificationBell></NotificationBell>
+                                <ProfileButton></ProfileButton>
+                            </HStack>
+                        </Flex>
+                    </HStack>
                 </Flex>
+
 
                 
             </Box>

@@ -75,7 +75,6 @@ useEffect(() => {
             boxShadow="md"
             rounded="md"
             zIndex={10}
-            
           >
             <List 
                 spacing={1}

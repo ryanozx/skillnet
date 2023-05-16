@@ -11,13 +11,13 @@ import {
 import React from 'react';
 import NavBar from '../components/base/NavBar';
 import Searchbar from '../components/base/Searchbar';
+import SideBar from '../components/base/SideBar';
 
 export default function Home() {
   return (
     <>
       <NavBar></NavBar>
-      {/* <Searchbar/> */}
-      
+      <SideBar></SideBar>      
     </>
   )
 }
