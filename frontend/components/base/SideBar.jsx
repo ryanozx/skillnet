@@ -4,12 +4,9 @@ import Searchbar from './Searchbar';
 function Sidebar() {
   return (
     <Box
-      position="fixed"
-      top={20}
-      left={0}
+
       h="100vh"
-      w="15vw"
-      bg="gray.200"
+      w="100%"
       color="black"
       display="flex"
       flexDirection="column"

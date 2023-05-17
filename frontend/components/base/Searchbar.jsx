@@ -61,6 +61,7 @@ useEffect(() => {
     <Box position="relative">
       <Input
         type="text"
+        bg="gray.100"
         placeholder="Search"
         value={searchTerm}
         onChange={handleInputChange}

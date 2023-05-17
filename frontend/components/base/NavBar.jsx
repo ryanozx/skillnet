@@ -26,8 +26,8 @@ export default function NavBar() {
 
     return (
         <>
-            <Box bg={'gray.100'} px={4}>
-                <Flex h={20} alignItems={'center'} justifyContent={'space-around'}>
+            <Box px={4}>
+                <Flex h="7vh" alignItems={'center'} justifyContent={'space-around'}>
                 
                     <HStack spacing={8} alignItems={'center'}>
                         <Box>SkillNet</Box>
