@@ -1,4 +1,5 @@
 import React from "react";
+
 import {
     Grid,
     GridItem
@@ -24,7 +25,7 @@ export default function LayoutContainer({children}) {
             <GridItem bg='pink.300' area={'nav'}>
                 <SideBar></SideBar>
             </GridItem>
-            <GridItem pl='2' bg='green.300' area={'main'}>
+            <GridItem bg='green.300' area={'main'}>
                 {children}
             </GridItem>
         
