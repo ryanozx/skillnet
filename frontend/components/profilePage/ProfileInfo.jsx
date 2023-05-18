@@ -6,6 +6,7 @@ import {
 import EditProfileModal from './EditInfoModal';
 import BasicInfo from './BasicInfo';
 import AboutMe from './AboutMe';
+import ProjectDisplay from './ProjectDisplay';
 
 export default function ProfileInfo(user) {
 
@@ -15,7 +16,9 @@ export default function ProfileInfo(user) {
             <BasicInfo user={user}></BasicInfo>
             <AboutMe user={user}></AboutMe>
             <EditProfileModal/>
+            <ProjectDisplay></ProjectDisplay>
         </VStack>
+        
     </Box>
   );
 };

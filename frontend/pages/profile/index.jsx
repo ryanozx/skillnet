@@ -6,6 +6,7 @@ export default function ProfilePage() {
     return (
         <LayoutContainer>
             <ProfileInfo></ProfileInfo>
+
         </LayoutContainer>
     );
 

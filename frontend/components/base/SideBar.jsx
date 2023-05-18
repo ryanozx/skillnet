@@ -1,32 +1,21 @@
 import { Box, Flex, Icon, Link, Text, VStack } from '@chakra-ui/react';
 import Searchbar from './Searchbar';
 
-function Sidebar() {
+export default function Sidebar() {
   return (
     <Box
-
-      h="100vh"
-      w="100%"
-      color="black"
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="space-between"
-      py={4}
-      px={2}
-      zIndex={999}
+        w="100%"
+        color="black"
+        alignItems="start"
+        p={5}
+        zIndex={9}
     >
-      <VStack  spacing={4} alignItems="center">
-        <Searchbar></Searchbar>
-        <Link href="/">
-          link1
-        </Link>
-      </VStack>
-      <Flex alignItems="center" justifyContent="center">
-        <Text fontSize="sm">Your App</Text>
-      </Flex>
+        <VStack>
+            <Searchbar></Searchbar>
+            <Link href="/">
+                link1
+            </Link>
+        </VStack>
     </Box>
   );
 }
-
-export default Sidebar;

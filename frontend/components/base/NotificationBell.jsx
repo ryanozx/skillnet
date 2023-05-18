@@ -1,15 +1,13 @@
 import React from 'react';
 import {
-    Avatar,
     Button,
     Menu,
     MenuButton,
     MenuList,
     MenuItem,
-    MenuDivider,
 } from '@chakra-ui/react';
 
-import { BellIcon, SearchIcon } from '@chakra-ui/icons';
+import { BellIcon } from '@chakra-ui/icons';
 
 export default function NotificationBell() {
     return (

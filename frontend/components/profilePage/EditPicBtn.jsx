@@ -16,20 +16,20 @@ export default function EditPicBtn({ currentProfilePic }) {
 
   return (
     <>
-      <IconButton
-        aria-label="Change profile picture"
-        icon={<Avatar size="2xl" src={currentProfilePic} />}
-        onClick={handleFileInputClick}
-        isRound="true"
-      />
+        <IconButton
+            aria-label="Change profile picture"
+            icon={<Avatar size="2xl" src={currentProfilePic} />}
+            onClick={handleFileInputClick}
+            isRound="true"
+        />
 
-      <Input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
+        <Input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+        />
     </>
   );
 };

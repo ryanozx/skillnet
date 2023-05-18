@@ -4,7 +4,7 @@ import {
     Grid,
     GridItem
 }   from '@chakra-ui/react';
-import NavBar from "./NavBar";
+import NavBar from "../NavBar/NavBar"
 import SideBar from "./SideBar";
 
 export default function LayoutContainer({children}) {
@@ -22,10 +22,10 @@ export default function LayoutContainer({children}) {
             <GridItem bg='orange.300' area={'header'}>
                 <NavBar></NavBar>
             </GridItem>
-            <GridItem bg='pink.300' area={'nav'}>
+            <GridItem zIndex={1} bg='pink.300' area={'nav'}>
                 <SideBar></SideBar>
             </GridItem>
-            <GridItem bg='green.300' area={'main'}>
+            <GridItem zIndex={1} bg='green.300' area={'main'}>
                 {children}
             </GridItem>
         

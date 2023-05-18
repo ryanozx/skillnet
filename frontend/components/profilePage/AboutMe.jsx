@@ -1,15 +1,15 @@
 import React from 'react';
 import {
   Box,
-  HStack,
   VStack,
   Text,
   Heading,
 } from '@chakra-ui/react';
-import EditPicBtn from './EditPicBtn';
 
 export default function AboutMe(user) {
-    const {about} = user
+    const {
+        about = "No description available"
+    } = user
     return (
         <Box
             w="100%"
@@ -19,7 +19,7 @@ export default function AboutMe(user) {
             maxH={"20vh"}
         >
             <VStack spacing={5} align="start">
-                <Heading size="md">About</Heading>
+                <Heading size="md">About Me</Heading>
                 <Box 
                     bg="green.200"
                     w="100%"
