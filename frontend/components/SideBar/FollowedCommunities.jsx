@@ -1,5 +1,14 @@
 import { useState } from 'react';
-import { Box, Heading, List, ListItem, Button } from '@chakra-ui/react';
+import { 
+    Box, 
+    Flex,
+    Heading, 
+    List, 
+    ListItem, 
+    Button,
+    Link, 
+    Divider
+} from '@chakra-ui/react';
 
 export default function FollowedCommunities(props) {
     const [showMore, setShowMore] = useState(false);
@@ -21,15 +30,23 @@ export default function FollowedCommunities(props) {
     return (
         <Box>
             <Heading size="md">Followed Communities</Heading>
-            <List spacing={2} px={4}>
+            <List spacing={2} p={4}>
                 {displayedCommunities.map((community, index) => (
-                <ListItem key={index}>{community}</ListItem>
+                <ListItem key={index}>
+                    <Link>{community}</Link>
+                </ListItem>
                 ))}
             </List>
+            
             {followedCommunities.length > 5 && (
-                <Button onClick={handleClick} size="sm" alignSelf="flex-end">
-                    {showMore ? "Show less" : "Show more"}
-                </Button>
+                <>
+                    <Divider/>
+                    <Flex justifyContent={"flex-end"} pt={3}>
+                        <Button onClick={handleClick} size="sm" alignSelf={"flex-end"}>
+                            {showMore ? "Show less" : "Show more"}
+                        </Button>
+                    </Flex>
+                </>
             )}
         </Box>
   );

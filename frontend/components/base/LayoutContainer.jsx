@@ -1,5 +1,4 @@
 import React from "react";
-
 import {
     Grid,
     GridItem
@@ -31,5 +30,4 @@ export default function LayoutContainer({children}) {
         
         </Grid>  
     );
-
 }

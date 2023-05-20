@@ -1,16 +1,14 @@
 import { 
     Box, 
     VStack, 
-    Input, 
-    Button, 
     Heading, 
     List, 
     ListItem, 
     Link,
-    IconButton } from "@chakra-ui/react";
-import { AddIcon } from "@chakra-ui/icons";
+} from "@chakra-ui/react";
 import Searchbar from '../base/Searchbar';
 import FollowedCommunities from "./FollowedCommunities";
+import CreateCommunityBtn from "./CreateCommunityBtn";
 
 export default function SideBar() {
 
@@ -34,7 +32,7 @@ export default function SideBar() {
 
                 </List>
                 <FollowedCommunities/>
-                
+                <CreateCommunityBtn/>                
             </VStack>
         </Box>
   );
