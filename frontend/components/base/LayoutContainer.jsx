@@ -5,7 +5,7 @@ import {
     GridItem
 }   from '@chakra-ui/react';
 import NavBar from "../NavBar/NavBar"
-import SideBar from "./SideBar";
+import SideBar from "../SideBar/SideBar";
 
 export default function LayoutContainer({children}) {
     return (
@@ -19,7 +19,7 @@ export default function LayoutContainer({children}) {
             gap='1'
             color='blackAlpha.700'
         >
-            <GridItem bg='orange.300' area={'header'}>
+            <GridItem zIndex={2} bg='orange.300' area={'header'}>
                 <NavBar></NavBar>
             </GridItem>
             <GridItem zIndex={1} bg='pink.300' area={'nav'}>

@@ -13,9 +13,10 @@ import {
 
 } from '@chakra-ui/icons';
 import Searchbar from '../base/Searchbar';
-import ProfileButton from '../base/ProfileButton';
-import NotificationBell from '../base/NotificationBell';
-
+import ProfileButton from './ProfileButton';
+import NotificationBell from './NotificationBell';
+import LogInButton from './LogInButton';
+import SignUpButton from './SignUpButton';
 
 
 export default function MobileNav() {
@@ -42,30 +43,8 @@ export default function MobileNav() {
                 </>
                 :
                 <>
-                    <Button
-                        as={'a'}
-                        fontSize={'sm'}
-                        fontWeight={400}
-                        color={'blackAlpha.900'}
-                        variant={'link'}
-                        href={'#'}
-                    >
-                        Log in
-                    </Button>
-                    <Button
-                        as={'a'}
-                        display={'inline-flex'}
-                        fontSize={'sm'}
-                        fontWeight={600}
-                        color={'white'}
-                        bg={'blue.400'}
-                        href={'#'}
-                        _hover={{
-                            bg: 'blue.300',
-                        }}
-                    >
-                        Sign Up
-                    </Button>
+                    <LogInButton/>
+                    <SignInButton/>    
                 </> 
             }
         </HStack>

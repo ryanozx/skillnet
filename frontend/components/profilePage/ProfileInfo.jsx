@@ -17,8 +17,7 @@ export default function ProfileInfo(user) {
             <AboutMe user={user}></AboutMe>
             <EditProfileModal/>
             <ProjectDisplay></ProjectDisplay>
-        </VStack>
-        
+        </VStack>    
     </Box>
   );
 };
