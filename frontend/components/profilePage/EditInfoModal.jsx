@@ -31,7 +31,7 @@ export default function EditProfileModal() {
             aria-label="Edit profile"
         />
 
-        <Modal isOpen={isOpen} onClose={handleClose} size="xl">
+        <Modal isOpen={isOpen} onClose={handleClose} size={{base: "md", md:"2xl"}}>
             <ModalOverlay />
             <ModalContent>
                 <ModalHeader>Edit your profile</ModalHeader>

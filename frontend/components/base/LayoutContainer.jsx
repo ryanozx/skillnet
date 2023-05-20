@@ -1,33 +1,62 @@
 import React from "react";
 import {
     Grid,
-    GridItem
+    GridItem,
+    useBreakpointValue
 }   from '@chakra-ui/react';
 import NavBar from "../NavBar/NavBar"
 import SideBar from "../SideBar/SideBar";
 
+// export default function LayoutContainer({children}) {
+//     return (
+//         <Grid
+//             templateAreas={`"header header"
+//                             "nav main"
+//                             `}
+//             gridTemplateRows={'7vh 1fr'}
+//             gridTemplateColumns={'20vw 3fr'}
+//             h='100vh'
+//             gap='1'
+//             color='blackAlpha.700'
+//         >
+//             <GridItem zIndex={2} bg='orange.300' area={'header'}>
+//                 <NavBar></NavBar>
+//             </GridItem>
+//             <GridItem zIndex={1} bg='pink.300' area={'nav'}>
+//                 <SideBar></SideBar>
+//             </GridItem>
+//             <GridItem zIndex={1} bg='green.300' area={'main'}>
+//                 {children}
+//             </GridItem>
+        
+//         </Grid>  
+//     );
+// }
+
 export default function LayoutContainer({children}) {
+    const templateColumns = useBreakpointValue({ base: '1fr', md: '20vw 3fr' });
+    const templateAreas = useBreakpointValue({ base: `"header" "main"`, md: `"header header" "nav main"` });
+
     return (
         <Grid
-            templateAreas={`"header header"
-                            "nav main"
-                            `}
-            gridTemplateRows={'7vh 1fr'}
-            gridTemplateColumns={'20vw 3fr'}
+            templateAreas={templateAreas}
+            gridTemplateRows='7vh 1fr'
+            gridTemplateColumns={templateColumns}
             h='100vh'
             gap='1'
             color='blackAlpha.700'
         >
-            <GridItem zIndex={2} bg='orange.300' area={'header'}>
-                <NavBar></NavBar>
+            <GridItem zIndex={2} bg='orange.300' area='header'>
+                <NavBar />
             </GridItem>
-            <GridItem zIndex={1} bg='pink.300' area={'nav'}>
-                <SideBar></SideBar>
-            </GridItem>
-            <GridItem zIndex={1} bg='green.300' area={'main'}>
+            {templateColumns !== '1fr' && (
+                <GridItem zIndex={1} bg='pink.300' area='nav'>
+                    <SideBar />
+                </GridItem>
+            )}
+            <GridItem zIndex={1} bg='green.300' area='main'>
                 {children}
             </GridItem>
-        
         </Grid>  
     );
 }

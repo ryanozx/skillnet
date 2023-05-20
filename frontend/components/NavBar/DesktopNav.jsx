@@ -28,7 +28,7 @@ export default function DesktopNav () {
                     fontFamily={'heading'}
                     color={useColorModeValue('gray.800', 'white')}    
                 >
-                    FuckNet
+                    SkillNet
                 </Text>
                 <Box w="50vw">
                     <Searchbar/>
