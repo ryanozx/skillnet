@@ -54,13 +54,18 @@ export default function ProjectDisplay (props) {
     
     return (
         <Box>
+            
             <Grid 
-                templateColumns={{ sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)'}}
+                templateColumns={{ base: 'repeat(2, 1fr)', md:'repeat(3, 1fr)', lg: 'repeat(4, 1fr)'}}
                 gap={6} 
-                mb={4}
+                mb={4} 
             >
                 {displayProjects.map((project, index) => (
-                    <Box key={index}>
+                    <Box 
+                        key={index}
+                        width={{ base: "100%", sm: "auto" }}
+                        minWidth={{ base: "250px", sm: "auto" }}
+                    >
                         <ProjectDisplayCard
                             logo={project.logo}
                             name={project.name}
@@ -70,6 +75,7 @@ export default function ProjectDisplay (props) {
                     </Box>
                 ))}
             </Grid>
+
             {projects.length > 4 && 
                 <Flex justifyContent="flex-end">
                     <Button onClick={handleSeeAllClick}>See All</Button>
