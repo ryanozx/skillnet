@@ -11,27 +11,27 @@ import {
 } from '@chakra-ui/react';
 
 function Searchbar() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dropdownItems, setDropdownItems] = useState([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [dropdownItems, setDropdownItems] = useState([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const dropdownRef = useRef(null);
+    
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target)
+            ) {
+                setShowDropdown(false);
+            }
+        };
 
-useEffect(() => {
-    const handleOutsideClick = (event) => {
-        if (
-            dropdownRef.current &&
-            !dropdownRef.current.contains(event.target)
-        ) {
-            setShowDropdown(false);
-        }
-    };
+        document.addEventListener('mousedown', handleOutsideClick);
 
-    document.addEventListener('mousedown', handleOutsideClick);
-
-    return () => {
-        document.removeEventListener('mousedown', handleOutsideClick);
-    };
-  }, []);
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+    }, []);
 
   const handleInputChange = (event) => {
     const { value } = event.target;

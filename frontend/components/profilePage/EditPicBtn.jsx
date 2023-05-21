@@ -1,6 +1,5 @@
 import React, { useRef } from 'react';
 import { Avatar, IconButton, Input } from '@chakra-ui/react';
-import { EditIcon } from '@chakra-ui/icons';
 
 export default function EditPicBtn({ currentProfilePic }) {
   const fileInputRef = useRef();

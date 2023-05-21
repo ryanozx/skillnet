@@ -32,7 +32,7 @@ export default function FollowedCommunities(props) {
             <Heading size="md">Followed Communities</Heading>
             <List spacing={2} p={4}>
                 {displayedCommunities.map((community, index) => (
-                <ListItem key={index}>
+                <ListItem key={index} py={1}>
                     <Link>{community}</Link>
                 </ListItem>
                 ))}

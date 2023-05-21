@@ -7,36 +7,9 @@ import {
   Button
 } from '@chakra-ui/react';
 
-// export default function AboutMe(user) {
-//     const {
-//         about = "No description available"
-//     } = user
-    
-//     return (
-//         <Box
-//             w="100%"
-//             outline={"4px solid gray"}
-//             p={4}
-//             h={"20vh"}
-//             maxH={"20vh"}
-//         >
-//             <VStack spacing={5} align="start">
-//                 <Heading size="md">About Me</Heading>
-//                 <Box 
-//                     bg="green.200"
-//                     w="100%"
-//                     px={4}
-//                 >
-//                     <Text>{about}</Text>
-//                 </Box>
-//             </VStack>
-//         </Box>
-//     );
-// }
-
 export default function AboutMe({ user }) {
     const [showMore, setShowMore] = useState(false);
-    const [height, setHeight] = useState("100px");
+    const [height, setHeight] = useState("200px");
 
     const { about = `
         Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature 
@@ -56,13 +29,12 @@ export default function AboutMe({ user }) {
         1.10.33 from "de Finibus Bonorum et Malorum" by Cicero are also reproduced in their exact original form, accompanied by 
         English versions from the 1914 translation by H. Rackham.
     `} = user
+    // const { about = "this is a shorter description" } = user;
 
     const handleClick = () => {
         setShowMore(!showMore);
-        setHeight(showMore ? "100px" : "auto");
+        setHeight(showMore ? "200px" : "auto");
     };
-
-    
 
     return (
         <Box
@@ -70,23 +42,23 @@ export default function AboutMe({ user }) {
           p={4}
           mb={4}
         >
-          <VStack spacing={5} align="start">
-            <Heading size="md" px={2}>About Me</Heading>
-            <Box 
-              bg="green.200"
-              w="100%"
-              p={5}
-              h={height}
-              overflow="auto"
-            >
-              <Text>{about}</Text>
-            </Box>
-            {about && about.length > 100 && (
-              <Button onClick={handleClick} size="sm" alignSelf="flex-end">
-                {showMore ? "Show less" : "Show more"}
-              </Button>
-            )}
-          </VStack>
+            <VStack spacing={5} align="start">
+                <Heading size="md" px={2}>About Me</Heading>
+                <Box 
+                    bg="green.200"
+                    w="100%"
+                    p={5}
+                    h={height}
+                    overflow="hidden"
+                >
+                    <Text>{about}</Text>
+                </Box>
+                {about && about.length > 100 && (
+                    <Button onClick={handleClick} size="sm" alignSelf="flex-end">
+                        {showMore ? "Show less" : "Show more"}
+                    </Button>
+                )}
+            </VStack>
         </Box>
     );
 }
