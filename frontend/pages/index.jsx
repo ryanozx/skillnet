@@ -4,7 +4,7 @@ import LayoutContainer from '../components/base/LayoutContainer';
 export default function Home() {
   return (
     <>
-      <LayoutContainer> </LayoutContainer>
+        <LayoutContainer> </LayoutContainer>
     </>
   )
 }

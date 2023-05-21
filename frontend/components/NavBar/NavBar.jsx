@@ -2,7 +2,6 @@ import {
     Box,
     Flex,
     useBreakpointValue,
-    useDisclosure,
 } from '@chakra-ui/react';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
@@ -21,7 +20,7 @@ export default function NavBar() {
             </Flex>
         </Box>
     );
-  }
+}
   
 
   
