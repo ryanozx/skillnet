@@ -10,19 +10,14 @@ import {
     Flex
 } from "@chakra-ui/react";
 
-const ProjectDisplayCard = ( project ) => {
-    
-    const name = "SkillNet"
-    const category = "Web Development"
-    const logo = "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"
-    const backdrop= "" 
-
+export default function ProjectDisplayCard(project) {
+    const { logo, name, category, backdrop } = project;
     return (
         <Card maxW='300px' h="400px">
             <CardBody>
                 <Image
                     src={logo}
-                    alt='Green double couch with wooden legs'
+                    alt='Project logo'
                     borderRadius='lg'
                     h="250px"
                     w="100%"
@@ -50,5 +45,3 @@ const ProjectDisplayCard = ( project ) => {
         </Card>
     );
 };
-
-export default ProjectDisplayCard;

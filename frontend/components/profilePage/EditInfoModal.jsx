@@ -16,21 +16,15 @@ import {
 } from '@chakra-ui/react';
 import { EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 
-export default function EditProfileModal() {
-    const [isOpen, setIsOpen] = useState(false);
+export default function EditProfileModal(props) {
+    const { 
+        handleOpen, 
+        handleClose, 
+        isOpen, 
+        setIsOpen 
+    } = props;
 
-    const handleOpen = () => setIsOpen(true);
-    const handleClose = () => setIsOpen(false);
-
-    return (
-        <>
-        <IconButton 
-            alignSelf={"flex-end"}
-            icon={<EditIcon />} 
-            onClick={handleOpen} 
-            aria-label="Edit profile"
-        />
-
+    return (       
         <Modal isOpen={isOpen} onClose={handleClose} size={{base: "md", md:"2xl"}}>
             <ModalOverlay />
             <ModalContent>
@@ -61,6 +55,5 @@ export default function EditProfileModal() {
                 </ModalFooter>
             </ModalContent>
         </Modal>
-        </>
     );
 };
