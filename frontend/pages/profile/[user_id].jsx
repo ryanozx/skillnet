@@ -1,5 +1,4 @@
 import React from "react";
-// import ProfileInfo from "../../components/ProfilePage/ProfileInfo";
 import ProfileInfo from "../../components/profilePage/ProfileInfo";
 import LayoutContainer from "../../components/base/LayoutContainer";
 import { useRouter } from 'next/router';

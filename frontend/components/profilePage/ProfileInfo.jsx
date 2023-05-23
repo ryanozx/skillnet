@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Box,
   VStack,
@@ -6,10 +5,34 @@ import {
 import BasicInfo from './BasicInfo';
 import AboutMe from './AboutMe';
 import ProjectDisplay from './ProjectDisplay';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 export default function ProfileInfo({user_id}) {
+    const [user, setUser] = useState(null);
 
-    const user = {};
+    useEffect(() => {
+        const sessionID = sessionStorage.getItem('sessionID');
+    
+        const fetchData = axios.post('/api/profile', {
+          user_id,
+          sessionID,
+        });
+    
+        fetchData
+          .then(response => {
+            setProfile(response.data);
+          })
+          .catch(error => {
+            console.error(error);
+          });
+    
+      }, [user_id]);
+
+    // if (!user) {
+    //     return <div>Loading...</div>;
+    // }
+
     console.log("detected user id " + user_id)
     return (
         <Box mt={10} mx={5} p={4} >

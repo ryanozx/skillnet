@@ -9,8 +9,20 @@ import {
 import Searchbar from '../base/Searchbar';
 import FollowedCommunities from "./FollowedCommunities";
 import CreateCommunityBtn from "./CreateCommunityBtn";
+import { useEffect, useState } from "react";
 
 export default function SideBar() {
+    const [popularCommunities, setPopularCommunities] = useState([]);
+
+    useEffect(() => {
+        axios.get('/api/popular-communities')
+        .then(response => {
+            setPopularCommunities(response.data);
+        })
+        .catch(error => {
+            console.error(error);
+        });
+    }, []);
 
     // followed communities
     // popular communities
