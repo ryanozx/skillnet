@@ -7,15 +7,17 @@ import BasicInfo from './BasicInfo';
 import AboutMe from './AboutMe';
 import ProjectDisplay from './ProjectDisplay';
 
-export default function ProfileInfo(user) {
+export default function ProfileInfo({user_id}) {
 
-  return (
-    <Box mt={10} mx={5} p={4} >
-        <VStack spacing={10} align="start">
-            <BasicInfo user={user}></BasicInfo>
-            <AboutMe user={user}></AboutMe>
-            <ProjectDisplay></ProjectDisplay>
-        </VStack>    
-    </Box>
-  );
+    const user = {};
+    console.log("detected user id " + user_id)
+    return (
+        <Box mt={10} mx={5} p={4} >
+            <VStack spacing={10} align="start">
+                <BasicInfo user={user}></BasicInfo>
+                <AboutMe user={user}></AboutMe>
+                <ProjectDisplay></ProjectDisplay>
+            </VStack>    
+        </Box>
+    );
 };
