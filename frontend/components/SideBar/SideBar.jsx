@@ -23,13 +23,10 @@ export default function SideBar() {
 
                 <Heading size="md">Popular Communities</Heading>
                 <List spacing={2} px={4}>
-                {/* {popularCommunities.map((community, index) => (
-                    <ListItem key={index}>{community}</ListItem>
-                ))} */}
-                    <ListItem>
-                        <Link>Gardening</Link>
-                    </ListItem>
-
+                    {/* {popularCommunities.map((community, index) => (
+                        <ListItem key={index}>{community}</ListItem>
+                    ))} */}
+                    <ListItem><Link href="#">r/programming</Link></ListItem>
                 </List>
                 <FollowedCommunities/>
                 <CreateCommunityBtn/>                
