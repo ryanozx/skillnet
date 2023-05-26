@@ -8,32 +8,29 @@ import ProjectDisplay from './ProjectDisplay';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-export default function ProfileInfo({user_id}) {
+export default function ProfileInfo({username}) {
     const [user, setUser] = useState(null);
-
+    
     useEffect(() => {
-        const sessionID = sessionStorage.getItem('sessionID');
-    
-        const fetchData = axios.post('/api/profile', {
-          user_id,
-          sessionID,
+        const url = ''
+        const session_id = sessionStorage.getItem('session_id');
+        const fetchData = axios.post(url, {
+          username: username,
+          session_id: session_id,
         });
-    
         fetchData
-          .then(response => {
-            setProfile(response.data);
-          })
-          .catch(error => {
-            console.error(error);
-          });
-    
-      }, [user_id]);
+            .then(response => {
+                setUser(response.data);
+            })
+            .catch(error => {
+                console.error(error);
+            });
+      }, [username]);
 
     // if (!user) {
-    //     return <div>Loading...</div>;
+    //     return <div>Invalid User Id</div>;
     // }
 
-    console.log("detected user id " + user_id)
     return (
         <Box mt={10} mx={5} p={4} >
             <VStack spacing={10} align="start">
