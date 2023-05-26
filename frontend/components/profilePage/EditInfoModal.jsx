@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';  
 import { 
     Button, 
     FormControl, 
@@ -57,13 +58,50 @@ export default function EditProfileModal(props) {
         }));
     };
 
-
     const handleTabChange = (index) => {
         setActiveTab(index);
     };
 
+    useEffect(() => {
+        if (isOpen) {
+            const sessionId = sessionStorage.getItem('sessionId');
+            console.log('API call to get the current privacy setting of user');
+            axios
+                .get('your-privacy-endpoint', {
+                headers: {
+                    Authorization: `Bearer ${sessionId}`
+                }
+                })
+                .then(response => {
+                setForm(prevState => ({
+                    ...prevState,
+                    privacySettings: response.data
+                }));
+                })
+                .catch(error => {
+                console.error(error);
+                });
+        }
+        
+    }, [isOpen]);
+
     const handleSave = () => {
-        console.log(form); // Log the form data. Here is where you could add your API request to update the user data.
+        const sessionId = sessionStorage.getItem('sessionId');
+        console.log('API call to save updated changes to profile page');
+        axios
+            .post('your-update-endpoint', form, {
+                headers: {
+                Authorization: `Bearer ${sessionId}`
+                }
+            })
+            .then(response => {
+                // console.log(response.data); // Log the response data
+                console.log('Successfully updated');
+                setIsOpen(false);
+            })
+            .catch(error => {
+                console.error(error);
+            });
     };
 
     return (
