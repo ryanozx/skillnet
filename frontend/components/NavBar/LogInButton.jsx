@@ -1,16 +1,23 @@
-import { Button } from '@chakra-ui/button';
+import { Button } from '@chakra-ui/react';
+import { useRouter } from 'next/router';
 
 export default function LogInButton() {
+    const router = useRouter();
+
+    const handleLogin = () => {
+        router.push('/login');
+    };
+
     return (
         <Button
-            as={'a'}
             fontSize={'sm'}
             fontWeight={400}
             color={'blackAlpha.900'}
             variant={'link'}
-            href={'#'}
+            onClick={handleLogin}
         >
-            Log in
+        Log in
         </Button>
     );
 }
+

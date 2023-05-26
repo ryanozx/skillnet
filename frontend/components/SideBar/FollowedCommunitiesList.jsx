@@ -10,7 +10,7 @@ import {
     Divider
 } from '@chakra-ui/react';
 
-export default function FollowedCommunities(props) {
+export default function FollowedCommunitiesList(props) {
     const [showMore, setShowMore] = useState(false);
     const handleClick = () => setShowMore(!showMore);
 

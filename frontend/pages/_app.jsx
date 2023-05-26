@@ -1,12 +1,18 @@
 import { ChakraProvider } from '@chakra-ui/react';
-import AuthContextProvider from '../contexts/AuthContextProvider.jsx';
+import { Provider } from 'react-redux';
+import store from '../store';
+import React from 'react';
 
 export default function MyApp({ Component, pageProps }) {
   return (
-    <ChakraProvider>
-        <AuthContextProvider>
-            <Component {...pageProps} />
-        </AuthContextProvider>
-    </ChakraProvider>
-  )
+    <React.StrictMode>
+        <ChakraProvider>
+            <Provider store={store}>
+                <Component {...pageProps} />
+            </Provider>
+        </ChakraProvider>
+
+    </React.StrictMode>
+    
+  );
 }

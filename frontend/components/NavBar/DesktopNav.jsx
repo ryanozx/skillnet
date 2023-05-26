@@ -15,33 +15,36 @@ import LogInButton from './LogInButton';
 import SignUpButton from './SignUpButton';
 
 
-export default function DesktopNav () {  
-    const isLoggedIn = true
+export default function DesktopNav (props) {  
+    const { isLoggedIn = true, profilePic = '' } = props;
     return (
-        <Flex flex={{ base: 1 }} justify={{ base: 'center', md: 'start' }} display={{base: 'none', md: 'flex'}} justifyContent={"space-between"}>
+        <Flex 
+            flex={1}  
+            justify={{ base: 'center', md: 'start' }} 
+            display={{base: 'none', md: 'flex'}} 
+            justifyContent={"space-between"}>
             <Text
                 pt={2}
-                textAlign={useBreakpointValue({ base: 'center', md: 'left' })}
-                fontFamily={'heading'}
-                color={useColorModeValue('gray.800', 'white')}    
-            >
-                SkillNet
+                textAlign={{ base: 'center', md: 'left' }}
+                fontFamily='heading'
+                color='gray.800'>
+                SKILLNET
             </Text>
             <Box w="50vw">
                 <Searchbar/>
             </Box>
             <HStack spacing={6}>
-                {isLoggedIn ?                
-                <>
+                {isLoggedIn ?  (
+                    <>
                     <NotificationBell/>
-                    <ProfileButton/>
-                </>
-                :
-                <>
+                    <ProfileButton profilePic={profilePic}/>
+                    </>
+                ) : (
+                    <>
                     <LogInButton/>
                     <SignUpButton/>
-                </> 
-                } 
+                    </> 
+                )}
             </HStack>
         </Flex>
     );
