@@ -5,10 +5,10 @@ import { useRouter } from 'next/router';
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { user_id } = router.query;
+    const { username } = router.query;
     return (
         <LayoutContainer>
-            <ProfileInfo user_id={user_id}></ProfileInfo>
+            <ProfileInfo username={username}></ProfileInfo>
         </LayoutContainer>
     );
 
