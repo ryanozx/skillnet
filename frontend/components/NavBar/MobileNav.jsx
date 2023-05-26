@@ -30,9 +30,7 @@ import SideBar from '../SideBar/SideBar';
 export default function MobileNav(props) {
     const { isOpen, onOpen, onClose } = useDisclosure()
     const btnRef = useRef()
-    const isLoggedIn = true
-    const { profilePic } = props;
-
+    const { isLoggedIn=true, profilePic='' } = props;
     return (
         <>
         
@@ -70,11 +68,11 @@ export default function MobileNav(props) {
             >
                 <DrawerOverlay />
                 <DrawerContent>
-                <DrawerCloseButton />
-                <DrawerHeader>SkillNet</DrawerHeader>
-                <DrawerBody>
-                    <SideBar/>
-                </DrawerBody>
+                    <DrawerCloseButton />
+                    <DrawerHeader>SkillNet</DrawerHeader>
+                    <DrawerBody>
+                        <SideBar/>
+                    </DrawerBody>
                 </DrawerContent>
             </Drawer>
         </>

@@ -20,19 +20,19 @@ export default function LayoutContainer({children}) {
 
     useEffect(() => {
         dispatch(loginRequest());
+        // url for session id validation
+        console.log('API call to check if user is logged in');
+        const url = '';
         const sessionId = sessionStorage.getItem('sessionId');
         if (sessionId) {
-        axios.post('your-backend-url/api/auth', {}, {
+        axios.post(url, {}, {
             headers: {
             Authorization: `Bearer ${sessionId}`
             }
         })
         .then(response => {
-            const userRedux = response.data;
-            dispatch(loginSuccess(userRedux));
-            // Here, you can also dispatch other actions to update 
-            // the other parts of your state (followed communities, 
-            // profile picture, notifications)
+            const user = response.data;
+            dispatch(loginSuccess(user));
         })
         .catch(error => {
             dispatch(loginFailure(error.message));
