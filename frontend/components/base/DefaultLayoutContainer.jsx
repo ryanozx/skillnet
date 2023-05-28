@@ -10,7 +10,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { loginRequest, loginSuccess, loginFailure } from '../../actions/userActions';
 
-export default function LayoutContainer({children}) {
+export default function DefaultLayoutContainer({children}) {
 
     const templateColumns = useBreakpointValue({ base: '1fr', lg: '20vw 3fr' });
     const templateAreas = useBreakpointValue({ base: `"header" "main"`, lg: `"header header" "nav main"` });
