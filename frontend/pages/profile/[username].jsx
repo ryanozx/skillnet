@@ -1,15 +1,15 @@
 import React from "react";
 import ProfileInfo from "../../components/profilePage/ProfileInfo";
-import LayoutContainer from "../../components/base/LayoutContainer";
+import DefaultLayoutContainer from "../../components/base/DefaultLayoutContainer";
 import { useRouter } from 'next/router';
 
 export default function ProfilePage() {
     const router = useRouter();
     const { username } = router.query;
     return (
-        <LayoutContainer>
+        <DefaultLayoutContainer>
             <ProfileInfo username={username}></ProfileInfo>
-        </LayoutContainer>
+        </DefaultLayoutContainer>
     );
 
 }

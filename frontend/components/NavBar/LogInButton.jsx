@@ -13,10 +13,10 @@ export default function LogInButton() {
             fontSize={'sm'}
             fontWeight={400}
             color={'blackAlpha.900'}
-            variant={'link'}
+            variant={'ghost'}
             onClick={handleLogin}
         >
-        Log in
+            Log in
         </Button>
     );
 }

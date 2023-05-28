@@ -17,6 +17,7 @@ import SignUpButton from './SignUpButton';
 
 export default function DesktopNav (props) {  
     const { isLoggedIn = true, profilePic = '' } = props;
+    console.log(isLoggedIn + " is logged in?");
     return (
         <Flex 
             flex={1}  
@@ -33,7 +34,7 @@ export default function DesktopNav (props) {
             <Box w="50vw">
                 <Searchbar/>
             </Box>
-            <HStack spacing={6}>
+            <HStack spacing={isLoggedIn? 6 : 3}>
                 {isLoggedIn ?  (
                     <>
                     <NotificationBell/>
