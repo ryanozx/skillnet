@@ -7,37 +7,37 @@ import (
 )
 
 type UserMinimal struct {
-	ID         uuid.UUID `json:"id" gorm:"primary_key"`
-	Name       string    `json:"name"`
-	ProfileURL string    `json:"url"`
-	ProfilePic string    `json:"profilePic"`
+	ID         uuid.UUID
+	Name       string
+	ProfileURL string
+	ProfilePic string
 }
 
 type UserCredentials struct {
-	Username string    `json:"username"`
-	Password string    `json:"password"`
-	ID       uuid.UUID `json:"id" gorm:"primary_key"`
+	Username string
+	Password string
+	UserID   uuid.UUID
 }
 
 type User struct {
-	ID            uuid.UUID     `json:"id" gorm:"primary_key"`
-	Username      string        `json:"username"`
-	Name          string        `json:"name"`
-	ProfilePicURI string        `json:"profilePic"`
-	Title         string        `json:"title"`
-	Birthday      time.Time     `json:"birthday"`
-	Location      string        `json:"location"`
-	AboutMe       string        `json:"aboutMe"`
-	Projects      ProjectsArray `json:"projects"`
+	ID            uuid.UUID
+	Username      string
+	Name          string
+	ProfilePicURI string
+	Title         string
+	Birthday      time.Time
+	Location      string
+	AboutMe       string
+	Projects      ProjectsArray
 }
 
 type UserWithSettings struct {
-	User              User  `json:"user"`
-	TitlePrivileges   uint8 `json:"titlePrivilege"`
-	BirthdayPrivilege uint8 `json:"birthdayPrivilege"`
-	LocationPrivilege uint8 `json:"locationPrivilege"`
-	AboutMePrivilege  uint8 `json:"aboutMePrivilege"`
-	ProjectsPrivilege uint8 `json:"projectsPrivilege"`
+	User              User
+	TitlePrivileges   uint8
+	BirthdayPrivilege uint8
+	LocationPrivilege uint8
+	AboutMePrivilege  uint8
+	ProjectsPrivilege uint8
 }
 
 type UserWithValidationError struct {

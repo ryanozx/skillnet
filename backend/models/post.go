@@ -8,41 +8,41 @@ import (
 )
 
 type PostArray struct {
-	Posts       []Post `json:"posts"`
-	NextPageURL string `json:"nextPageURL"`
+	Posts       []Post
+	NextPageURL string
 }
 
 type PostSchema struct {
 	gorm.Model
-	UserID    uuid.UUID `json:"userID" gorm:"text;not null;default:null"`
-	ProjectID uuid.UUID `json:"projectID" gorm:"text;not null; default:null"`
-	Content   string    `json:"content" gorm:"text;default:null"`
+	UserID    uuid.UUID
+	ProjectID uuid.UUID
+	Content   string
 }
 
 type CreatePostInput struct {
-	ProjectID uuid.UUID `json:"projectID"`
-	Content   string    `json:"content" binding:"required"`
+	Content string
 }
 
 type UpdatePostInput struct {
-	Content string `json:"content" binding:"required"`
+	Content string
 }
 
 type Post struct {
-	ID        uint          `json:"id" gorm:"primary_key"`
-	User      UserMinimal   `json:"user"`
-	CreatedAt time.Time     `json:"createdAt"`
-	UpdatedAt time.Time     `json:"updatedAt"`
-	ProjectID uuid.UUID     `json:"projectID"`
-	Content   string        `json:"content"`
-	Comments  CommentsArray `json:"comments"`
+	ID        uint
+	UserID    uuid.UUID
+	User      UserMinimal
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	ProjectID uuid.UUID
+	Content   string
+	CommentsArray
 }
 
 // MultimediaContent will be used to represent multimedia resources
 // TODO: Add MultimediaContent array as attribute of Post
 type MultimediaContent struct {
-	ContentType string `json:"contentType"`
-	URI         string `json:"uri"`
+	ContentType string
+	URI         string
 }
 
 func ConvertInputToPostSchema(input CreatePostInput) PostSchema {

@@ -1,1 +1,5 @@
 .env
+**/.rdb
+/backend/main
+backend/data/redis/dump.rdb
+**/node_modules

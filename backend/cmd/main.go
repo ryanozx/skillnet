@@ -1,8 +1,11 @@
 package main
 
 import (
+	"log"
+	"os"
+
+	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"github.com/ryanozx/skillnet/controllers"
 	"github.com/ryanozx/skillnet/database"
 )
 
@@ -10,14 +13,22 @@ func main() {
 	router := gin.Default()
 	database.ConnectDatabase()
 
-	router.GET("/posts", controllers.GetPosts)
-	router.POST("/posts", controllers.PostPost)
-	router.GET("/posts/:id", controllers.GetPostByID)
-	router.PATCH("/posts/:id", controllers.UpdatePost)
-	router.DELETE("/posts/:id", controllers.DeletePost)
+	sessionKey := os.Getenv("REDIS_SESSION_KEY")
+	RedisHost := os.Getenv("REDISHOST")
+	RedisPort := os.Getenv("REDISPORT")
+	if sessionKey == "" {
+		log.Fatal("ERROR: Set REDIS_SESSION_KEY to a secret string and try again")
+	}
+	store, redisErr := redis.NewStore(10, "tcp", RedisHost+":"+RedisPort, "", []byte("secret"))
+	if redisErr != nil {
+		log.Fatal(redisErr.Error())
+	}
 
-	routerErr := router.Run("localhost:8080")
+	registerRoutes(router, store)
+
+	routerErr := router.Run("0.0.0.0:8080")
 	if routerErr != nil {
 		return
 	}
+	log.Output(1, "Setup complete!")
 }

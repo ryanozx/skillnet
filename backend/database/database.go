@@ -30,10 +30,13 @@ func ConnectDatabase() {
 }
 
 func establishConnection() (*gorm.DB, error) {
-	dataSourceName := fmt.Sprintf("host=db user=%s password=%s dbname=%s port=5432 sslmode=disable TimeZone=Asia/Singapore",
+	dataSourceName := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%v sslmode=disable TimeZone=Asia/Singapore",
+		os.Getenv("DB_HOST"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
 	)
 
 	gormOptions := &gorm.Config{
@@ -47,7 +50,7 @@ func establishConnection() (*gorm.DB, error) {
 func autoMigrate(database *gorm.DB) {
 	log.Println("Running migrations")
 	database.AutoMigrate(&models.PostSchema{})
-	database.AutoMigrate(&models.UserWithSettings{})
 	database.AutoMigrate(&models.UserCredentials{})
-	database.AutoMigrate(&models.CommentSchema{})
+	/*database.AutoMigrate(&models.UserWithSettings{})
+	database.AutoMigrate(&models.CommentSchema{})*/
 }
