@@ -12,6 +12,7 @@
     "@emotion/styled": "^11.11.0",
     "@reduxjs/toolkit": "^1.9.5",
     "axios": "^1.4.0",
+    "create-react-app": "^5.0.1",
     "framer-motion": "^10.12.10",
     "next": "latest",
     "react": "18.2.0",
