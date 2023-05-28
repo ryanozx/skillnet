@@ -31,6 +31,7 @@ export default function MobileNav(props) {
     const { isOpen, onOpen, onClose } = useDisclosure()
     const btnRef = useRef()
     const { isLoggedIn=true, profilePic='' } = props;
+    console.log(isLoggedIn + " is logged in?");
     return (
         <>
         
@@ -45,7 +46,7 @@ export default function MobileNav(props) {
                     <Searchbar/>
                 </Box>
                 
-                <HStack spacing={4}>
+                <HStack spacing={isLoggedIn ? 4 : 2}>
                     {isLoggedIn ?  
                         <>
                             <NotificationBell/>

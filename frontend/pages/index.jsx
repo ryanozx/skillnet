@@ -1,12 +1,14 @@
 import React from 'react';
-import LayoutContainer from '../components/base/LayoutContainer';
+import DefaultLayoutContainer from "../components/base/DefaultLayoutContainer";
+import HomePageContainer from "../components/HomePage/HomePageContainer";
 
 export default function Home() {
   return (
-    <>
-        <LayoutContainer>
-            <div>Home</div>
-        </LayoutContainer>
-    </>
+    // <>
+    //     <DefaultLayoutContainer>
+    //         <div>Home</div>
+    //     </DefaultLayoutContainer>
+    // </>
+    <HomePageContainer />
   )
 }
