@@ -50,6 +50,7 @@ export default function LayoutContainer({children}) {
             gridTemplateColumns={templateColumns}
             gap='1'
             color='blackAlpha.700'
+            minHeight='100vh'
         >
             <GridItem zIndex={2} bg='orange.300' area='header'>
                 <NavBar user={user} isLoggedIn={isLoggedIn}/>
