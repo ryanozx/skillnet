@@ -16,7 +16,7 @@ export default function LoginForm() {
 
     const onSubmit = () => {
         axios
-            .post('your-endpoint', form)
+            .post('fake-endpoint', form)
             .then((res) => {
                 toast({
                     title: "Form submission successful.",
