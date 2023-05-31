@@ -4,7 +4,7 @@ import axios from 'axios';
 export const AuthContext = createContext();
 
 const AuthContextProvider = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
     // useEffect(() => {
     //     const token = sessionStorage.getItem('authToken');

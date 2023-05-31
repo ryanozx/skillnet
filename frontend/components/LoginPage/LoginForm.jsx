@@ -6,7 +6,8 @@ import axios from "axios";
 
 export default function LoginForm() {
 
-    const [form, setForm] = useState({ email: "", password: "" });
+
+    const [form, setForm] = useState({ username: "", password: "" });
     const toast = useToast();
 
     const handleInputChange = (e) => {
@@ -15,24 +16,30 @@ export default function LoginForm() {
     };
 
     const onSubmit = () => {
-        axios
-            .post('fake-endpoint', form)
+
+        const {username, password} = form
+        var form_data = new FormData();
+        form_data.append('username', username);
+        form_data.append('password', password);
+        axios.post('http://localhost:8080/login', form_data)
             .then((res) => {
+                console.log(res);
                 toast({
-                    title: "Form submission successful.",
-                    description: "We've received your form data.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
+                title: "Form submission successful.",
+                description: "We've received your form data.",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
                 });
             })
             .catch((error) => {
+                console.log(error);
                 toast({
-                    title: "An error occurred.",
-                    description: error.message,
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
+                title: "An error occurred.",
+                description: error,
+                status: "error",
+                duration: 5000,
+                isClosable: true,
                 });
             });
     };
@@ -46,12 +53,12 @@ export default function LoginForm() {
             w={{ base: '90vw', md: '60vw', lg: '30vw' }}
         >
             <Stack spacing={4}>
-                <FormControl id="email">
-                    <FormLabel>Email address</FormLabel>
+                <FormControl id="username">
+                    <FormLabel>username</FormLabel>
                     <Input
-                        type="email"
-                        name="email"
-                        value={form.email}
+                        type="username"
+                        name="username"
+                        value={form.username}
                         onChange={handleInputChange}
                     />
                 </FormControl>
