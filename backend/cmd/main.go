@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 
+
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanozx/skillnet/database"
@@ -12,6 +14,11 @@ import (
 func main() {
 	router := gin.Default()
 	database.ConnectDatabase()
+
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	router.Use(cors.New(config))
+
 
 	sessionKey := os.Getenv("REDIS_SESSION_KEY")
 	RedisHost := os.Getenv("REDISHOST")

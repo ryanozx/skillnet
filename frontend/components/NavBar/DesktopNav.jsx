@@ -35,17 +35,9 @@ export default function DesktopNav (props) {
                 <Searchbar/>
             </Box>
             <HStack spacing={isLoggedIn? 6 : 3}>
-                {isLoggedIn ?  (
-                    <>
-                    <NotificationBell/>
-                    <ProfileButton profilePic={profilePic}/>
-                    </>
-                ) : (
-                    <>
-                    <LogInButton/>
-                    <SignUpButton/>
-                    </> 
-                )}
+                <NotificationBell/>
+                <ProfileButton profilePic={profilePic}/>
+
             </HStack>
         </Flex>
     );

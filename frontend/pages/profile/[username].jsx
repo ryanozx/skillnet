@@ -11,5 +11,4 @@ export default function ProfilePage() {
             <ProfileInfo username={username}></ProfileInfo>
         </DefaultLayoutContainer>
     );
-
 }
