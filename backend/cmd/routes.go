@@ -3,7 +3,9 @@ package main
 import (
 	"net/http"
 
+
 	"github.com/gin-contrib/cors"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
@@ -12,6 +14,7 @@ import (
 )
 
 func registerRoutes(router *gin.Engine, store redis.Store) {
+
 	router.Use(cors.Default())
 	router.Use(sessions.Sessions("mysession", store))
 
