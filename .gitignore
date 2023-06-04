@@ -1,0 +1,4 @@
+.env
+data
+/backend/main
+**/node_modules
