@@ -6,10 +6,7 @@ import axios from "axios";
 
 export default function LoginForm() {
 
-
-
     const [form, setForm] = useState({ username: "", password: "" });
-
     const toast = useToast();
 
     const handleInputChange = (e) => {
@@ -18,7 +15,6 @@ export default function LoginForm() {
     };
 
     const onSubmit = () => {
-
         const {username, password} = form
         var form_data = new FormData();
         form_data.append('username', username);
@@ -42,9 +38,9 @@ export default function LoginForm() {
                 status: "error",
                 duration: 5000,
                 isClosable: true,
-
                 });
             });
+
     };
 
     return (
@@ -56,7 +52,6 @@ export default function LoginForm() {
             w={{ base: '90vw', md: '60vw', lg: '30vw' }}
         >
             <Stack spacing={4}>
-
                 <FormControl id="username">
                     <FormLabel>username</FormLabel>
                     <Input
