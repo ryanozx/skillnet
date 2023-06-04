@@ -2,12 +2,22 @@ package helpers
 
 import (
 	"strings"
+
+	"github.com/ryanozx/skillnet/models"
 )
 
-func CheckUserPass(username, password string) bool {
+func CheckUserPass(user *models.UserCredentials) bool {
 	return true
 }
 
-func EmptyUserPass(username, password string) bool {
-	return strings.Trim(username, " ") == "" || strings.Trim(password, " ") == ""
+func EmptyUserPass(user *models.UserCredentials) bool {
+	return strings.Trim(user.Username, " ") == "" || strings.Trim(user.Password, " ") == ""
+}
+
+func IsValidSession(sessionID interface{}) bool {
+	if sessionID == nil {
+		return false
+	} else {
+		return true
+	}
 }

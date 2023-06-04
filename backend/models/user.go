@@ -16,23 +16,23 @@ type UserMinimal struct {
 type UserCredentials struct {
 	Username string
 	Password string
-	UserID   uuid.UUID
 }
 
 type User struct {
-	ID            uuid.UUID
+	ID            uuid.UUID `gorm:"type:uuid;primary_key;"`
 	Username      string
+	Password      string
 	Name          string
 	ProfilePicURI string
 	Title         string
 	Birthday      time.Time
 	Location      string
 	AboutMe       string
-	Projects      ProjectsArray
+	// Projects      ProjectsArray
 }
 
 type UserWithSettings struct {
-	User              User
+	User              User `gorm:"embedded"`
 	TitlePrivileges   uint8
 	BirthdayPrivilege uint8
 	LocationPrivilege uint8
@@ -40,22 +40,21 @@ type UserWithSettings struct {
 	ProjectsPrivilege uint8
 }
 
-type UserWithValidationError struct {
-	User               UserWithSettings `json:"userWithSettings"`
-	UsernameError      error            `json:"usernameError"`
-	NameError          error            `json:"nameError"`
-	ProfilePicURIError error            `json:"profilePicError"`
-	BirthdayError      error            `json:"birthdayError"`
-	LocationError      error            `json:"locationError"`
-	AboutMeError       error            `json:"aboutMeError"`
-}
-
-func generateTestUser(userID uuid.UUID) UserMinimal {
+func generateTestUser(userID uuid.UUID) *UserMinimal {
 	testUser := UserMinimal{
 		ID:         userID,
 		Name:       "User1",
 		ProfileURL: "www.skillnet.com/user/user1",
 		ProfilePic: "user1PicURL",
 	}
-	return testUser
+	return &testUser
+}
+
+func (userCreds *UserCredentials) ConvertToUser() *User {
+	newUser := User{
+		ID:       uuid.New(),
+		Username: userCreds.Username,
+		Password: userCreds.Password,
+	}
+	return &newUser
 }

@@ -3,43 +3,47 @@ package main
 import (
 	"net/http"
 
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanozx/skillnet/controllers"
 	"github.com/ryanozx/skillnet/middleware"
 )
 
-func registerRoutes(router *gin.Engine, store redis.Store) {
-	router.Use(cors.Default())
-	router.Use(sessions.Sessions("mysession", store))
+func (server *serverConfig) setupRoutes() {
+	// TODO: Research implications of allowing cross-domain requests
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost:3000"}
+	server.router.Use(cors.New(corsConfig))
+	server.router.Use(sessions.Sessions("mysession", server.store))
 
-	public := router.Group("/")
-	registerPublicRoutes(public)
+	apiEnv := &controllers.APIEnv{
+		DB: server.db,
+	}
+	public := server.router.Group("/")
+	registerPublicRoutes(public, apiEnv)
 
-	auth := router.Group("/auth")
+	auth := server.router.Group("/auth")
 	auth.Use(middleware.AuthRequired)
-	registerPrivateRoutes(auth)
+	registerPrivateRoutes(auth, apiEnv)
 }
 
-func registerPublicRoutes(routerGroup *gin.RouterGroup) {
-	routerGroup.POST("/login", controllers.LoginPostHandler())
-	routerGroup.GET("/login", controllers.LoginGetHandler())
-	routerGroup.GET("/posts", controllers.GetPosts)
-	routerGroup.GET("/posts/:id", controllers.GetPostByID)
+func registerPublicRoutes(routerGroup *gin.RouterGroup, api *controllers.APIEnv) {
+	routerGroup.POST("/login", controllers.PostLogin)
+	routerGroup.GET("/login", controllers.GetLogin)
+	routerGroup.GET("/posts", api.GetPosts)
+	routerGroup.GET("/posts/:id", api.GetPostByID)
 }
 
-func registerPrivateRoutes(routerGroup *gin.RouterGroup) {
-	routerGroup.POST("/posts", controllers.PostPost)
-	routerGroup.PATCH("/posts/:id", controllers.UpdatePost)
-	routerGroup.DELETE("/posts/:id", controllers.DeletePost)
+func registerPrivateRoutes(routerGroup *gin.RouterGroup, api *controllers.APIEnv) {
+	routerGroup.POST("/posts", api.CreatePost)
+	routerGroup.PATCH("/posts/:id", api.UpdatePost)
+	routerGroup.DELETE("/posts/:id", api.DeletePost)
 	routerGroup.GET("/test", func(context *gin.Context) {
 		context.IndentedJSON(http.StatusOK, gin.H{
 			"message": "authorised",
 		})
 	})
 
-	routerGroup.GET("/logout", controllers.LogoutGetHandler())
+	routerGroup.GET("/logout", controllers.GetLogout)
 }
