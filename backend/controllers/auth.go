@@ -30,7 +30,6 @@ func LoginPostHandler() gin.HandlerFunc {
 		session := sessions.Default(context)
 		sessionID := session.Get("session_id")
 
-
 		if sessionID != nil {
 			context.IndentedJSON(http.StatusBadRequest, gin.H{
 				"message": "Please logout first",
@@ -52,7 +51,6 @@ func LoginPostHandler() gin.HandlerFunc {
 		}
 
 		session.Set("session_id", uuid.NewString())
-
 		session.Save()
 		if sessionErr := session.Save(); sessionErr != nil {
 			context.IndentedJSON(http.StatusInternalServerError, gin.H{
