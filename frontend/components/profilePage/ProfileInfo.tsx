@@ -12,7 +12,7 @@ export default function ProfileInfo({username} : any) {
     const [user, setUser] = useState(null);
     
     useEffect(() => {
-        const url = ''
+        const url = '/fake-url';
         console.log('API call to get user information given username');
         const session_id = sessionStorage.getItem('session_id');
         const fetchData = axios.post(url, {

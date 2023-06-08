@@ -7,7 +7,7 @@ import {
   Text,
   Heading,
 } from '@chakra-ui/react';
-import EditPicBtn from './EditPicBtn';
+import CropperComponent from './CropperComponent';
 import EditInfoBtn from './EditInfoBtn';
 
 export default function BasicInfo(user: any) {
@@ -23,12 +23,12 @@ export default function BasicInfo(user: any) {
             <Flex justifyContent={"space-between"} alignItems="flex-start">
                 <HStack spacing={"10"}>
                 {/* <Avatar size="2xl" src={profilePic} /> */}
-                <EditPicBtn currentProfilePic={profilePic}/>
-                    <VStack align="start">
-                        <Heading size="md">{name}</Heading>
-                        <Text>{username}</Text>
-                        <Text>{description}</Text>
-                    </VStack>
+                <CropperComponent profilePic={profilePic}/>
+                <VStack align="start">
+                    <Heading size="md">{name}</Heading>
+                    <Text>{username}</Text>
+                    <Text>{description}</Text>
+                </VStack>
                 </HStack>
                 <Flex alignSelf="flex-start">
                     <EditInfoBtn/>
