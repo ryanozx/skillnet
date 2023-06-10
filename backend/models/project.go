@@ -1,23 +1,23 @@
 package models
 
-import "github.com/google/uuid"
+import "gorm.io/gorm"
 
 type ProjectsArray struct {
-	Projects    []ProjectMinimal `json:"projects"`
-	NextPageURL string           `json:"nextPageURL"`
+	Projects    []ProjectMinimal `gorm:"-:all"`
+	NextPageURL string           `gorm:"-:all"`
 }
 
 type ProjectMinimal struct {
-	Name          string `json:"name"`
-	URL           string `json:"url"`
-	ProjectImgURI string `json:"picURI"`
+	Name          string
+	URL           string
+	ProjectImgURI string
 }
 
 type Project struct {
-	ID          uuid.UUID     `json:"id" gorm:"primary_key"`
-	Name        string        `json:"name"`
-	Owner       UserMinimal   `json:"owner"`
-	Members     []UserMinimal `json:"members"`
-	ProjectInfo string        `json:"projectInfo"`
-	Posts       PostArray     `json:"posts"`
+	gorm.Model
+	Name        string
+	Owner       UserMinimal
+	Members     []UserMinimal
+	ProjectInfo string
+	Posts       PostViewArray `gorm:"-:all"`
 }
