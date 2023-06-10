@@ -1,41 +1,29 @@
 package models
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type PostArray struct {
-	Posts       []Post
+// PostViewArray is a struct for supporting post feed pagination
+type PostViewArray struct {
+	Posts       []PostView
 	NextPageURL string
 }
 
-type PostSchema struct {
-	gorm.Model
-	UserID    uuid.UUID
-	ProjectID uuid.UUID
-	Content   string
-}
-
-type CreatePostInput struct {
-	Content string
-}
-
-type UpdatePostInput struct {
-	Content string
-}
-
+// Post is the database representation of a post object
 type Post struct {
-	ID        uint
-	UserID    uuid.UUID
-	User      UserMinimal
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	ProjectID uuid.UUID
-	Content   string
-	CommentsArray
+	gorm.Model
+	UserID  uuid.UUID `json:"-" gorm:"<-:create; not null"`
+	User    User      `json:"-"`
+	Content string    `gorm:"not null"`
+}
+
+// PostView represents the information that the client receives
+type PostView struct {
+	Post          Post
+	UserMinimal   `json:"User"`
+	CommentsArray `json:"Comments"`
 }
 
 // MultimediaContent will be used to represent multimedia resources
@@ -45,23 +33,11 @@ type MultimediaContent struct {
 	URI         string
 }
 
-func ConvertInputToPostSchema(input CreatePostInput) PostSchema {
-	newDBPostEntry := PostSchema{
-		UserID:    uuid.New(),
-		ProjectID: uuid.New(),
-		Content:   input.Content,
+// Creates a PostView object
+func (post *Post) PostView() *PostView {
+	postView := PostView{
+		Post:        *post,
+		UserMinimal: *post.User.UserMinimal(),
 	}
-	return newDBPostEntry
-}
-
-func ConvertPostSchemaToPost(schema PostSchema) Post {
-	postOutput := Post{
-		ID:        schema.ID,
-		User:      generateTestUser(schema.UserID),
-		CreatedAt: schema.CreatedAt,
-		UpdatedAt: schema.UpdatedAt,
-		ProjectID: schema.ProjectID,
-		Content:   schema.Content,
-	}
-	return postOutput
+	return &postView
 }
