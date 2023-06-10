@@ -1,11 +1,11 @@
 package models
 
-import "github.com/google/uuid"
+import "gorm.io/gorm"
 
 type Community struct {
-	ID    uuid.UUID   `json:"id" gorm:"primary_key"`
-	Name  string      `json:"name"`
-	Owner UserMinimal `json:"owner"`
-	About string      `json:"about"`
-	// Projects ProjectsArray `json:"projects"`
+	gorm.Model
+	Name     string
+	Owner    UserMinimal
+	About    string
+	Projects ProjectsArray `gorm:"-:all"`
 }

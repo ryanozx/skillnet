@@ -1,65 +1,62 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
-const sessionKey = "session_id"
-const routeIfSuccessful = "/auth/test"
-
 /*
-If user already has a valid sessionID, the user is redirected
-to "/posts", otherwise proceed on to login page
+If user already has a valid sessionID, the user is redirected, otherwise proceed on to login page
 */
-func GetLogin(context *gin.Context) {
+func (a *APIEnv) GetLogin(context *gin.Context) {
 	session := sessions.Default(context)
-	sessionID := session.Get(sessionKey)
-	if helpers.IsValidSession(sessionID) {
-		context.Redirect(http.StatusPermanentRedirect, routeIfSuccessful)
+	if helpers.IsValidSession(session) {
+		context.Redirect(http.StatusPermanentRedirect, helpers.RouteIfSuccessful)
 		return
 	}
 	context.JSON(http.StatusOK, gin.H{})
 }
 
-func PostLogin(context *gin.Context) {
+func (a *APIEnv) PostLogin(context *gin.Context) {
 	session := sessions.Default(context)
-	sessionID := session.Get(sessionKey)
 
-	if helpers.IsValidSession(sessionID) {
+	if helpers.IsValidSession(session) {
 		context.JSON(http.StatusBadRequest, gin.H{
 			"message": "Please logout first",
 		})
 		return
 	}
 
-	userCredentials := extractUserCredentials(context)
-
-	if helpers.EmptyUserPass(userCredentials) {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Missing username or password"})
+	userCredentials, bindSucceed := helpers.BindUserCredentials(context)
+	if !bindSucceed {
 		return
 	}
-	if !helpers.CheckUserPass(userCredentials) {
+	dbUser, err := database.GetUserByUsername(a.DB, userCredentials.Username)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message": "Incorrect username or password"})
+		return
+	}
+	if err := helpers.CheckPassword(dbUser.Password, userCredentials.Password); err != nil {
 		context.JSON(http.StatusUnauthorized, gin.H{"message": "Incorrect username or password"})
 		return
 	}
 
-	saveSession(context)
+	helpers.SaveSession(context, dbUser)
 }
 
-func GetLogout(context *gin.Context) {
+func (a *APIEnv) GetLogout(context *gin.Context) {
 	session := sessions.Default(context)
-	sessionID := session.Get(sessionKey)
-	if !helpers.IsValidSession(sessionID) {
+	if !helpers.IsValidSession(session) {
 		log.Println("Invalid session token")
 		return
 	}
@@ -76,15 +73,12 @@ func GetLogout(context *gin.Context) {
 	})
 }
 
-func CreateUser(context *gin.Context) {
-	user := extractUserCredentials(context)
-
-	if helpers.EmptyUserPass(user) {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Missing username or password."})
+func (a *APIEnv) CreateUser(context *gin.Context) {
+	userCredentials, bindSucceed := helpers.BindUserCredentials(context)
+	if !bindSucceed {
 		return
 	}
-
-	hashedPassword, passwordErr := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashedPassword, passwordErr := bcrypt.GenerateFromPassword([]byte(userCredentials.Password), bcrypt.DefaultCost)
 	if passwordErr != nil {
 		fmt.Println(passwordErr)
 		context.JSON(http.StatusInternalServerError, gin.H{
@@ -93,41 +87,56 @@ func CreateUser(context *gin.Context) {
 		return
 	}
 
-	user.Password = string(hashedPassword)
-	userDBEntry := user.ConvertToUser()
+	userCredentials.Password = string(hashedPassword)
 
-	if err := database.Database.Where("username = ?", userDBEntry.Username).First(&userDBEntry); err != nil {
+	user, err := database.CreateUser(a.DB, userCredentials)
+	if err != nil {
 		context.JSON(http.StatusConflict, gin.H{
-			"message": "Username already exists",
+			"message": err.Error(),
 		})
 		return
 	}
-
-	database.Database.Create(userDBEntry)
-	saveSession(context)
+	helpers.SaveSession(context, user)
 }
 
-func extractUserCredentials(context *gin.Context) *models.UserCredentials {
-	const usernameKey = "username"
-	const passwordKey = "password"
-	username := context.PostForm(usernameKey)
-	password := context.PostForm(passwordKey)
-	return &models.UserCredentials{
-		Username: username,
-		Password: password,
+func (a *APIEnv) UpdateUser(context *gin.Context) {
+	userID := context.Param("userID")
+	var inputUpdate models.User
+	if bindErr := bindInput(context, &inputUpdate); bindErr != nil {
+		return
 	}
+	user, err := database.UpdateUser(a.DB, &inputUpdate, userID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	} else if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	context.JSON(http.StatusOK, user)
 }
 
-func saveSession(context *gin.Context) {
-	session := sessions.Default(context)
-	newSessionID := uuid.NewString()
-	session.Set(sessionKey, newSessionID)
-	// TODO: Register new session ID on redis
-	if sessionSaveErr := session.Save(); sessionSaveErr != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to clear session",
+func (a *APIEnv) GetProfile(context *gin.Context) {
+	username := context.Param("username")
+	user, err := database.GetUserByUsername(a.DB, username)
+	if err != nil {
+		context.JSON(http.StatusNotFound, gin.H{
+			"error": "User not found",
 		})
 		return
 	}
-	context.Redirect(http.StatusMovedPermanently, routeIfSuccessful)
+	profile := user.Profile
+	context.JSON(http.StatusOK, profile)
+}
+
+func (a *APIEnv) GetProfileSettings(context *gin.Context) {
+	userID := context.Param("userID")
+	user, err := database.GetUserByID(a.DB, userID)
+	if err != nil {
+		context.JSON(http.StatusNotFound, gin.H{
+			"error": "Profile not found",
+		})
+		return
+	}
+	context.JSON(http.StatusOK, user)
 }

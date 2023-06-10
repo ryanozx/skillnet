@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -9,19 +10,20 @@ import (
 	"github.com/ryanozx/skillnet/helpers"
 )
 
-const loginRoute = "/login"
-
 /*
 If user does not have a valid session, the user will be automatically
 redirected to the login gateway
 */
 func AuthRequired(context *gin.Context) {
 	session := sessions.Default(context)
-	sessionID := session.Get("session_id")
-	if !helpers.IsValidSession(sessionID) {
-		log.Println("User does not have a valid session")
-		context.Redirect(http.StatusPermanentRedirect, loginRoute)
+	if !helpers.IsValidSession(session) {
+		log.Println("UserID in session does not match value in Redis")
+		context.JSON(http.StatusBadRequest, gin.H{
+			"error": "Unable to retrieve session",
+		})
 		context.Abort()
 	}
+	userID := session.Get("userID")
+	context.AddParam("userID", fmt.Sprintf("%v", userID))
 	context.Next()
 }

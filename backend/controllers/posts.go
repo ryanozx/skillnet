@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
@@ -16,9 +17,6 @@ type APIEnv struct {
 	DB *gorm.DB
 }
 
-/*
-Gets a list of all posts and returns it
-*/
 func (a *APIEnv) GetPosts(context *gin.Context) {
 	posts, err := database.GetPosts(a.DB)
 	if err != nil {
@@ -29,11 +27,12 @@ func (a *APIEnv) GetPosts(context *gin.Context) {
 }
 
 func (a *APIEnv) CreatePost(context *gin.Context) {
-	var newPostInput models.PostInput
-	if err := bindInput(context, &newPostInput); err != nil {
+	var newPost models.Post
+	if err := bindInput(context, &newPost); err != nil {
 		return
 	}
-	post, err := database.CreatePost(a.DB, &newPostInput)
+	newPost.UserID = uuid.MustParse(context.Params.ByName("userID"))
+	post, err := database.CreatePost(a.DB, &newPost)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -50,39 +49,48 @@ func bindInput(context *gin.Context, obj any) error {
 }
 
 func (a *APIEnv) GetPostByID(context *gin.Context) {
-	postID := context.Params.ByName("id")
-	postSchema, err := database.GetPostSchemaByID(a.DB, postID)
+	postID := context.Param("id")
+	post, err := database.GetPostByID(a.DB, postID)
 	if err != nil {
 		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-	post := postSchema.ConvertToPost()
 	context.JSON(http.StatusOK, post)
 }
 
 func (a *APIEnv) UpdatePost(context *gin.Context) {
 	postID := context.Param("id")
-	var inputUpdate models.PostInput
+	var inputUpdate models.Post
 	if bindErr := bindInput(context, &inputUpdate); bindErr != nil {
 		return
 	}
-	postSchema, err := database.UpdatePost(a.DB, &inputUpdate, postID)
+	post, err := database.UpdatePost(a.DB, &inputUpdate, postID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		context.JSON(http.StatusNotFound, gin.H{"error": postNotFoundMessage})
+		return
+	} else if errors.Is(err, database.ErrNotOwner) {
+		context.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
 		return
 	} else if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	post := postSchema.ConvertToPost()
 	context.JSON(http.StatusOK, post)
 }
 
 func (a *APIEnv) DeletePost(context *gin.Context) {
 	postID := context.Param("id")
-	err := database.DeletePost(a.DB, postID)
+	userID := context.Param("userID")
+	err := database.DeletePost(a.DB, postID, userID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		context.JSON(http.StatusNotFound, gin.H{"error": postNotFoundMessage})
+		return
+	} else if errors.Is(err, database.ErrNotOwner) {
+		context.JSON(http.StatusUnauthorized, gin.H{
+			"error": err.Error(),
+		})
 		return
 	} else if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

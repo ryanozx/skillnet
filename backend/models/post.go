@@ -5,29 +5,25 @@ import (
 	"gorm.io/gorm"
 )
 
-var testUserID = uuid.Must(uuid.Parse("6ba7b810-9dad-11d1-80b4-00c04fd430c8"))
-var testProjectID = uuid.Must(uuid.Parse("6ba7b811-9dad-11d1-80b4-00c04fd430c8"))
-
-type PostArray struct {
-	Posts       []Post
+// PostViewArray is a struct for supporting post feed pagination
+type PostViewArray struct {
+	Posts       []PostView
 	NextPageURL string
 }
 
-type PostSchema struct {
-	gorm.Model
-	UserID    uuid.UUID `json:"-"`
-	ProjectID uuid.UUID
-	Content   string
-}
-
-type PostInput struct {
-	Content string
-}
-
+// Post is the database representation of a post object
 type Post struct {
-	PostSchema
-	User     UserMinimal   `gorm:"embedded"`
-	Comments CommentsArray `gorm:"embedded"`
+	gorm.Model
+	UserID  uuid.UUID `json:"-" gorm:"<-:create; not null"`
+	User    User      `json:"-"`
+	Content string    `gorm:"not null"`
+}
+
+// PostView represents the information that the client receives
+type PostView struct {
+	Post          Post
+	UserMinimal   `json:"User"`
+	CommentsArray `json:"Comments"`
 }
 
 // MultimediaContent will be used to represent multimedia resources
@@ -37,33 +33,11 @@ type MultimediaContent struct {
 	URI         string
 }
 
-func (input *PostInput) ConvertToPostSchema() *PostSchema {
-	newDBPostEntry := PostSchema{
-		UserID:    testUserID,
-		ProjectID: testProjectID,
-		Content:   input.Content,
+// Creates a PostView object
+func (post *Post) PostView() *PostView {
+	postView := PostView{
+		Post:        *post,
+		UserMinimal: *post.User.UserMinimal(),
 	}
-	return &newDBPostEntry
-}
-
-func (schema *PostSchema) ConvertToPost() *Post {
-	postOutput := Post{
-		PostSchema: *schema,
-		User:       *generateTestUser(schema.UserID),
-	}
-	// unsets the userID field after it has been used to generate the
-	// UserMinimal struct, so that there is only one field containing
-	// the userID. This is done to pass the test cases, as the expected
-	// output is not generated via JSON and will thus ignore the
-	// json ignore tags, which sets the userID field to the default value of nil
-	postOutput.PostSchema.UserID = uuid.Nil
-	return &postOutput
-}
-
-func ConvertToPosts(posts []PostSchema) []Post {
-	output := make([]Post, len(posts))
-	for i, post := range posts {
-		output[i] = *post.ConvertToPost()
-	}
-	return output
+	return &postView
 }

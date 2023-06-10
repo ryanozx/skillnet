@@ -1,57 +1,35 @@
 package database
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
-var Database *gorm.DB
-
 func ConnectProdDatabase() *gorm.DB {
-	host := os.Getenv("DB_HOST")
-	user := os.Getenv("DB_USER")
-	password := os.Getenv("DB_PASSWORD")
-	name := os.Getenv("DB_NAME")
-	port := os.Getenv("DB_PORT")
-	dataSourceName := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%v",
-		host,
-		user,
-		password,
-		name,
-		port,
-	)
-	db := connectDatabase(dataSourceName)
+	env := helpers.RetrieveProdDBEnv()
+	db := connectDatabase(env)
 	return db
 }
 
 func ConnectTestDatabase() *gorm.DB {
-	host := os.Getenv("DB_TEST_HOST")
-	port := os.Getenv("DB_TEST_PORT")
-	name := os.Getenv("DB_TEST_NAME")
-	user := os.Getenv("DB_TEST_USER")
-	password := os.Getenv("DB_TEST_PASSWORD")
-	dataSourceName := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%v sslmode=disable",
-		host,
-		user,
-		password,
-		name,
-		port,
-	)
-	db := connectDatabase(dataSourceName)
+	env := helpers.RetrieveTestDBEnv()
+	db := connectDatabase(env)
 	return db
 }
 
-func connectDatabase(dataSourceName string) *gorm.DB {
-	db, dbErr := establishConnection(dataSourceName)
+type DataSourceNamer interface {
+	DataSourceName() string
+}
+
+func connectDatabase(env DataSourceNamer) *gorm.DB {
+	db, dbErr := establishConnection(env)
 	if dbErr != nil {
 		log.Fatal("Failed to connect to database. \n", dbErr)
 		os.Exit(2)
@@ -60,11 +38,11 @@ func connectDatabase(dataSourceName string) *gorm.DB {
 	log.Println("Connected")
 	db.Logger = logger.Default.LogMode(logger.Info)
 	autoMigrate(db)
-	Database = db
 	return db
 }
 
-func establishConnection(dataSourceName string) (*gorm.DB, error) {
+func establishConnection(env DataSourceNamer) (*gorm.DB, error) {
+	dataSourceName := env.DataSourceName()
 	gormOptions := initialiseGormConfigurations("")
 	return gorm.Open(postgres.Open(dataSourceName), gormOptions)
 }
@@ -72,8 +50,8 @@ func establishConnection(dataSourceName string) (*gorm.DB, error) {
 // update this function with any new schemas
 func autoMigrate(database *gorm.DB) {
 	log.Println("Running migrations")
-	database.AutoMigrate(&models.PostSchema{})
-	database.AutoMigrate(&models.UserWithSettings{})
+	database.AutoMigrate(&models.Post{})
+	database.AutoMigrate(&models.User{})
 	//database.AutoMigrate(&models.CommentSchema{})
 }
 
