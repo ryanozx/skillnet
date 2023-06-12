@@ -9,82 +9,85 @@ import (
 
 var ErrNotOwner = errors.New("unauthorised action")
 
-func GetPosts(db *gorm.DB) ([]models.PostView, error) {
+type PostDBHandler interface {
+	CreatePost(*models.Post) (*models.PostView, error)
+	DeletePost(string, string) error
+	GetPosts() ([]models.PostView, error)
+	GetPostByID(string) (*models.PostView, error)
+	UpdatePost(*models.Post, string) (*models.PostView, error)
+}
+
+// PostDB implements PostDBHandler
+type PostDB struct {
+	DB *gorm.DB
+}
+
+func (db *PostDB) GetPosts() ([]models.PostView, error) {
 	var posts []models.Post
 	var postViews []models.PostView
 
 	// Retrieve all posts from database
-	query := db.Preload("User").Find(&posts)
+	query := db.DB.Joins("User").Find(&posts)
 	if err := query.Find(&posts).Error; err != nil {
-		return nil, err
+		return postViews, err
 	}
 
 	// Fill in user details for each post using userID of post creator
 	for _, post := range posts {
-		post := bindUserToPost(&post)
+		post := post.PostView()
 		postViews = append(postViews, *post)
 	}
 	return postViews, nil
 }
 
-func CreatePost(db *gorm.DB, post *models.Post) (*models.PostView, error) {
-	result := db.Create(post)
-	if err := result.Error; err != nil {
-		return nil, err
-	}
-	newPost := bindUserToPost(post)
-	return newPost, nil
+func (db *PostDB) CreatePost(post *models.Post) (*models.PostView, error) {
+	result := db.DB.Create(post)
+	newPostView := post.PostView()
+	return newPostView, result.Error
 }
 
-func GetPostByID(db *gorm.DB, id string) (*models.PostView, error) {
+func (db *PostDB) GetPostByID(id string) (*models.PostView, error) {
 	post := models.Post{}
-	err := db.First(&post, id).Error
-	if err != nil {
-		return nil, err
-	}
-	postView := bindUserToPost(&post)
-	return postView, nil
+	err := db.DB.First(&post, id).Error
+	postView := post.PostView()
+	return postView, err
 }
 
-func UpdatePost(db *gorm.DB, post *models.Post, id string) (*models.PostView, error) {
-	originalPostView, err := GetPostByID(db, id)
+func (db *PostDB) UpdatePost(post *models.Post, id string) (*models.PostView, error) {
+	originalPostView, err := db.GetPostByID(id)
 	if err != nil {
-		return nil, err
+		return originalPostView, err
 	}
-	originalPost := originalPostView.Post
+	originalPost := originalPostView.GetPost()
 	userID := originalPost.UserID.String()
 	if err := checkUserIsOwner(originalPostView, userID); err != nil {
-		return nil, err
+		return originalPostView, err
 	}
-	err = db.Model(originalPost).Updates(post).Error
-	if err != nil {
-		return nil, err
-	}
-	postView := bindUserToPost(&originalPost)
-	return postView, nil
+	err = db.DB.Model(originalPost).Updates(post).Error
+	postView := post.PostView()
+	return postView, err
 }
 
-func DeletePost(db *gorm.DB, id string, userID string) error {
-	postView, err := GetPostByID(db, id)
+func (db *PostDB) DeletePost(id string, userID string) error {
+	postView, err := db.GetPostByID(id)
 	if err != nil {
 		return err
 	}
 	if err := checkUserIsOwner(postView, userID); err != nil {
 		return err
 	}
-	post := postView.Post
-	err = db.Delete(&post).Error
+	post := postView.GetPost()
+	err = db.DB.Delete(&post).Error
 	return err
 }
 
-func bindUserToPost(post *models.Post) *models.PostView {
-	postView := post.PostView()
-	return postView
-}
-
-func checkUserIsOwner(postView *models.PostView, userID string) error {
-	if postView.Post.UserID.String() != userID {
+func checkUserIsOwner(postView PostViewer, userID string) error {
+	if postView.GetPost().UserID.String() != userID {
 		return ErrNotOwner
 	}
 	return nil
+}
+
+type PostViewer interface {
+	GetPost() *models.Post
 }

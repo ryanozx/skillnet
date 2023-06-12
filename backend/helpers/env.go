@@ -108,3 +108,13 @@ func (env *DBEnv) DataSourceName() string {
 	)
 	return dataSourceName
 }
+
+func RetrieveClientEnv() *BaseEnv {
+	host := os.Getenv("CLIENT_HOST")
+	port := os.Getenv("CLIENT_PORT")
+	env := BaseEnv{
+		Host: host,
+		Port: port,
+	}
+	return &env
+}

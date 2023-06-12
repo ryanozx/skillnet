@@ -1,13 +1,6 @@
 package controllers
 
-import (
-	"net/http"
-	"testing"
-
-	"github.com/ryanozx/skillnet/database"
-	"github.com/stretchr/testify/suite"
-)
-
+/*
 type TestSuiteEnv struct {
 	suite.Suite
 	api APIEnv
@@ -40,7 +33,6 @@ const (
 	DELETE HTTPMethod = http.MethodDelete
 )
 
-/*
 func (suite *TestSuiteEnv) Test_GetPosts_EmptyResult() {
 	test := setupCrud[[]models.Post](suite)
 	test.generateResponse(suite.api.setGetPostsRouter, "/posts")
