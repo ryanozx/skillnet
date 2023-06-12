@@ -1,142 +1,100 @@
+/*
+Contains controllers for authentication.
+*/
 package controllers
 
 import (
-	"errors"
-	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
-	"github.com/ryanozx/skillnet/models"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
-/*
-If user already has a valid sessionID, the user is redirected, otherwise proceed on to login page
-*/
-func (a *APIEnv) GetLogin(context *gin.Context) {
-	session := sessions.Default(context)
-	if helpers.IsValidSession(session) {
-		context.Redirect(http.StatusPermanentRedirect, helpers.RouteIfSuccessful)
-		return
+const (
+	MissingUserCredentialsErrMsg  = "Missing username or password"
+	IncorrectUserCredentialErrMsg = "Incorrect username or password"
+)
+
+func (a *APIEnv) InitialiseAuthHandler() {
+	a.AuthDBHandler = &database.UserDB{
+		DB: a.DB,
 	}
-	context.JSON(http.StatusOK, gin.H{})
 }
 
-func (a *APIEnv) PostLogin(context *gin.Context) {
-	session := sessions.Default(context)
-
+// If user already has a valid sessionID, the user is redirected, otherwise
+// proceed on to login page (200 status code returned)
+func (a *APIEnv) GetLogin(ctx *gin.Context) {
+	session := sessions.Default(ctx)
 	if helpers.IsValidSession(session) {
-		context.JSON(http.StatusBadRequest, gin.H{
-			"message": "Please logout first",
-		})
+		ctx.Redirect(http.StatusPermanentRedirect, helpers.RouteIfSuccessful)
+		return
+	}
+	helpers.OutputMessage(ctx, "OK")
+}
+
+// Handles user login
+func (a *APIEnv) PostLogin(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+
+	// If user is already logged in (there is an active session), return with status code 400 Bad Request
+	if helpers.IsValidSession(session) {
+		helpers.OutputError(ctx, http.StatusBadRequest, "Already logged in")
 		return
 	}
 
-	userCredentials, bindSucceed := helpers.BindUserCredentials(context)
-	if !bindSucceed {
+	// If request is badly formatted, do not process this request, return with status code 400 Bad Request
+	userCredentials := helpers.ExtractUserCredentials(ctx)
+	if helpers.IsEmptyUserPass(userCredentials) {
+		helpers.OutputError(ctx, http.StatusBadRequest, MissingUserCredentialsErrMsg)
 		return
 	}
-	dbUser, err := database.GetUserByUsername(a.DB, userCredentials.Username)
+
+	// If username in request does not refer to a valid user in the database, return with
+	// status code 401 Unauthorised
+	dbUser, err := a.AuthDBHandler.GetUserByUsername(userCredentials.Username)
 	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Incorrect username or password"})
-		return
-	}
-	if err := helpers.CheckPassword(dbUser.Password, userCredentials.Password); err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message": "Incorrect username or password"})
+		helpers.OutputError(ctx, http.StatusUnauthorized, IncorrectUserCredentialErrMsg)
 		return
 	}
 
-	helpers.SaveSession(context, dbUser)
+	// If hashed password does not match hash in database, return with status code 401
+	// Unauthorised
+	if err := helpers.CheckHashEqualsPassword(dbUser.Password, userCredentials.Password); err != nil {
+		helpers.OutputError(ctx, http.StatusUnauthorized, IncorrectUserCredentialErrMsg)
+		return
+	}
+
+	// Saves session and sets a session cookie on the client's side; if unsuccessful, return
+	// with status code 500 Internal Server Error
+	if err := helpers.SaveSession(ctx, dbUser); err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Login successful
+	helpers.OutputMessage(ctx, "Logged in")
 }
 
-func (a *APIEnv) GetLogout(context *gin.Context) {
-	session := sessions.Default(context)
+// Handles user logout
+func (a *APIEnv) GetLogout(ctx *gin.Context) {
+	session := sessions.Default(ctx)
+
+	// There is no valid session to log out from - return with a status code 500
+	// Bad Request
 	if !helpers.IsValidSession(session) {
-		log.Println("Invalid session token")
+		helpers.OutputError(ctx, http.StatusBadRequest, "No valid session")
 		return
 	}
+
 	session.Clear()
-	if sessionErr := session.Save(); sessionErr != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Failed to clear session",
-		})
+	// If unable to invalidate the session on the server side, return with a status code
+	// 501 Internal Server Error
+	if err := session.Save(); err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, "Failed to clear session")
 		return
 	}
-
-	context.JSON(http.StatusOK, gin.H{
-		"message": "Logged out successfully",
-	})
-}
-
-func (a *APIEnv) CreateUser(context *gin.Context) {
-	userCredentials, bindSucceed := helpers.BindUserCredentials(context)
-	if !bindSucceed {
-		return
-	}
-	hashedPassword, passwordErr := bcrypt.GenerateFromPassword([]byte(userCredentials.Password), bcrypt.DefaultCost)
-	if passwordErr != nil {
-		fmt.Println(passwordErr)
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Password Encryption failed",
-		})
-		return
-	}
-
-	userCredentials.Password = string(hashedPassword)
-
-	user, err := database.CreateUser(a.DB, userCredentials)
-	if err != nil {
-		context.JSON(http.StatusConflict, gin.H{
-			"message": err.Error(),
-		})
-		return
-	}
-	helpers.SaveSession(context, user)
-}
-
-func (a *APIEnv) UpdateUser(context *gin.Context) {
-	userID := context.Param("userID")
-	var inputUpdate models.User
-	if bindErr := bindInput(context, &inputUpdate); bindErr != nil {
-		return
-	}
-	user, err := database.UpdateUser(a.DB, &inputUpdate, userID)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	} else if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	context.JSON(http.StatusOK, user)
-}
-
-func (a *APIEnv) GetProfile(context *gin.Context) {
-	username := context.Param("username")
-	user, err := database.GetUserByUsername(a.DB, username)
-	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{
-			"error": "User not found",
-		})
-		return
-	}
-	profile := user.Profile
-	context.JSON(http.StatusOK, profile)
-}
-
-func (a *APIEnv) GetProfileSettings(context *gin.Context) {
-	userID := context.Param("userID")
-	user, err := database.GetUserByID(a.DB, userID)
-	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{
-			"error": "Profile not found",
-		})
-		return
-	}
-	context.JSON(http.StatusOK, user)
+	// Session invalidated, successful logout
+	helpers.OutputMessage(ctx, "Logged out successfully")
 }

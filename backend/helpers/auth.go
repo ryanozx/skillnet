@@ -1,7 +1,7 @@
 package helpers
 
 import (
-	"net/http"
+	"log"
 	"strings"
 
 	"github.com/gin-contrib/sessions"
@@ -11,51 +11,48 @@ import (
 )
 
 const (
-	sessionKey        = "userID"
-	RouteIfSuccessful = "/auth/test"
+	IdKey             = "userID"
+	RouteIfSuccessful = "/posts"
 )
 
 func IsEmptyUserPass(user *models.UserCredentials) bool {
 	return strings.Trim(user.Username, " ") == "" || strings.Trim(user.Password, " ") == ""
 }
 
-func IsValidSession(session sessions.Session) bool {
-	userID := session.Get(sessionKey)
+func IsValidSession(session SessionGetter) bool {
+	userID := session.Get(IdKey)
 	return userID != nil
 }
 
-func BindUserCredentials(context *gin.Context) (userCreds *models.UserCredentials, successfulBind bool) {
-	userCredentials := extractUserCredentials(context)
-	if IsEmptyUserPass(userCredentials) {
-		context.JSON(http.StatusBadRequest, gin.H{"message": "Missing username or password"})
-		return userCredentials, false
-	}
-	return userCredentials, true
+type SessionGetter interface {
+	Get(interface{}) interface{}
 }
 
-func extractUserCredentials(context *gin.Context) *models.UserCredentials {
+func ExtractUserCredentials(ctx *gin.Context) *models.UserCredentials {
 	const usernameKey = "username"
 	const passwordKey = "password"
-	username := context.PostForm(usernameKey)
-	password := context.PostForm(passwordKey)
+	username := ctx.PostForm(usernameKey)
+	password := ctx.PostForm(passwordKey)
 	return &models.UserCredentials{
 		Username: username,
 		Password: password,
 	}
 }
 
-func SaveSession(context *gin.Context, user *models.User) {
-	session := sessions.Default(context)
-	session.Set("userID", user.ID)
-	if sessionSaveErr := session.Save(); sessionSaveErr != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{
-			"error": sessionSaveErr.Error(),
-		})
-		return
+func SaveSession(ctx *gin.Context, user *models.User) error {
+	session := sessions.Default(ctx)
+	session.Set(IdKey, user.ID)
+	log.Printf("Saving userID: %v", user.ID)
+	if err := session.Save(); err != nil {
+		return err
 	}
-	context.Redirect(http.StatusMovedPermanently, RouteIfSuccessful)
+	return nil
 }
 
-func CheckPassword(hash string, password string) error {
+func CheckHashEqualsPassword(hash string, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+}
+
+func GenerateHashFromPassword(password string) (hash []byte, err error) {
+	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
