@@ -16,8 +16,8 @@ export default function ProfileInfo({username} : any) {
         console.log('API call to get user information given username');
         const session_id = sessionStorage.getItem('session_id');
         const fetchData = axios.post(url, {
-          username: username,
-          session_id: session_id,
+            username: username,
+            session_id: session_id,
         });
         fetchData
             .then(response => {
@@ -27,10 +27,6 @@ export default function ProfileInfo({username} : any) {
                 console.error(error);
             });
       }, [username]);
-
-    if (!user) {
-        return <div>Invalid User Id</div>;
-    }
 
     return (
         <Box mt={10} mx={5} p={4} >

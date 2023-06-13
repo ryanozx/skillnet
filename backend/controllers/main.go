@@ -9,6 +9,7 @@ The response body will contain one of three keys:
 package controllers
 
 import (
+	"cloud.google.com/go/storage"
 	"github.com/ryanozx/skillnet/database"
 	"gorm.io/gorm"
 )
@@ -19,12 +20,14 @@ type APIEnv struct {
 	PostDBHandler database.PostDBHandler
 	UserDBHandler database.UserDBHandler
 	AuthDBHandler database.AuthDBHandler
+	GoogleCloud   *storage.Client
 }
 
 // Creates an APIEnv object from a Database object
-func CreateAPIEnv(db *gorm.DB) *APIEnv {
+func CreateAPIEnv(db *gorm.DB, gc *storage.Client) *APIEnv {
 	apiEnv := &APIEnv{
-		DB: db,
+		DB:          db,
+		GoogleCloud: gc,
 	}
 	return apiEnv
 }

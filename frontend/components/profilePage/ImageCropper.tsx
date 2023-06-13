@@ -20,28 +20,22 @@ interface ImageCropperProps {
 const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, onClose, onCropped, imageSrc }) => {
     const cropperRef = useRef<CropperElement>(null);
 
-    // const saveCroppedImage = () => {
-    //     const imageElement = cropperRef?.current;
-    //     if (imageElement?.cropper) {
-    //         onCropped(imageElement.cropper.getCroppedCanvas().toDataURL());
-    //     }
-    //     onClose();
-    // };
-
     const saveCroppedImage = async () => {
         const imageElement = cropperRef?.current;
+        const url = "http://localhost:8080/testupload";
         if (imageElement?.cropper) {
             const croppedCanvas = imageElement.cropper.getCroppedCanvas();
             croppedCanvas.toBlob(async (blob) => {
                 if (blob) {
                     const formData = new FormData();
                     formData.append('file', blob, 'image.jpg');
-                    axios.post('/your-upload-endpoint', formData, {
+                    axios.post(url, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
                         },
                     })
                     .then((response) => {
+                        console.log(response)
                         if (response.data.url) {
                             onCropped(response.data.url);
                         }

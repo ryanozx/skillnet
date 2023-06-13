@@ -5,6 +5,8 @@ file to add additional routes where necessary.
 package main
 
 import (
+	"log"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -15,17 +17,19 @@ import (
 
 // Sets up the routes on the server router
 func (s *serverConfig) setupRoutes() {
+	log.Println("Setting up routes...")
 	s.configureCors()
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
-	apiEnv := controllers.CreateAPIEnv(s.db)
+	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud)
 
 	// Register routes - routes are grouped by features for greater
 	// modularity
 	setupPostAPI(routerGroup, apiEnv)
 	setupUserAPI(routerGroup, apiEnv)
 	setupAuthAPI(routerGroup, apiEnv)
+	setupPhotoAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -37,6 +41,7 @@ func (s *serverConfig) configureCors() {
 	// Set up configuration and apply it to the router
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{localClientAddress}
+	corsConfig.AllowCredentials = true
 	s.router.Use(cors.New(corsConfig))
 }
 
@@ -156,4 +161,17 @@ func registerAuthRoutes(rg RouterGrouper, api AuthAPIer) {
 	rg.Public().POST("/login", api.PostLogin)
 
 	rg.Private().POST("/logout", api.GetLogout)
+}
+
+func setupPhotoAPI(rg RouterGrouper, api PhotoAPIer) {
+	// api.InitialisePhotoHandler()
+	registerPhotoRoutes(rg, api)
+}
+
+type PhotoAPIer interface {
+	PostUserPicture(*gin.Context)
+}
+
+func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
+	rg.Public().POST("/testupload", api.PostUserPicture)
 }
