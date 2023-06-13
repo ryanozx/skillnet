@@ -41,3 +41,7 @@ func (post *Post) PostView() *PostView {
 	}
 	return &postView
 }
+
+func (pv *PostView) GetPost() *Post {
+	return &pv.Post
+}

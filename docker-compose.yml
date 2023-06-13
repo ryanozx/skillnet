@@ -5,9 +5,6 @@ services:
     build: ./backend
     env_file:
       - .env
-    environment:
-      - REDISPORT=6379
-      - REDISHOST=redis
     ports:
       - "8080:8080"
     volumes:

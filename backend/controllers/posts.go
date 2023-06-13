@@ -1,100 +1,175 @@
+/*
+Contains controllers for Post API.
+*/
 package controllers
 
 import (
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ryanozx/skillnet/database"
+	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
 )
 
-const postNotFoundMessage = "Post not found"
+const (
+	postNotFoundMessage = "Post not found"
+)
 
-type APIEnv struct {
-	DB *gorm.DB
-}
-
-func (a *APIEnv) GetPosts(context *gin.Context) {
-	posts, err := database.GetPosts(a.DB)
-	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
+func (a *APIEnv) InitialisePostHandler() {
+	a.PostDBHandler = &database.PostDB{
+		DB: a.DB,
 	}
-	context.JSON(http.StatusOK, posts)
 }
 
-func (a *APIEnv) CreatePost(context *gin.Context) {
+func (a *APIEnv) CreatePost(ctx *gin.Context) {
 	var newPost models.Post
-	if err := bindInput(context, &newPost); err != nil {
+
+	// If unable to bind JSON in request to the Post object, return status
+	// code 400 Bad Request
+	if err := helpers.BindInput(ctx, &newPost); err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
 		return
 	}
-	newPost.UserID = uuid.MustParse(context.Params.ByName("userID"))
-	post, err := database.CreatePost(a.DB, &newPost)
+
+	// Add userID into the corresponding field in the newPost object so that
+	// the client does not have to pass in any userID, and overwrites any userID
+	// that a malicious client might have passed in.
+	userID := helpers.GetUserIdFromContext(ctx)
+	newPost.UserID = uuid.MustParse(userID)
+
+	post, err := a.PostDBHandler.CreatePost(&newPost)
+
+	// If post cannot be created, return status code 500 Internal Service Error
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err.Error())
+		return
+	}
+	helpers.OutputData(ctx, post)
+}
+
+func (a *APIEnv) DeletePost(ctx *gin.Context) {
+	postID := helpers.GetPostIdFromContext(ctx)
+	userID := helpers.GetUserIdFromContext(ctx)
+
+	err := a.PostDBHandler.DeletePost(postID, userID)
+	// If post cannot be found in the database return status code 404 Status Not Found
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		return
+	}
+	// If user is not the owner of the post, return status code 401 Unauthorized
+	if errors.Is(err, database.ErrNotOwner) {
+		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner.Error())
+		return
+	}
+	// If post cannot be deleted for any other reason, return status code 403 Bad Request
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	helpers.OutputMessage(ctx, "Post successfully deleted")
+}
+
+func (a *APIEnv) GetPosts(ctx *gin.Context) {
+	posts, err := a.PostDBHandler.GetPosts()
+	// If unable to retrieve posts, return status code 404 Not Found
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		return
+	}
+	helpers.OutputData(ctx, posts)
+}
+
+func (a *APIEnv) GetPostByID(ctx *gin.Context) {
+	postID := helpers.GetPostIdFromContext(ctx)
+	post, err := a.PostDBHandler.GetPostByID(postID)
+	// If unable to retrieve post, return status code 404 Not Found
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		return
+	}
+	helpers.OutputData(ctx, post)
+}
+
+func (a *APIEnv) PostUserPicture(context *gin.Context) {
+	// userID := context.Param("userID")
+	file, err := context.FormFile("file")
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	openedFile, err := file.Open()
+	if err != nil {
+		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer openedFile.Close()
+
+	bucket := a.GoogleCloud.Bucket("skillnet-profile-pictures")
+	ctx := context.Request.Context()
+	fileName := "test" + "-pfp.jpeg"
+	writer := bucket.Object(fileName).NewWriter(ctx)
+
+	_, err = io.Copy(writer, openedFile)
 	if err != nil {
 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	context.JSON(http.StatusOK, post)
-}
 
-func bindInput(context *gin.Context, obj any) error {
-	if bindErr := context.ShouldBindJSON(obj); bindErr != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": bindErr.Error()})
-		return bindErr
-	}
-	return nil
-}
-
-func (a *APIEnv) GetPostByID(context *gin.Context) {
-	postID := context.Param("id")
-	post, err := database.GetPostByID(a.DB, postID)
-	if err != nil {
-		context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	if err := writer.Close(); err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	context.JSON(http.StatusOK, post)
+
+	attrs := writer.Attrs()
+	url := attrs.MediaLink
+
+	// var inputUpdate models.User
+	// inputUpdate.ProfilePic = url
+	// user, err := database.UpdateUser(a.DB, &inputUpdate, userID)
+	// if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 	context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+	// 	return
+	// } else if err != nil {
+	// 	context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	context.JSON(http.StatusOK, gin.H{"url": url})
 }
 
-func (a *APIEnv) UpdatePost(context *gin.Context) {
-	postID := context.Param("id")
+func (a *APIEnv) UpdatePost(ctx *gin.Context) {
+	postID := helpers.GetPostIdFromContext(ctx)
 	var inputUpdate models.Post
-	if bindErr := bindInput(context, &inputUpdate); bindErr != nil {
-		return
-	}
-	post, err := database.UpdatePost(a.DB, &inputUpdate, postID)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		context.JSON(http.StatusNotFound, gin.H{"error": postNotFoundMessage})
-		return
-	} else if errors.Is(err, database.ErrNotOwner) {
-		context.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	} else if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	context.JSON(http.StatusOK, post)
-}
 
-func (a *APIEnv) DeletePost(context *gin.Context) {
-	postID := context.Param("id")
-	userID := context.Param("userID")
-	err := database.DeletePost(a.DB, postID, userID)
+	// If unable to bind JSON in request to the Post object, return status
+	// code 400 Bad Request
+	if err := helpers.BindInput(ctx, &inputUpdate); err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+	}
+
+	post, err := a.PostDBHandler.UpdatePost(&inputUpdate, postID)
+
+	// If post cannot be found in the database, return status code 404 Status Not Found
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		context.JSON(http.StatusNotFound, gin.H{"error": postNotFoundMessage})
-		return
-	} else if errors.Is(err, database.ErrNotOwner) {
-		context.JSON(http.StatusUnauthorized, gin.H{
-			"error": err.Error(),
-		})
-		return
-	} else if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
 		return
 	}
-	context.JSON(http.StatusOK, nil)
+	// If user is not the owner of the post, return status code 401 Unauthorised
+	if errors.Is(err, database.ErrNotOwner) {
+		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner.Error())
+		return
+	}
+	// If post cannot be updated for any other reason, return status code 403 Bad Request
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+		return
+	}
+	helpers.OutputData(ctx, post)
 }

@@ -25,6 +25,10 @@ type DBEnv struct {
 	BaseEnv
 }
 
+type GoogleCloudEnv struct {
+	Filepath string
+}
+
 func RetrieveRedisEnv() *RedisEnv {
 	sessionKey := os.Getenv("REDIS_SESSION_KEY")
 	host := os.Getenv("REDISHOST")
@@ -43,6 +47,14 @@ func RetrieveRedisEnv() *RedisEnv {
 			Host: host,
 			Port: port,
 		},
+	}
+	return &env
+}
+
+func RetrieveGoogleCloudEnv() *GoogleCloudEnv {
+	filepath := os.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	env := GoogleCloudEnv{
+		Filepath: filepath,
 	}
 	return &env
 }
@@ -107,4 +119,14 @@ func (env *DBEnv) DataSourceName() string {
 		env.Port,
 	)
 	return dataSourceName
+}
+
+func RetrieveClientEnv() *BaseEnv {
+	host := os.Getenv("CLIENT_HOST")
+	port := os.Getenv("CLIENT_PORT")
+	env := BaseEnv{
+		Host: host,
+		Port: port,
+	}
+	return &env
 }

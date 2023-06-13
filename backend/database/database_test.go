@@ -1,38 +1,27 @@
-package controllers
+package database
 
-/*
+import (
+	"testing"
+
+	"github.com/stretchr/testify/suite"
+)
+
 type TestSuiteEnv struct {
 	suite.Suite
-	api APIEnv
 }
 
 func (suite *TestSuiteEnv) SetupSuite() {
-	db := database.ConnectTestDatabase()
-	api := APIEnv{
-		DB: db,
-	}
-	suite.api = api
 }
 
 // clears database
 func (suite *TestSuiteEnv) TearDownTest() {
-	suite.api.DB.Exec("DELETE FROM post_schemas")
-	suite.api.DB.Exec("ALTER SEQUENCE post_schemas_id_seq RESTART WITH 1")
 }
 
 func TestSuite(t *testing.T) {
 	suite.Run(t, new(TestSuiteEnv))
 }
 
-type HTTPMethod string
-
-const (
-	GET    HTTPMethod = http.MethodGet
-	POST   HTTPMethod = http.MethodPost
-	PATCH  HTTPMethod = http.MethodPatch
-	DELETE HTTPMethod = http.MethodDelete
-)
-
+/*
 func (suite *TestSuiteEnv) Test_GetPosts_EmptyResult() {
 	test := setupCrud[[]models.Post](suite)
 	test.generateResponse(suite.api.setGetPostsRouter, "/posts")

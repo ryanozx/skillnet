@@ -2,3 +2,5 @@
 data
 /backend/main
 **/node_modules
+
+/backend/google-keyfile.json
