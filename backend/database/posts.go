@@ -14,12 +14,31 @@ type PostDBHandler interface {
 	DeletePost(string, string) error
 	GetPosts() ([]models.PostView, error)
 	GetPostByID(string) (*models.PostView, error)
-	UpdatePost(*models.Post, string) (*models.PostView, error)
+	UpdatePost(*models.Post, string, string) (*models.PostView, error)
 }
 
 // PostDB implements PostDBHandler
 type PostDB struct {
 	DB *gorm.DB
+}
+
+func (db *PostDB) CreatePost(post *models.Post) (*models.PostView, error) {
+	result := db.DB.Create(post)
+	newPostView := post.PostView()
+	return newPostView, result.Error
+}
+
+func (db *PostDB) DeletePost(id string, userID string) error {
+	postView, err := db.GetPostByID(id)
+	if err != nil {
+		return err
+	}
+	if err := checkUserIsOwner(postView, userID); err != nil {
+		return err
+	}
+	post := postView.GetPost()
+	err = db.DB.Delete(&post).Error
+	return err
 }
 
 func (db *PostDB) GetPosts() ([]models.PostView, error) {
@@ -40,12 +59,6 @@ func (db *PostDB) GetPosts() ([]models.PostView, error) {
 	return postViews, nil
 }
 
-func (db *PostDB) CreatePost(post *models.Post) (*models.PostView, error) {
-	result := db.DB.Create(post)
-	newPostView := post.PostView()
-	return newPostView, result.Error
-}
-
 func (db *PostDB) GetPostByID(id string) (*models.PostView, error) {
 	post := models.Post{}
 	err := db.DB.First(&post, id).Error
@@ -53,13 +66,12 @@ func (db *PostDB) GetPostByID(id string) (*models.PostView, error) {
 	return postView, err
 }
 
-func (db *PostDB) UpdatePost(post *models.Post, id string) (*models.PostView, error) {
-	originalPostView, err := db.GetPostByID(id)
+func (db *PostDB) UpdatePost(post *models.Post, postid string, userID string) (*models.PostView, error) {
+	originalPostView, err := db.GetPostByID(postid)
 	if err != nil {
 		return originalPostView, err
 	}
 	originalPost := originalPostView.GetPost()
-	userID := originalPost.UserID.String()
 	if err := checkUserIsOwner(originalPostView, userID); err != nil {
 		return originalPostView, err
 	}
@@ -68,21 +80,8 @@ func (db *PostDB) UpdatePost(post *models.Post, id string) (*models.PostView, er
 	return postView, err
 }
 
-func (db *PostDB) DeletePost(id string, userID string) error {
-	postView, err := db.GetPostByID(id)
-	if err != nil {
-		return err
-	}
-	if err := checkUserIsOwner(postView, userID); err != nil {
-		return err
-	}
-	post := postView.GetPost()
-	err = db.DB.Delete(&post).Error
-	return err
-}
-
 func checkUserIsOwner(postView PostViewer, userID string) error {
-	if postView.GetPost().UserID.String() != userID {
+	if postView.GetPost().UserID != userID {
 		return ErrNotOwner
 	}
 	return nil

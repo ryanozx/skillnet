@@ -9,6 +9,8 @@ The response body will contain one of three keys:
 package controllers
 
 import (
+	"errors"
+
 	"github.com/ryanozx/skillnet/database"
 	"gorm.io/gorm"
 )
@@ -28,3 +30,31 @@ func CreateAPIEnv(db *gorm.DB) *APIEnv {
 	}
 	return apiEnv
 }
+
+const (
+	GetLoginOKMsg                = "OK"
+	LoginSuccessfulMsg           = "Logged in"
+	PostDeletedMsg               = "Post successfully deleted"
+	SuccessfulAccountCreationMsg = "Account successfully created and logged in"
+	SuccessfulAccountDeleteMsg   = "User successfully deleted"
+	SuccessfulLogoutMsg          = "Logged out successfully"
+)
+
+var (
+	ErrAlreadyLoggedIn          = errors.New("already logged in")
+	ErrBadBinding               = errors.New("invalid request")
+	ErrCannotCreatePost         = errors.New("cannot create post")
+	ErrCannotDeletePost         = errors.New("cannot delete post")
+	ErrCannotUpdatePost         = errors.New("cannot update post")
+	ErrCannotUpdateUser         = errors.New("cannot update user")
+	ErrCreateAccountNoCookie    = errors.New("account successfully created but cookie not set")
+	ErrCookieSaveFail           = errors.New("cookie failed to save")
+	ErrIncorrectUserCredentials = errors.New("incorrect username or password")
+	ErrMissingUserCredentials   = errors.New("missing username or password")
+	ErrNoValidSession           = errors.New("no valid session")
+	ErrPasswordEncryptFailed    = errors.New("password encryption failed")
+	ErrPostNotFound             = errors.New("post not found")
+	ErrSessionClearFailed       = errors.New("failed to clear session")
+	ErrUserNotFound             = errors.New("user not found")
+	ErrUsernameAlreadyExists    = errors.New("username already exists")
+)

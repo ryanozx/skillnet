@@ -148,12 +148,12 @@ type AuthAPIer interface {
 	InitialiseAuthHandler()
 	GetLogin(*gin.Context)
 	PostLogin(*gin.Context)
-	GetLogout(*gin.Context)
+	PostLogout(*gin.Context)
 }
 
 func registerAuthRoutes(rg RouterGrouper, api AuthAPIer) {
 	rg.Public().GET("/login", api.GetLogin)
 	rg.Public().POST("/login", api.PostLogin)
 
-	rg.Private().POST("/logout", api.GetLogout)
+	rg.Private().POST("/logout", api.PostLogout)
 }
