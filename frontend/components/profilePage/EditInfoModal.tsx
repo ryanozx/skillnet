@@ -1,28 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';  
 import { 
-    Button, 
-    FormControl, 
-    FormLabel, 
+    Button,  
     Modal, 
-    ModalBody, 
-    ModalCloseButton, 
     ModalContent, 
     ModalFooter, 
-    ModalHeader, 
     ModalOverlay, 
-    Input, 
-    Textarea, 
-    Switch,
     Tab,
     Tabs,
     TabList,
     TabPanel,
-    TabPanels
+    TabPanels,
+    useToast
 } from "@chakra-ui/react";
 import { CloseIcon, CheckIcon } from '@chakra-ui/icons';
 import BasicInfoForm from './BasicInfoForm';
 import PrivacyForm from './PrivacyForm';
+import { User } from '../../types';
 
 interface FormType {
     name: string;
@@ -32,11 +26,18 @@ interface FormType {
       [key: string]: boolean;
     };
 }
-  
 
-export default function EditProfileModal(props: any) {
-    const { handleOpen, handleClose, isOpen, setIsOpen } = props;
-    
+interface EditProfileModalProps {
+    setUser: React.Dispatch<React.SetStateAction<User>>;
+    handleOpen: () => void;
+    handleClose: () => void;
+    isOpen: boolean;
+    setIsOpen: (isOpen: boolean) => void;
+}  
+
+export default function EditProfileModal(props: EditProfileModalProps) {
+    const { handleOpen, handleClose, isOpen, setIsOpen, setUser } = props;
+    const toast = useToast();
     const [activeTab, setActiveTab] = useState(0);
     const [form, setForm] = useState<FormType>({
         name: "",
@@ -96,17 +97,30 @@ export default function EditProfileModal(props: any) {
     }, [isOpen]);
 
     const handleSave = () => {
-        const sessionId = sessionStorage.getItem('sessionId');
-        console.log('API call to save updated changes to profile page');
-        axios
-            .post('your-update-endpoint', form, {
-                headers: {
-                Authorization: `Bearer ${sessionId}`
-                }
+        const url = "http://localhost:8080/auth/user"
+        axios.patch(url, {
+                name: form.name,
+                title: form.title,
+                aboutme: form.about,
+            }, {
+                withCredentials: true,
             })
-            .then(response => {
-                // console.log(response.data); // Log the response data
-                console.log('Successfully updated');
+            .then(res => {
+                console.log(res.data); // Log the response data
+                const { AboutMe, Name, Title } = res.data.data;
+                setUser((prevUser: User) => ({
+                    ...prevUser,
+                    AboutMe: AboutMe ? AboutMe : "No description available",
+                    Name: Name ? Name :  "No display name",
+                    Title: Title ? Title : "No title available",
+                }));
+                toast({
+                    title: "Profile updated.",
+                    description: "We've updated your profile for you.",
+                    status: "success",
+                    duration: 9000,
+                    isClosable: true,
+                });
                 setIsOpen(false);
             })
             .catch(error => {

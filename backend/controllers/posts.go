@@ -5,7 +5,6 @@ package controllers
 
 import (
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -94,54 +93,6 @@ func (a *APIEnv) GetPostByID(ctx *gin.Context) {
 		return
 	}
 	helpers.OutputData(ctx, post)
-}
-
-func (a *APIEnv) PostUserPicture(context *gin.Context) {
-	// userID := context.Param("userID")
-	file, err := context.FormFile("file")
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	openedFile, err := file.Open()
-	if err != nil {
-		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	defer openedFile.Close()
-
-	bucket := a.GoogleCloud.Bucket("skillnet-profile-pictures")
-	ctx := context.Request.Context()
-	fileName := "test" + "-pfp.jpeg"
-	writer := bucket.Object(fileName).NewWriter(ctx)
-
-	_, err = io.Copy(writer, openedFile)
-	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := writer.Close(); err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	attrs := writer.Attrs()
-	url := attrs.MediaLink
-
-	// var inputUpdate models.User
-	// inputUpdate.ProfilePic = url
-	// user, err := database.UpdateUser(a.DB, &inputUpdate, userID)
-	// if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 	context.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-	// 	return
-	// } else if err != nil {
-	// 	context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	context.JSON(http.StatusOK, gin.H{"url": url})
 }
 
 func (a *APIEnv) UpdatePost(ctx *gin.Context) {

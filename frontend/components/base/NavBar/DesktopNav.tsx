@@ -7,7 +7,7 @@ import {
     useBreakpointValue,
     HStack
 } from '@chakra-ui/react';
-import Searchbar from '../base/Searchbar';
+import Searchbar from '../Searchbar';
 import React, { useState } from 'react';
 import ProfileButton from './ProfileButton';
 import NotificationBell from './NotificationBell';

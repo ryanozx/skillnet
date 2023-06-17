@@ -4,7 +4,7 @@ import {
     VStack, 
     Heading, 
 } from "@chakra-ui/react";
-import Searchbar from '../base/Searchbar';
+import Searchbar from '../Searchbar';
 import FollowedCommunitiesList from "./FollowedCommunitiesList";
 import PopularCommunitiesList from "./PopularCommunitiesList";
 import CreateCommunityBtn from "./CreateCommunityBtn";

@@ -18,7 +18,7 @@ import {
     CloseIcon,
 
 } from '@chakra-ui/icons';
-import Searchbar from '../base/Searchbar';
+import Searchbar from '../Searchbar';
 import ProfileButton from './ProfileButton';
 import NotificationBell from './NotificationBell';
 import { useRef } from 'react'; 

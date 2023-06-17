@@ -22,7 +22,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, onClose, onCropped,
 
     const saveCroppedImage = async () => {
         const imageElement = cropperRef?.current;
-        const url = "http://localhost:8080/testupload";
+        const url = "http://localhost:8080/auth/user/photo";
         if (imageElement?.cropper) {
             const croppedCanvas = imageElement.cropper.getCroppedCanvas();
             croppedCanvas.toBlob(async (blob) => {
@@ -32,7 +32,7 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, onClose, onCropped,
                     axios.post(url, formData, {
                         headers: {
                             'Content-Type': 'multipart/form-data',
-                        },
+                        }, withCredentials: true,
                     })
                     .then((response) => {
                         console.log(response)

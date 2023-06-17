@@ -173,5 +173,7 @@ type PhotoAPIer interface {
 }
 
 func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
-	rg.Public().POST("/testupload", api.PostUserPicture)
+	// rg.Public().POST("/testupload", api.PostUserPicture)
+
+	rg.Private().POST("/user/photo", api.PostUserPicture)
 }
