@@ -7,11 +7,9 @@ import {
   Button
 } from '@chakra-ui/react';
 
-export default function AboutMe({ user }: any) {
+export default function AboutMe({ aboutMe }: { aboutMe?: string }) {
     const [showMore, setShowMore] = useState(false);
     const [height, setHeight] = useState("200px");
-    const { about = 'Description not available' } = user || {};
-
     const handleClick = () => {
         setShowMore(!showMore);
         setHeight(showMore ? "200px" : "auto");
@@ -32,9 +30,9 @@ export default function AboutMe({ user }: any) {
                     h={height}
                     overflow="hidden"
                 >
-                    <Text>{about}</Text>
+                    <Text>{aboutMe}</Text>
                 </Box>
-                {about && about.length > 100 && (
+                {aboutMe && aboutMe.length > 100 && (
                     <Button onClick={handleClick} size="sm" alignSelf="flex-end">
                         {showMore ? "Show less" : "Show more"}
                     </Button>

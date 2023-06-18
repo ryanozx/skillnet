@@ -1,17 +1,8 @@
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
     ModalHeader,
-    ModalCloseButton,
     ModalBody,
-    ModalFooter,
     FormControl,
     FormLabel,
-    Input,
-    Textarea,
-    IconButton,
-    Button,
     Switch
 } from '@chakra-ui/react';
 

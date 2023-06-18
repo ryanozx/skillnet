@@ -5,24 +5,24 @@ import { BellIcon } from '@chakra-ui/icons';
 
 export default function NotificationBell() {
     const [notifications, setNotifications] = useState([]);
-    const url = '/fake-url';
-    console.log('API call to get notifications for user');
-    useEffect(() => {
-        const sessionId = sessionStorage.getItem('sessionId');
-        axios.post(url, {
-            headers: {
-                'Authorization': `Bearer ${sessionId}`
-            }
-        })
-        .then(result => {
-            setNotifications(result.data);
-        })
-        .catch(error => {
-            // console.error(error);
-            setNotifications([]);
-        });
+    // const url = '/fake-url';
+    // console.log('API call to get notifications for user');
+    // useEffect(() => {
+    //     const sessionId = sessionStorage.getItem('sessionId');
+    //     axios.post(url, {
+    //         headers: {
+    //             'Authorization': `Bearer ${sessionId}`
+    //         }
+    //     })
+    //     .then(result => {
+    //         setNotifications(result.data);
+    //     })
+    //     .catch(error => {
+    //         // console.error(error);
+    //         setNotifications([]);
+    //     });
 
-    }, []);
+    // }, []);
 
     return (
         <Box>
