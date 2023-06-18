@@ -2,8 +2,7 @@ import React from 'react';
 import { Box, Flex, Stack } from '@chakra-ui/react';
 import FormHeading from './FormHeading';
 import SignUpForm from './SignUpForm';
-import { preventAuthAccess } from '../../WithAuthRedirect';
-
+import { preventAuthAccess } from '../../withAuthRedirect';
 
 export default preventAuthAccess(function SignUpPageContainer() {
     return (

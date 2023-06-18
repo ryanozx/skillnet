@@ -12,7 +12,7 @@ import CropperComponent from './CropperComponent';
 import NameTitleFields from './NameTitleFields';
 import AboutMeField from './AboutMeField';
 import FormButtons from './FormButtons';
-import { requireAuth } from '../../WithAuthRedirect';
+import { requireAuth } from '../../withAuthRedirect';
 
 export default requireAuth(function CreateProfilePageContainer() {
     const [form, setForm] = useState({

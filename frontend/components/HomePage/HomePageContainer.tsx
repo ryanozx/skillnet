@@ -6,7 +6,7 @@ import {
 } from '@chakra-ui/react';
 import { CallToActionButtons } from './CallToActionButtons';
 import { HomePageHeader } from './HomePageHeader';
-import { preventAuthAccess } from '../../WithAuthRedirect';
+import { preventAuthAccess } from '../../withAuthRedirect';
 
 export default preventAuthAccess(function HomePageContainer() {
     return (

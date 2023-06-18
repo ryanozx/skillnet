@@ -2,7 +2,7 @@ import React from 'react';
 import { Flex, Stack, useColorModeValue } from '@chakra-ui/react';
 import FormHeading from './FormHeading';
 import LoginForm from './LoginForm';
-import { preventAuthAccess } from '../../WithAuthRedirect';
+import { preventAuthAccess } from '../../withAuthRedirect';
 
 export default preventAuthAccess(function LoginPageContainer() {
     return (

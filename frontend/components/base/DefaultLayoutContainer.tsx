@@ -8,7 +8,7 @@ import SideBar from "./SideBar/SideBar";
 import React, { useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { useUser } from '../../userContext';
-import { requireAuth } from '../../WithAuthRedirect';
+import { requireAuth } from '../../withAuthRedirect';
 
 interface DefaultLayoutContainerProps {
     children: ReactNode;
