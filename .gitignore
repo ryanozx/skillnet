@@ -4,3 +4,5 @@ data
 **/node_modules
 
 /backend/google-keyfile.json
+/backend/tmp
+

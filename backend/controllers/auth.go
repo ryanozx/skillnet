@@ -12,11 +12,6 @@ import (
 	"github.com/ryanozx/skillnet/helpers"
 )
 
-const (
-	MissingUserCredentialsErrMsg  = "Missing username or password"
-	IncorrectUserCredentialErrMsg = "Incorrect username or password"
-)
-
 func (a *APIEnv) InitialiseAuthHandler() {
 	a.AuthDBHandler = &database.UserDB{
 		DB: a.DB,
@@ -28,10 +23,10 @@ func (a *APIEnv) InitialiseAuthHandler() {
 func (a *APIEnv) GetLogin(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 	if helpers.IsValidSession(session) {
-		ctx.Redirect(http.StatusPermanentRedirect, helpers.RouteIfSuccessful)
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrAlreadyLoggedIn)
 		return
 	}
-	helpers.OutputMessage(ctx, "OK")
+	helpers.OutputMessage(ctx, GetLoginOKMsg)
 }
 
 // Handles user login
@@ -40,14 +35,14 @@ func (a *APIEnv) PostLogin(ctx *gin.Context) {
 
 	// If user is already logged in (there is an active session), return with status code 400 Bad Request
 	if helpers.IsValidSession(session) {
-		helpers.OutputError(ctx, http.StatusBadRequest, "Already logged in")
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrAlreadyLoggedIn)
 		return
 	}
 
 	// If request is badly formatted, do not process this request, return with status code 400 Bad Request
 	userCredentials := helpers.ExtractUserCredentials(ctx)
 	if helpers.IsEmptyUserPass(userCredentials) {
-		helpers.OutputError(ctx, http.StatusBadRequest, MissingUserCredentialsErrMsg)
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrMissingUserCredentials)
 		return
 	}
 
@@ -55,36 +50,36 @@ func (a *APIEnv) PostLogin(ctx *gin.Context) {
 	// status code 401 Unauthorised
 	dbUser, err := a.AuthDBHandler.GetUserByUsername(userCredentials.Username)
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusUnauthorized, IncorrectUserCredentialErrMsg)
+		helpers.OutputError(ctx, http.StatusUnauthorized, ErrIncorrectUserCredentials)
 		return
 	}
 
 	// If hashed password does not match hash in database, return with status code 401
 	// Unauthorised
 	if err := helpers.CheckHashEqualsPassword(dbUser.Password, userCredentials.Password); err != nil {
-		helpers.OutputError(ctx, http.StatusUnauthorized, IncorrectUserCredentialErrMsg)
+		helpers.OutputError(ctx, http.StatusUnauthorized, ErrIncorrectUserCredentials)
 		return
 	}
 
 	// Saves session and sets a session cookie on the client's side; if unsuccessful, return
 	// with status code 500 Internal Server Error
 	if err := helpers.SaveSession(ctx, dbUser); err != nil {
-		helpers.OutputError(ctx, http.StatusInternalServerError, err.Error())
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCookieSaveFail)
 		return
 	}
 
 	// Login successful
-	helpers.OutputMessage(ctx, "Logged in")
+	helpers.OutputMessage(ctx, LoginSuccessfulMsg)
 }
 
 // Handles user logout
-func (a *APIEnv) GetLogout(ctx *gin.Context) {
+func (a *APIEnv) PostLogout(ctx *gin.Context) {
 	session := sessions.Default(ctx)
 
 	// There is no valid session to log out from - return with a status code 500
 	// Bad Request
 	if !helpers.IsValidSession(session) {
-		helpers.OutputError(ctx, http.StatusBadRequest, "No valid session")
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrNoValidSession)
 		return
 	}
 
@@ -92,9 +87,9 @@ func (a *APIEnv) GetLogout(ctx *gin.Context) {
 	// If unable to invalidate the session on the server side, return with a status code
 	// 501 Internal Server Error
 	if err := session.Save(); err != nil {
-		helpers.OutputError(ctx, http.StatusInternalServerError, "Failed to clear session")
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrSessionClearFailed)
 		return
 	}
 	// Session invalidated, successful logout
-	helpers.OutputMessage(ctx, "Logged out successfully")
+	helpers.OutputMessage(ctx, SuccessfulLogoutMsg)
 }

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -14,9 +13,9 @@ type PostViewArray struct {
 // Post is the database representation of a post object
 type Post struct {
 	gorm.Model
-	UserID  uuid.UUID `json:"-" gorm:"<-:create; not null"`
-	User    User      `json:"-"`
-	Content string    `gorm:"not null"`
+	UserID  string `json:"-" gorm:"<-:create; not null"`
+	User    User   `json:"-"`
+	Content string `gorm:"not null"`
 }
 
 // PostView represents the information that the client receives
