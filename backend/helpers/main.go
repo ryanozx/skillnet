@@ -57,9 +57,9 @@ func OutputData(ctx *gin.Context, obj any) {
 }
 
 // Adds error message to response body along with error status code
-func OutputError(ctx *gin.Context, statusCode int, errorMsg string) {
+func OutputError(ctx *gin.Context, statusCode int, err error) {
 	ctx.JSON(statusCode, gin.H{
-		"error": errorMsg,
+		"error": err.Error(),
 	})
 }
 

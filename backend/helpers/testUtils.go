@@ -12,7 +12,6 @@ import (
 
 	gcs "github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/google/go-cmp/cmp"
 )
 
 type MockSessionStore struct {
@@ -124,15 +123,15 @@ func CheckExpectedDataEqualsActual[T interface{}](m map[string]interface{}, expe
 	if err := json.Unmarshal(jsonData, &model); err != nil {
 		return err.Error(), false
 	}
-	if !cmp.Equal(expected, model, cmp.AllowUnexported(model)) {
+	if !reflect.DeepEqual(expected, model) {
 		return fmt.Sprintf("Data Error:\nExpected: %v\nActual: %v\n", expected, model), false
 	}
 	return "", true
 }
 
-func CheckExpectedErrorEqualsActual(m map[string]interface{}, errStr string) (errorStr string, isSame bool) {
-	if m["error"] != errStr {
-		return fmt.Sprintf("Message Error:\nExpected: %s\nActual: %s\n", errStr, m["error"]), false
+func CheckExpectedErrorEqualsActual(m map[string]interface{}, err error) (errorStr string, isSame bool) {
+	if m["error"] != err.Error() {
+		return fmt.Sprintf("Message Error:\nExpected: %s\nActual: %s\n", err.Error(), m["error"]), false
 	}
 	return "", true
 }

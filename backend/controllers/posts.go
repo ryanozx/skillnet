@@ -8,15 +8,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
-)
-
-const (
-	postNotFoundMessage = "Post not found"
 )
 
 func (a *APIEnv) InitialisePostHandler() {
@@ -31,7 +26,7 @@ func (a *APIEnv) CreatePost(ctx *gin.Context) {
 	// If unable to bind JSON in request to the Post object, return status
 	// code 400 Bad Request
 	if err := helpers.BindInput(ctx, &newPost); err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)
 		return
 	}
 
@@ -39,13 +34,13 @@ func (a *APIEnv) CreatePost(ctx *gin.Context) {
 	// the client does not have to pass in any userID, and overwrites any userID
 	// that a malicious client might have passed in.
 	userID := helpers.GetUserIdFromContext(ctx)
-	newPost.UserID = uuid.MustParse(userID)
+	newPost.UserID = userID
 
 	post, err := a.PostDBHandler.CreatePost(&newPost)
 
 	// If post cannot be created, return status code 500 Internal Service Error
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusInternalServerError, err.Error())
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotCreatePost)
 		return
 	}
 	helpers.OutputData(ctx, post)
@@ -58,27 +53,27 @@ func (a *APIEnv) DeletePost(ctx *gin.Context) {
 	err := a.PostDBHandler.DeletePost(postID, userID)
 	// If post cannot be found in the database return status code 404 Status Not Found
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
 	// If user is not the owner of the post, return status code 401 Unauthorized
 	if errors.Is(err, database.ErrNotOwner) {
-		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner.Error())
+		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner)
 		return
 	}
 	// If post cannot be deleted for any other reason, return status code 403 Bad Request
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrCannotDeletePost)
 		return
 	}
-	helpers.OutputMessage(ctx, "Post successfully deleted")
+	helpers.OutputMessage(ctx, PostDeletedMsg)
 }
 
 func (a *APIEnv) GetPosts(ctx *gin.Context) {
 	posts, err := a.PostDBHandler.GetPosts()
 	// If unable to retrieve posts, return status code 404 Not Found
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
 	helpers.OutputData(ctx, posts)
@@ -89,7 +84,7 @@ func (a *APIEnv) GetPostByID(ctx *gin.Context) {
 	post, err := a.PostDBHandler.GetPostByID(postID)
 	// If unable to retrieve post, return status code 404 Not Found
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
 	helpers.OutputData(ctx, post)
@@ -97,29 +92,31 @@ func (a *APIEnv) GetPostByID(ctx *gin.Context) {
 
 func (a *APIEnv) UpdatePost(ctx *gin.Context) {
 	postID := helpers.GetPostIdFromContext(ctx)
+	userID := helpers.GetUserIdFromContext(ctx)
 	var inputUpdate models.Post
 
 	// If unable to bind JSON in request to the Post object, return status
 	// code 400 Bad Request
 	if err := helpers.BindInput(ctx, &inputUpdate); err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)
+		return
 	}
 
-	post, err := a.PostDBHandler.UpdatePost(&inputUpdate, postID)
+	post, err := a.PostDBHandler.UpdatePost(&inputUpdate, postID, userID)
 
 	// If post cannot be found in the database, return status code 404 Status Not Found
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		helpers.OutputError(ctx, http.StatusNotFound, postNotFoundMessage)
+		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
 	// If user is not the owner of the post, return status code 401 Unauthorised
 	if errors.Is(err, database.ErrNotOwner) {
-		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner.Error())
+		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner)
 		return
 	}
 	// If post cannot be updated for any other reason, return status code 403 Bad Request
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, err.Error())
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrCannotUpdatePost)
 		return
 	}
 	helpers.OutputData(ctx, post)
