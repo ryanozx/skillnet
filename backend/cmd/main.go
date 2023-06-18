@@ -4,12 +4,15 @@ Contains functions to set up the server and run it.
 package main
 
 import (
+	"context"
 	"log"
 
+	"cloud.google.com/go/storage"
 	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
+	"google.golang.org/api/option"
 	"gorm.io/gorm"
 )
 
@@ -23,9 +26,10 @@ func main() {
 // serverConfig contains the essentials to run the backend - a router,
 // a Redis database for fast reads, and a database for persistent data
 type serverConfig struct {
-	db     *gorm.DB
-	router *gin.Engine
-	store  redis.Store
+	db          *gorm.DB
+	store       redis.Store
+	router      *gin.Engine
+	GoogleCloud *storage.Client
 }
 
 // Returns a server configuration with the production database (as defined
@@ -39,6 +43,7 @@ func initialiseProdServer() *serverConfig {
 		router: router,
 		store:  store,
 	}
+	server.setupGoogleCloud()
 	return &server
 }
 
@@ -54,11 +59,21 @@ func setupRedis() redis.Store {
 	return store
 }
 
-// Runs the router - router has to be set up beforehand
-func (s *serverConfig) runRouter() {
+func (s *serverConfig) setupGoogleCloud() {
+	ctx := context.Background()
+	env := helpers.RetrieveGoogleCloudEnv()
+
+	client, err := storage.NewClient(ctx, option.WithCredentialsFile(env.Filepath))
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+	s.GoogleCloud = client
+}
+
+func (server *serverConfig) runRouter() {
 	env := helpers.RetrieveWebAppEnv()
 	routerAddress := env.Address()
-	err := s.router.Run(routerAddress)
+	err := server.router.Run(routerAddress)
 	if err != nil {
 		log.Fatalln(err.Error())
 		return
