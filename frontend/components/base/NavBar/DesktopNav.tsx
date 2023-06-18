@@ -2,9 +2,6 @@ import {
     Box,
     Flex,
     Text,
-    Button,
-    useColorModeValue,
-    useBreakpointValue,
     HStack
 } from '@chakra-ui/react';
 import Searchbar from '../Searchbar';
@@ -38,7 +35,6 @@ export default function DesktopNav (props: DesktopNavProps) {
             <HStack spacing={6}>
                 <NotificationBell/>
                 <ProfileButton profilePic={profilePic} username={username}/>
-
             </HStack>
         </Flex>
     );

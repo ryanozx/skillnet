@@ -2,8 +2,9 @@ import React from 'react';
 import { Flex, Stack, useColorModeValue } from '@chakra-ui/react';
 import FormHeading from './FormHeading';
 import LoginForm from './LoginForm';
+import { preventAuthAccess } from '../../withAuthRedirect';
 
-export default function LoginPageContainer() {
+export default preventAuthAccess(function LoginPageContainer() {
     return (
         <Flex
             minH={'100vh'}
@@ -17,4 +18,4 @@ export default function LoginPageContainer() {
             </Stack>
         </Flex>
     );
-}
+});
