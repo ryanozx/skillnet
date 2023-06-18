@@ -12,6 +12,7 @@ import CropperComponent from './CropperComponent';
 import NameTitleFields from './NameTitleFields';
 import AboutMeField from './AboutMeField';
 import FormButtons from './FormButtons';
+import { requireAuth } from '../../WithAuthRedirect';
 
 const CreateProfilePageContainer: React.FC = () => {
     const [form, setForm] = useState({
@@ -78,4 +79,4 @@ const CreateProfilePageContainer: React.FC = () => {
     );
 };
 
-export default CreateProfilePageContainer;
+export default requireAuth(CreateProfilePageContainer);

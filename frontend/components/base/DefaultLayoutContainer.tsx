@@ -8,6 +8,7 @@ import SideBar from "./SideBar/SideBar";
 import React, { useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { useUser } from '../../userContext';
+import { requireAuth } from '../../WithAuthRedirect';
 
 interface DefaultLayoutContainerProps {
     children: ReactNode;
@@ -15,7 +16,7 @@ interface DefaultLayoutContainerProps {
 
 
 
-export default function DefaultLayoutContainer({ children }: DefaultLayoutContainerProps) {
+export default requireAuth(function DefaultLayoutContainer({ children }: DefaultLayoutContainerProps) {
     const { needUpdate, setNeedUpdate } = useUser();
     const [ profilePic, setProfilePic ] = useState("");
     const [ username, setUsername ] = useState("");
@@ -58,4 +59,4 @@ export default function DefaultLayoutContainer({ children }: DefaultLayoutContai
             </GridItem>
         </Grid>  
     );
-}
+});

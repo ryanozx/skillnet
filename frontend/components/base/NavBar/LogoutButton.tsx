@@ -36,7 +36,7 @@ const LogoutButton: React.FC = () => {
     };
 
     return (
-        <MenuItem onClick={handleClick}>logout</MenuItem> 
+        <MenuItem onClick={handleClick}>Log out</MenuItem> 
     )
 }
 export default LogoutButton;

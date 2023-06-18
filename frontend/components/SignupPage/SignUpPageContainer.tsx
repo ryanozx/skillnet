@@ -2,8 +2,10 @@ import React from 'react';
 import { Box, Flex, Stack } from '@chakra-ui/react';
 import FormHeading from './FormHeading';
 import SignUpForm from './SignUpForm';
+import { preventAuthAccess } from '../../WithAuthRedirect';
 
-export default function SignUpPageContainer() {
+
+export default preventAuthAccess(function SignUpPageContainer() {
     return (
         <Flex
             minH={'100vh'}
@@ -24,4 +26,4 @@ export default function SignUpPageContainer() {
             </Stack>
         </Flex>
     );
-}
+});
