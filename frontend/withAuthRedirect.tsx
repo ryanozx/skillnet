@@ -53,5 +53,3 @@ export function requireAuth(Component: any) {
     };
 }
 
-
-// export default withAuthRedirect;
