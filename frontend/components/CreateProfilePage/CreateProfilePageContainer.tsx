@@ -14,7 +14,7 @@ import AboutMeField from './AboutMeField';
 import FormButtons from './FormButtons';
 import { requireAuth } from '../../WithAuthRedirect';
 
-const CreateProfilePageContainer: React.FC = () => {
+export default requireAuth(function CreateProfilePageContainer() {
     const [form, setForm] = useState({
         aboutMe: '',
         name: '',
@@ -77,6 +77,6 @@ const CreateProfilePageContainer: React.FC = () => {
             </Flex>
         </>
     );
-};
+});
 
-export default requireAuth(CreateProfilePageContainer);
+// export default requireAuth(CreateProfilePageContainer);
