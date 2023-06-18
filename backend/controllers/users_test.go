@@ -169,7 +169,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_EmptyUserPass() {
 	}
 	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, userCreds)
 
-	s.dbHandler.SetMockCreateUserFunc(nil, nil)
+	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
 	s.api.CreateUser(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -180,7 +180,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_EmptyUserPass() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, MissingUserCredentialsErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingUserCredentials); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -201,7 +201,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_UsernameConflict() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, UsernameAlreadyExistsErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUsernameAlreadyExists); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -222,7 +222,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotCreate() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest.Error()); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -244,7 +244,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotSaveSession() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, CreateAccountNoCookieErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCreateAccountNoCookie); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -287,7 +287,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_NotFound() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, UserNotFoundErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUserNotFound); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -308,7 +308,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_CannotDelete() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest.Error()); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -330,7 +330,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_CannotClearSession() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, SessionClearFailedErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrSessionClearFailed); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -371,7 +371,7 @@ func (s *UserControllerTestSuite) Test_GetProfile_NotFound() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, UserNotFoundErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUserNotFound); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -413,7 +413,7 @@ func (s *UserControllerTestSuite) Test_GetSelfProfile_NotFound() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, UserNotFoundErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUserNotFound); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -462,7 +462,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_BadRequest() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, "invalid request"); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrBadBinding); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -489,7 +489,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_NotFound() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, UserNotFoundErrMsg); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUserNotFound); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -516,7 +516,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_CannotUpdate() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest.Error()); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCannotUpdateUser); !isEqual {
 		s.T().Error(errStr)
 	}
 }
