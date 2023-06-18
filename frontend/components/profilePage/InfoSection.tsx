@@ -9,7 +9,6 @@ interface InfoSectionProps {
 }
 
 export default function InfoSection({user, setUser}: InfoSectionProps) {
-    console.log(user)
     return (
         <>
             <BasicInfo 

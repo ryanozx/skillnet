@@ -14,12 +14,11 @@ import NotificationBell from './NotificationBell';
 
 interface DesktopNavProps {
     profilePic: string;
-    isLoggedIn: boolean;
+    username: string;
 }
 
 export default function DesktopNav (props: DesktopNavProps) {  
-    const { isLoggedIn = true, profilePic = '' } = props;
-    console.log(isLoggedIn + " is logged in?");
+    const { profilePic, username } = props;
     return (
         <Flex 
             flex={1}  
@@ -36,9 +35,9 @@ export default function DesktopNav (props: DesktopNavProps) {
             <Box w="50vw">
                 <Searchbar/>
             </Box>
-            <HStack spacing={isLoggedIn? 6 : 3}>
+            <HStack spacing={6}>
                 <NotificationBell/>
-                <ProfileButton profilePic={profilePic}/>
+                <ProfileButton profilePic={profilePic} username={username}/>
 
             </HStack>
         </Flex>

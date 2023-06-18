@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { useDisclosure, useToast } from '@chakra-ui/react';
-import EditPicButton from './EditPicButton';
-import ImageCropper from './ImageCropper';
+import EditPicButton from '../base/EditProfilePicButton/EditPicButton';
+import ImageCropper from '../base/EditProfilePicButton/ImageCropper';
 import axios from 'axios';
-import { User } from '../../../types';
-import { useUser } from '../../../userContext';
+import { User } from '../../types';
+import { useUser } from '../../userContext';
 
 
 interface CropperComponentProps {
     profilePic?: string;
-    setUser: React.Dispatch<React.SetStateAction<User>>;
 }
 
-const CropperComponent: React.FC<CropperComponentProps> = ({profilePic, setUser}) => {
+const CropperComponent: React.FC<CropperComponentProps> = ({profilePic}) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
     const toast = useToast();
@@ -32,10 +31,6 @@ const CropperComponent: React.FC<CropperComponentProps> = ({profilePic, setUser}
             })
             .then(res => {
                 const { ProfilePic } = res.data.data;
-                setUser((prevUser: User) => ({
-                    ...prevUser,
-                    ProfilePic: ProfilePic
-                }));
                 setNeedUpdate(true);
                 toast({
                     title: "Profile updated.",

@@ -2,10 +2,14 @@ import React from 'react';
 import ProfileInfo from "./ProfileInfo";
 import DefaultLayoutContainer from "../base/DefaultLayoutContainer";
 
-export default function ProfilePageContainer() {
+interface ProfilePageContainerProps {
+    username: string;
+}
+
+export default function ProfilePageContainer({username}: ProfilePageContainerProps) {
     return (
         <DefaultLayoutContainer>
-            <ProfileInfo username="ivyy-poison"></ProfileInfo>
+            <ProfileInfo username={username}></ProfileInfo>
         </DefaultLayoutContainer>
     )
 }

@@ -27,7 +27,7 @@ const EditPicButton: React.FC<EditPicButtonProps> = ({ onValidFile, currentProfi
         <>
             <IconButton
                 aria-label="Change profile picture"
-                icon={<Avatar size="2xl" src={currentProfilePic} />}
+                icon={<Avatar size="2xl" src={currentProfilePic} shadow="xl"/>}
                 onClick={handleFileInputClick}
                 isRound={true}
             />

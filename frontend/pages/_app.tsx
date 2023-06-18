@@ -1,6 +1,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
-import { Provider } from 'react-redux';
-import React from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import axios from 'axios';
+import { UserProvider } from '../userContext';
 
 interface MyAppProps {
   Component: React.ComponentType<any>;
@@ -11,8 +12,9 @@ const MyApp: React.FC<MyAppProps> = ({ Component, pageProps }) => {
   return (
     <React.StrictMode>
       <ChakraProvider>
-
+        <UserProvider>
           <Component {...pageProps} />
+        </UserProvider>
       </ChakraProvider>
     </React.StrictMode>
   );

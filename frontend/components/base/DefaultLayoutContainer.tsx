@@ -5,8 +5,9 @@ import {
 }   from '@chakra-ui/react';
 import NavBar from "./NavBar/NavBar"
 import SideBar from "./SideBar/SideBar";
-import React, { useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import { useUser } from '../../userContext';
 
 interface DefaultLayoutContainerProps {
     children: ReactNode;
@@ -15,10 +16,26 @@ interface DefaultLayoutContainerProps {
 
 
 export default function DefaultLayoutContainer({ children }: DefaultLayoutContainerProps) {
-
+    const { needUpdate, setNeedUpdate } = useUser();
+    const [ profilePic, setProfilePic ] = useState("");
+    const [ username, setUsername ] = useState("");
     const templateColumns = useBreakpointValue({ base: '1fr', lg: '20vw 3fr' });
     const templateAreas = useBreakpointValue({ base: `"header" "main"`, lg: `"header header" "nav main"` });
-    const user = null;
+
+    useEffect(() => {
+        if (needUpdate) {
+            axios.get('http://localhost:8080/auth/user', { withCredentials: true })
+                .then((res) => {
+                    const { ProfilePic, Username } = res.data.data;
+                    setProfilePic(ProfilePic);
+                    setUsername(Username);
+                    setNeedUpdate(false); // reset the flag after the data is updated
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        }
+    }, [needUpdate]);
     return (
         <Grid
             templateAreas={templateAreas}
@@ -29,7 +46,7 @@ export default function DefaultLayoutContainer({ children }: DefaultLayoutContai
             minHeight='100vh'
         >
             <GridItem zIndex={2} bg='orange.300' area='header'>
-                <NavBar profile={user}/>
+                <NavBar profilePic={profilePic} username={username}/>
             </GridItem>
             {templateColumns !== '1fr' && (
                 <GridItem zIndex={1} bg='pink.300' area='nav'>

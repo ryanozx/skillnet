@@ -3,6 +3,7 @@ import { Stack, Button, FormControl, FormLabel, Input, InputGroup, InputRightEle
 import LoginRedirect from './LoginRedirect';
 import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
 import axios from 'axios';
+import { useRouter } from 'next/router';
 
 
 export default function SignUpForm() {
@@ -11,6 +12,7 @@ export default function SignUpForm() {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const toast = useToast();
+    const router = useRouter();
 
     const handleClick: MouseEventHandler = () => {        
         var form_data = new FormData();
@@ -21,14 +23,15 @@ export default function SignUpForm() {
     
         axios.post(url, form_data, {withCredentials: true})
             .then((res) => {
-                console.log(res);
+                router.push('/create-profile');
                 toast({
-                title: "Form submission successful.",
-                description: "We've received your form data.",
-                status: "success",
-                duration: 5000,
-                isClosable: true,
+                    title: "Form submission successful.",
+                    description: "Account successfully created.",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
                 });
+                
             })
             .catch((error) => {
                 console.log(error);

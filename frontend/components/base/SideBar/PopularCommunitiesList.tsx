@@ -15,17 +15,17 @@ export default function PopularCommunitiesList() {
 
     
 
-    useEffect(() => {
-        console.log('API call to get list of popular communities');
-        const url = '';
-        axios.get('/api/popular-communities')
-        .then(response => {
-            setPopularCommunities(response.data);
-        })
-        .catch(error => {
-            console.error(error);
-        });
-    }, []);
+    // useEffect(() => {
+    //     console.log('API call to get list of popular communities');
+    //     const url = '';
+    //     axios.get('/api/popular-communities')
+    //     .then(response => {
+    //         setPopularCommunities(response.data);
+    //     })
+    //     .catch(error => {
+    //         console.error(error);
+    //     });
+    // }, []);
 
     return (
         <>

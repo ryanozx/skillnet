@@ -35,7 +35,6 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, onClose, onCropped,
                         }, withCredentials: true,
                     })
                     .then((response) => {
-                        console.log(response)
                         if (response.data.url) {
                             onCropped(response.data.url);
                         }

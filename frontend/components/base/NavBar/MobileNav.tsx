@@ -27,14 +27,13 @@ import SideBar from '../SideBar/SideBar';
 
 interface MobileNavProps {
     profilePic: string;
-    isLoggedIn: boolean;
+    username: string;
 }   
 
 export default function MobileNav(props: MobileNavProps) {
     const { isOpen, onOpen, onClose } = useDisclosure()
     const btnRef = useRef(null)
-    const { isLoggedIn=true, profilePic='' } = props;
-    console.log(isLoggedIn + " is logged in?");
+    const { profilePic, username } = props;
     return (
         <>
         
@@ -49,10 +48,10 @@ export default function MobileNav(props: MobileNavProps) {
                     <Searchbar/>
                 </Box>
                 
-                <HStack spacing={isLoggedIn ? 4 : 2}>
+                <HStack spacing={4}>
 
                     <NotificationBell/>
-                    <ProfileButton profilePic = {profilePic}/>
+                    <ProfileButton profilePic = {profilePic} username={username}/>
 
                 </HStack>
             </Flex>
