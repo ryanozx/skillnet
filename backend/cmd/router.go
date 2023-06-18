@@ -37,6 +37,7 @@ func (s *serverConfig) configureCors() {
 	// Set up configuration and apply it to the router
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{localClientAddress}
+	corsConfig.AllowCredentials = true
 	s.router.Use(cors.New(corsConfig))
 }
 
@@ -101,8 +102,8 @@ type PostAPIer interface {
 
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
 	// Public routes
-	rg.Public().GET("/posts", api.GetPosts)
-	rg.Public().GET("/posts/:id", api.GetPostByID)
+	rg.Private().GET("/posts", api.GetPosts)
+	rg.Private().GET("/posts/:id", api.GetPostByID)
 
 	// Private routes
 	rg.Private().POST("/posts", api.CreatePost)

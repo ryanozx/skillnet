@@ -5,13 +5,18 @@ import (
 )
 
 type CommentsArray struct {
-	Comments    []CommentSchema
+	Comments    []CommentView
 	NextPageURL string
 }
 
-type CommentSchema struct {
+type Comment struct {
 	gorm.Model
 	PostID uint
-	User   UserMinimal
+	UserID string
 	Text   string
+}
+
+type CommentView struct {
+	Comment     `gorm:"embedded"`
+	UserMinimal `json:"User"`
 }

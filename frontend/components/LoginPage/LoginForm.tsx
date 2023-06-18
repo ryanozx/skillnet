@@ -27,9 +27,8 @@ export default function LoginForm() {
         var form_data = new FormData();
         form_data.append('username', username);
         form_data.append('password', password);
-        axios.post('http://localhost:8080/login', form_data)
+        axios.post('http://localhost:8080/login', form_data, {withCredentials: true})
             .then((res) => {
-                console.log(res);
                 toast({
                 title: "Form submission successful.",
                 description: "We've received your form data.",
@@ -39,7 +38,7 @@ export default function LoginForm() {
                 });
             })
             .catch((error) => {
-                console.log(error);
+                console.log(error.response);
                 toast({
                     title: "An error occurred.",
                     description: error.message,

@@ -8,19 +8,21 @@ import ProjectDisplay from './ProjectDisplay';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 
-export default function ProfileInfo({username} : any) {
+type ProfileInfoProps = {
+    username?: string,
+    ownProfile: boolean
+}
+
+export default function ProfileInfo({username, ownProfile} : ProfileInfoProps) {
     const [user, setUser] = useState(null);
     
     useEffect(() => {
-        const url = '/fake-url';
+        const url = ownProfile ? "http://localhost:8080/auth/user" : `http://localhost:8080/users/${username}`;
         console.log('API call to get user information given username');
-        const session_id = sessionStorage.getItem('session_id');
-        const fetchData = axios.post(url, {
-          username: username,
-          session_id: session_id,
-        });
+        const fetchData = axios.get(url, {withCredentials: true});
         fetchData
             .then(response => {
+                console.log(response.data);
                 setUser(response.data);
             })
             .catch(error => {

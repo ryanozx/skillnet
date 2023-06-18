@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -58,6 +59,7 @@ func OutputData(ctx *gin.Context, obj any) {
 
 // Adds error message to response body along with error status code
 func OutputError(ctx *gin.Context, statusCode int, err error) {
+	log.Println(err.Error())
 	ctx.JSON(statusCode, gin.H{
 		"error": err.Error(),
 	})

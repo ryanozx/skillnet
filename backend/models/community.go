@@ -1,11 +1,14 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gopkg.in/guregu/null.v3"
+	"gorm.io/gorm"
+)
 
 type Community struct {
 	gorm.Model
 	Name     string
 	Owner    UserMinimal
-	About    string
+	About    null.String
 	Projects ProjectsArray `gorm:"-:all"`
 }

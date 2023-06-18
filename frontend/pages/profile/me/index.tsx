@@ -5,11 +5,10 @@ import DefaultLayoutContainer from "../../../components/base/DefaultLayoutContai
 export default function ProfilePage() {
 
     // must do something here to get the username from sessionId token
-    const username = "testUser";
 
     return (
         <DefaultLayoutContainer>
-            <ProfileInfo username={username}></ProfileInfo>
+            <ProfileInfo ownProfile={true}></ProfileInfo>
         </DefaultLayoutContainer>
     );
 }

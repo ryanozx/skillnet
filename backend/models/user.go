@@ -20,20 +20,26 @@ type UserMinimal struct {
 	ProfilePic string
 }
 
-// UserCredentials handles login/signup information
+// UserCredentials handles login information
 type UserCredentials struct {
 	Username string `gorm:"unique; not null"`
 	Password string `gorm:"not null" json:"-"`
 }
 
+// UserCredentials for signup
+type SignupUserCredentials struct {
+	UserCredentials
+	Email string `gorm:"not null"`
+}
+
 // UserView represents the information a visitor to a user's profile page can see
 type UserView struct {
-	UserMinimal   `gorm:"embedded"`
-	Title         null.String
-	Birthday      time.Time
-	Location      null.String
-	AboutMe       null.String
-	ProjectsArray `json:"Projects" gorm:"-:all"`
+	UserMinimal `gorm:"embedded"`
+	Title       null.String
+	Birthday    time.Time
+	Location    null.String
+	AboutMe     null.String
+	Projects    []ProjectMinimal `gorm:"-:all"`
 }
 
 // User is the database representation of a user object
@@ -41,12 +47,13 @@ type User struct {
 	ID              string `gorm:"<-:create" json:"-"` // UserID will never be revealed to the client; it will never change
 	UserView        `gorm:"embedded"`
 	UserCredentials `gorm:"embedded"`
-	Email           string
+	Email           string `gorm:"not null"`
 }
 
-func (userCreds *UserCredentials) NewUser() *User {
+func (userCreds *SignupUserCredentials) NewUser() *User {
 	user := User{
-		UserCredentials: *userCreds,
+		UserCredentials: userCreds.UserCredentials,
+		Email:           userCreds.Email,
 	}
 	return &user
 }
@@ -109,7 +116,7 @@ func (profile *UserView) GetUserMinimal() *UserMinimal {
 }
 
 func (user *User) GenerateProfileURL() {
-	const profileUrlPrefix = "localhost:8080/users/"
+	const profileUrlPrefix = "http://localhost:3000/profile/"
 	url := profileUrlPrefix + user.Username
 	user.UserView.URL = url
 }

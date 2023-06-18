@@ -12,11 +12,11 @@ export default function SignUpForm() {
     const toast = useToast();
 
     const handleSubmit = () => {
-        axios.post('fake-endpoint', {
-            username,
-            email,
-            password
-        }).then(() => {
+        var form_data = new FormData();
+        form_data.append("username", username);
+        form_data.append("password", password);
+        form_data.append("email", email);
+        axios.post('http://localhost:8080/signup', form_data).then(() => {
             toast({
                 title: "Account created.",
                 description: "We've created your account.",
