@@ -14,7 +14,7 @@ type PostViewArray struct {
 type Post struct {
 	gorm.Model
 	UserID  string `json:"-" gorm:"<-:create; not null"`
-	User    User   `json:"-"`
+	User    User
 	Content string `gorm:"not null"`
 }
 

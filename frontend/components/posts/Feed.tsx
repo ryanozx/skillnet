@@ -3,6 +3,7 @@ import axios from "axios";
 import {Box, Text} from "@chakra-ui/react";
 import Post, {PostView} from "./Post";
 import InfiniteScroll from "react-infinite-scroll-component";
+import CreatePostCard from "./CreatePostCard";
 
 export default function Feed() {
     const [posts, setPosts] = useState<React.JSX.Element[]>([]);
@@ -19,7 +20,6 @@ export default function Feed() {
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData
             .then((response) => {
-                console.log(response.data)
                 setPosts([...posts, ...response.data["data"]["Posts"].map((postdata : PostView) => <Post key={postdata.Post.ID} {...postdata}/>)])
                 setURL(response.data["data"]["NextPageURL"])
             })
@@ -33,11 +33,16 @@ export default function Feed() {
         }
     }
 
+    const addPost = (post : PostView) => {
+        setPosts([<Post key={post.Post.ID} {...post} />, ...posts]);
+    }
+
     useEffect(() => {
         updateFeed();
     }, []);
 
     return (<Box>
+        <CreatePostCard addPostHandler={addPost}/>
         <InfiniteScroll
             dataLength={posts.length}
             next={updateFeed}

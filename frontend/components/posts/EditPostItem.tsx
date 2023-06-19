@@ -1,10 +1,11 @@
 import React, {useState} from 'react';
 import {MenuItem} from '@chakra-ui/react';
 import EditPostModel from "./EditPostModel";
-import {PostComponent} from "./Post"
+import {PostComponent, PostView} from "./Post"
 
 interface EditPostItemProps {
-    post: PostComponent
+    post: PostComponent;
+    updatePostHandler: React.Dispatch<React.SetStateAction<PostView>>;
 }
 
 export default function EditPostItem(props: EditPostItemProps) {
@@ -21,7 +22,8 @@ export default function EditPostItem(props: EditPostItemProps) {
             <EditPostModel 
                 isOpen={isOpen} 
                 postComponent={props.post}
-                setIsOpen={setIsOpen}/>
+                setIsOpen={setIsOpen}
+                updatePostHandler={props.updatePostHandler}/>
         </>
     )
 }

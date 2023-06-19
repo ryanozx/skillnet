@@ -1,8 +1,6 @@
 package database
 
 import (
-	"log"
-
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -45,7 +43,6 @@ func (db *UserDB) DeleteUser(id string) error {
 
 // Retrieves a User object by ID
 func (db *UserDB) GetUserByID(id string) (*models.User, error) {
-	log.Println(id)
 	user := models.User{}
 	err := db.DB.First(&user, "id = ?", id).Error
 	return &user, err

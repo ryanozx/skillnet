@@ -11,9 +11,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const {isReady, query} = router;
     
-    console.log(query.username)
-    
     return (
-        <ProfilePageContainer username={username as string}/>
+        <ProfilePageContainer username={query.username as string}/>
     );
 }

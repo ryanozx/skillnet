@@ -12,7 +12,7 @@ interface UsernameInputProps {
 export const UsernameInput: React.FC<UsernameInputProps> = ({ value, onChange }) => {
     return (
         <FormControl id="username">
-            <FormLabel>username</FormLabel>
+            <FormLabel>Username</FormLabel>
             <Input
                 type="username"
                 name="username"

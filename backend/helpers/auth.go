@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -26,7 +25,6 @@ func IsSignupUserCredsEmpty(user *models.SignupUserCredentials) bool {
 
 func IsValidSession(session SessionGetter) bool {
 	userID := session.Get(IdKey)
-	fmt.Println(userID)
 	return userID != nil
 }
 

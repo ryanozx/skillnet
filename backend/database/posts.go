@@ -2,9 +2,11 @@ package database
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrNotOwner = errors.New("unauthorised action")
@@ -26,8 +28,10 @@ type PostDB struct {
 
 func (db *PostDB) CreatePost(post *models.Post) (*models.PostView, error) {
 	result := db.DB.Create(post)
-	newPostView := post.PostView(post.UserID)
-	return newPostView, result.Error
+	if result.Error != nil {
+		return post.PostView(post.UserID), result.Error
+	}
+	return db.GetPostByID(fmt.Sprintf("%v", post.ID), post.UserID)
 }
 
 func (db *PostDB) DeletePost(id string, userID string) error {
@@ -72,22 +76,23 @@ func (db *PostDB) GetPosts(cutoff string, userID string) ([]models.PostView, uin
 
 func (db *PostDB) GetPostByID(id string, userID string) (*models.PostView, error) {
 	post := models.Post{}
-	err := db.DB.First(&post, id).Error
+	err := db.DB.Joins("User").First(&post, id).Error
 	postView := post.PostView(userID)
 	return postView, err
 }
 
 func (db *PostDB) UpdatePost(post *models.Post, postid string, userID string) (*models.PostView, error) {
-	originalPostView, err := db.GetPostByID(postid, userID)
+	postView, err := db.GetPostByID(postid, userID)
 	if err != nil {
-		return originalPostView, err
+		return postView, err
 	}
-	originalPost := originalPostView.GetPost()
-	if err := checkUserIsOwner(originalPostView, userID); err != nil {
-		return originalPostView, err
+	if err := checkUserIsOwner(postView, userID); err != nil {
+		return postView, err
 	}
-	err = db.DB.Model(originalPost).Updates(post).Error
-	postView := post.PostView(userID)
+	resPost := &models.Post{}
+	result := db.DB.Model(resPost).Clauses(clause.Returning{}).Where("id = ?", postid).Updates(post)
+	err = result.Error
+	postView.Post = *resPost
 	return postView, err
 }
 

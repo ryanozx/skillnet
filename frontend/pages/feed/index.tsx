@@ -7,7 +7,7 @@ export default function ProfilePage() {
     const router = useRouter();
     return (
         <DefaultLayoutContainer>
-            <Feed></Feed>
+            <Feed />
         </DefaultLayoutContainer>
     );
 }
