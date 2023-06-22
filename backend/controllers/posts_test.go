@@ -57,8 +57,8 @@ func TestPostControllerSuite(t *testing.T) {
 type PostDBTestHandler struct {
 	CreatePostFunc  func(*models.Post) (*models.PostView, error)
 	DeletePostFunc  func(string, string) error
-	GetPostsFunc    func() ([]models.PostView, error)
-	GetPostByIDFunc func(string) (*models.PostView, error)
+	GetPostsFunc    func(string, string) ([]models.PostView, uint, error)
+	GetPostByIDFunc func(string, string) (*models.PostView, error)
 	UpdatePostFunc  func(*models.Post, string, string) (*models.PostView, error)
 }
 
@@ -72,13 +72,13 @@ func (h *PostDBTestHandler) DeletePost(id string, userid string) error {
 	return err
 }
 
-func (h *PostDBTestHandler) GetPosts() ([]models.PostView, error) {
-	posts, err := h.GetPostsFunc()
-	return posts, err
+func (h *PostDBTestHandler) GetPosts(cutoff string, userID string) ([]models.PostView, uint, error) {
+	posts, newCutoff, err := h.GetPostsFunc(cutoff, userID)
+	return posts, newCutoff, err
 }
 
-func (h *PostDBTestHandler) GetPostByID(id string) (*models.PostView, error) {
-	post, err := h.GetPostByIDFunc(id)
+func (h *PostDBTestHandler) GetPostByID(id string, userID string) (*models.PostView, error) {
+	post, err := h.GetPostByIDFunc(id, userID)
 	return post, err
 }
 
@@ -99,14 +99,14 @@ func (h *PostDBTestHandler) SetMockDeletePostFunc(err error) {
 	}
 }
 
-func (h *PostDBTestHandler) SetMockGetPostsFunc(posts []models.PostView, err error) {
-	h.GetPostsFunc = func() ([]models.PostView, error) {
-		return posts, err
+func (h *PostDBTestHandler) SetMockGetPostsFunc(posts []models.PostView, newCutoff uint, err error) {
+	h.GetPostsFunc = func(cutoff string, userID string) ([]models.PostView, uint, error) {
+		return posts, newCutoff, err
 	}
 }
 
 func (h *PostDBTestHandler) SetMockGetPostByIDFunc(post *models.PostView, err error) {
-	h.GetPostByIDFunc = func(id string) (*models.PostView, error) {
+	h.GetPostByIDFunc = func(id string, userID string) (*models.PostView, error) {
 		return post, err
 	}
 }
@@ -292,10 +292,15 @@ func (s *PostControllerTestSuite) Test_DeletePost_CannotDelete() {
 func (s *PostControllerTestSuite) Test_GetPosts_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
+	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
 
-	expected := []models.PostView{defaultPostView}
+	expectedPostViews := []models.PostView{defaultPostView}
+	expectedArr := models.PostViewArray{
+		Posts:       expectedPostViews,
+		NextPageURL: "http://localhost:8080/auth/posts?cutoff=0",
+	}
 
-	s.dbHandler.SetMockGetPostsFunc(expected, nil)
+	s.dbHandler.SetMockGetPostsFunc(expectedPostViews, 0, nil)
 	s.api.GetPosts(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -306,7 +311,34 @@ func (s *PostControllerTestSuite) Test_GetPosts_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[[]models.PostView](m, expected); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostViewArray](m, expectedArr); !isEqual {
+		s.T().Error(errStr)
+	}
+}
+
+func (s *PostControllerTestSuite) Test_GetPosts_DiffCutoff() {
+	c, w := helpers.CreateTestContextAndRecorder()
+	helpers.AddStoreToContext(c, s.store)
+	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+
+	expectedPostViews := []models.PostView{defaultPostView}
+	expectedArr := models.PostViewArray{
+		Posts:       expectedPostViews,
+		NextPageURL: "http://localhost:8080/auth/posts?cutoff=10",
+	}
+
+	s.dbHandler.SetMockGetPostsFunc(expectedPostViews, 10, nil)
+	s.api.GetPosts(c)
+
+	b, _ := io.ReadAll(w.Body)
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
+		s.T().Error(errStr)
+	}
+	m, err := helpers.ParseJSONString(b)
+	if err != nil {
+		s.T().Error(err)
+	}
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostViewArray](m, expectedArr); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -314,10 +346,11 @@ func (s *PostControllerTestSuite) Test_GetPosts_OK() {
 func (s *PostControllerTestSuite) Test_GetPosts_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
+	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
 
 	expected := []models.PostView{defaultPostView}
 
-	s.dbHandler.SetMockGetPostsFunc(expected, errTest)
+	s.dbHandler.SetMockGetPostsFunc(expected, 0, errTest)
 	s.api.GetPosts(c)
 
 	b, _ := io.ReadAll(w.Body)

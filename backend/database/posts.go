@@ -2,18 +2,22 @@ package database
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrNotOwner = errors.New("unauthorised action")
 
+const postsToReturn = 10
+
 type PostDBHandler interface {
 	CreatePost(*models.Post) (*models.PostView, error)
 	DeletePost(string, string) error
-	GetPosts() ([]models.PostView, error)
-	GetPostByID(string) (*models.PostView, error)
+	GetPosts(string, string) ([]models.PostView, uint, error)
+	GetPostByID(string, string) (*models.PostView, error)
 	UpdatePost(*models.Post, string, string) (*models.PostView, error)
 }
 
@@ -24,12 +28,14 @@ type PostDB struct {
 
 func (db *PostDB) CreatePost(post *models.Post) (*models.PostView, error) {
 	result := db.DB.Create(post)
-	newPostView := post.PostView()
-	return newPostView, result.Error
+	if result.Error != nil {
+		return post.PostView(post.UserID), result.Error
+	}
+	return db.GetPostByID(fmt.Sprintf("%v", post.ID), post.UserID)
 }
 
 func (db *PostDB) DeletePost(id string, userID string) error {
-	postView, err := db.GetPostByID(id)
+	postView, err := db.GetPostByID(id, userID)
 	if err != nil {
 		return err
 	}
@@ -41,42 +47,52 @@ func (db *PostDB) DeletePost(id string, userID string) error {
 	return err
 }
 
-func (db *PostDB) GetPosts() ([]models.PostView, error) {
+func (db *PostDB) GetPosts(cutoff string, userID string) ([]models.PostView, uint, error) {
 	var posts []models.Post
 	var postViews []models.PostView
 
-	// Retrieve all posts from database
-	query := db.DB.Joins("User").Find(&posts)
-	if err := query.Find(&posts).Error; err != nil {
-		return postViews, err
+	if cutoff == "" {
+		// Retrieve all posts from database
+		query := db.DB.Limit(postsToReturn).Joins("User").Order("posts.id desc").Find(&posts)
+		if err := query.Find(&posts).Error; err != nil {
+			return postViews, 0, err
+		}
+	} else {
+		query := db.DB.Where("posts.id < ?", cutoff).Joins("User").Limit(postsToReturn).Order("posts.id desc").Find(&posts)
+		if err := query.Find(&posts).Error; err != nil {
+			return postViews, 0, err
+		}
 	}
 
+	var smallestID uint = 0
 	// Fill in user details for each post using userID of post creator
 	for _, post := range posts {
-		post := post.PostView()
+		smallestID = post.ID
+		post := post.PostView(userID)
 		postViews = append(postViews, *post)
 	}
-	return postViews, nil
+	return postViews, smallestID, nil
 }
 
-func (db *PostDB) GetPostByID(id string) (*models.PostView, error) {
+func (db *PostDB) GetPostByID(id string, userID string) (*models.PostView, error) {
 	post := models.Post{}
-	err := db.DB.First(&post, id).Error
-	postView := post.PostView()
+	err := db.DB.Joins("User").First(&post, id).Error
+	postView := post.PostView(userID)
 	return postView, err
 }
 
 func (db *PostDB) UpdatePost(post *models.Post, postid string, userID string) (*models.PostView, error) {
-	originalPostView, err := db.GetPostByID(postid)
+	postView, err := db.GetPostByID(postid, userID)
 	if err != nil {
-		return originalPostView, err
+		return postView, err
 	}
-	originalPost := originalPostView.GetPost()
-	if err := checkUserIsOwner(originalPostView, userID); err != nil {
-		return originalPostView, err
+	if err := checkUserIsOwner(postView, userID); err != nil {
+		return postView, err
 	}
-	err = db.DB.Model(originalPost).Updates(post).Error
-	postView := post.PostView()
+	resPost := &models.Post{}
+	result := db.DB.Model(resPost).Clauses(clause.Returning{}).Where("id = ?", postid).Updates(post)
+	err = result.Error
+	postView.Post = *resPost
 	return postView, err
 }
 

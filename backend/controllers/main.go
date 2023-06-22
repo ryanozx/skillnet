@@ -53,6 +53,7 @@ var (
 	ErrCookieSaveFail           = errors.New("cookie failed to save")
 	ErrIncorrectUserCredentials = errors.New("incorrect username or password")
 	ErrMissingUserCredentials   = errors.New("missing username or password")
+	ErrMissingSignupCredentials = errors.New("missing username, password, or email")
 	ErrNoValidSession           = errors.New("no valid session")
 	ErrPasswordEncryptFailed    = errors.New("password encryption failed")
 	ErrPostNotFound             = errors.New("post not found")

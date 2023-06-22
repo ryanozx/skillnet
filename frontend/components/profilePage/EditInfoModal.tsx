@@ -130,7 +130,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
 
     return (
         
-        <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'md', md: '2xl' }}>
+        <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'md', md: '2xl' }} closeOnOverlayClick={false}>
             <ModalOverlay />
             <ModalContent>
                 <Tabs index={activeTab} onChange={handleTabChange}>

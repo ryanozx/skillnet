@@ -106,8 +106,8 @@ type PostAPIer interface {
 
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
 	// Public routes
-	rg.Public().GET("/posts", api.GetPosts)
-	rg.Public().GET("/posts/:id", api.GetPostByID)
+	rg.Private().GET("/posts", api.GetPosts)
+	rg.Private().GET("/posts/:id", api.GetPostByID)
 
 	// Private routes
 	rg.Private().POST("/posts", api.CreatePost)

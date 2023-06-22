@@ -12,7 +12,7 @@ export function preventAuthAccess(Component: any) {
                 .then((res) => {
                     // if we get a successful response, the user is logged in, so redirect
                     const {Username} = res.data.data;
-                    router.push(`/profile/${Username}`);
+                    router.push(`/feed`);
                 })
                 .catch((error) => {
                     // if there was an error, we couldn't get user info, which means the user is not logged in

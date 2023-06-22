@@ -22,11 +22,11 @@ func (a *APIEnv) InitialiseUserHandler() {
 
 // Creates a new user (sign up)
 func (a *APIEnv) CreateUser(ctx *gin.Context) {
-	userCredentials := helpers.ExtractUserCredentials(ctx)
+	userCredentials := helpers.ExtractSignupUserCredentials(ctx)
 
 	// If request is badly formatted, return status code 400 Bad Request
-	if helpers.IsEmptyUserPass(userCredentials) {
-		helpers.OutputError(ctx, http.StatusBadRequest, ErrMissingUserCredentials)
+	if helpers.IsSignupUserCredsEmpty(userCredentials) {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrMissingSignupCredentials)
 		return
 	}
 
