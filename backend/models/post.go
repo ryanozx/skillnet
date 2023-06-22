@@ -6,7 +6,7 @@ import (
 
 // PostViewArray is a struct for supporting post feed pagination
 type PostViewArray struct {
-	Posts       []PostView
+	Posts       []PostView `json:"Posts"`
 	NextPageURL string
 }
 
@@ -14,7 +14,7 @@ type PostViewArray struct {
 type Post struct {
 	gorm.Model
 	UserID  string `json:"-" gorm:"<-:create; not null"`
-	User    User   `json:"-"`
+	User    User
 	Content string `gorm:"not null"`
 }
 
@@ -23,6 +23,7 @@ type PostView struct {
 	Post          Post
 	UserMinimal   `json:"User"`
 	CommentsArray `json:"Comments"`
+	IsEditable    bool
 }
 
 // MultimediaContent will be used to represent multimedia resources
@@ -33,10 +34,11 @@ type MultimediaContent struct {
 }
 
 // Creates a PostView object
-func (post *Post) PostView() *PostView {
+func (post *Post) PostView(userID string) *PostView {
 	postView := PostView{
 		Post:        *post,
 		UserMinimal: *post.User.UserMinimal(),
+		IsEditable:  userID == post.UserID,
 	}
 	return &postView
 }

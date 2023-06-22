@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 const FormButtons: React.FC<{handleSubmit: () => void}> = ({handleSubmit}) => {
     const router = useRouter();
     const handleSkip = () => {
-        router.push(`/profile/me`)
+        router.push(`/feed`)
     }
 
     return (

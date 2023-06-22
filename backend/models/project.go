@@ -3,21 +3,21 @@ package models
 import "gorm.io/gorm"
 
 type ProjectsArray struct {
-	Projects    []ProjectMinimal `gorm:"-:all"`
-	NextPageURL string           `gorm:"-:all"`
+	Projects    []ProjectMinimal `json:"projects"`
+	NextPageURL string
 }
 
 type ProjectMinimal struct {
 	Name          string
-	URL           string
+	URL           string `gorm:"-:all"`
 	ProjectImgURI string
+	ProjectInfo   string
 }
 
 type Project struct {
 	gorm.Model
-	Name        string
-	Owner       UserMinimal
-	Members     []UserMinimal
-	ProjectInfo string
-	Posts       PostViewArray `gorm:"-:all"`
+	ProjectMinimal `gorm:"embedded"`
+	Owner          UserMinimal
+	Members        []UserMinimal `gorm:"-:all"`
+	Posts          PostViewArray `gorm:"-:all"`
 }

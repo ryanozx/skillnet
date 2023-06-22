@@ -5,7 +5,8 @@ import {
   Flex,
   HStack,
   VStack,
-  Divider
+  Divider,
+  useToast
 } from '@chakra-ui/react';
 import axios from 'axios';
 import CropperComponent from './CropperComponent';
@@ -13,6 +14,7 @@ import NameTitleFields from './NameTitleFields';
 import AboutMeField from './AboutMeField';
 import FormButtons from './FormButtons';
 import { requireAuth } from '../../withAuthRedirect';
+import {useRouter} from "next/router";
 
 export default requireAuth(function CreateProfilePageContainer() {
     const [form, setForm] = useState({
@@ -21,6 +23,9 @@ export default requireAuth(function CreateProfilePageContainer() {
         title: '',
         profilePic: '',
     });
+
+    const router = useRouter();
+    const toast = useToast();
 
     useEffect(() => {
         axios
@@ -46,10 +51,24 @@ export default requireAuth(function CreateProfilePageContainer() {
     const handleSubmit = () => {
         axios.patch('http://localhost:8080/auth/user', form, { withCredentials: true })
             .then((res) => {
-                console.log(res.data);
+                toast({
+                    title: "Form submission successful.",
+                    description: "Your profile has been updated!",
+                    status: "success",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                router.push("/feed");
             })
             .catch((error) => {
                 console.log(error);
+                toast({
+                    title: "An error occurred.",
+                    description: error.response.data.error,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                });
             });
     };
 
