@@ -51,6 +51,12 @@ func (s *PostControllerTestSuite) TearDownTest() {
 }
 
 func TestPostControllerSuite(t *testing.T) {
+	t.Setenv("CLIENT_HOST", "http://localhost")
+	t.Setenv("CLIENT_PORT", "3000")
+	t.Setenv("BACKEND_HOST", "http://localhost")
+	t.Setenv("BACKEND_PORT", "8080")
+	helpers.SetModelClientAddress()
+	helpers.SetModelBackendAddress()
 	suite.Run(t, new(PostControllerTestSuite))
 }
 
@@ -290,6 +296,7 @@ func (s *PostControllerTestSuite) Test_DeletePost_CannotDelete() {
 
 // GetPosts
 func (s *PostControllerTestSuite) Test_GetPosts_OK() {
+	helpers.SetModelBackendAddress()
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)

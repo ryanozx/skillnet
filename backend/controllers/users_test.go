@@ -63,6 +63,12 @@ func (s *UserControllerTestSuite) TearDownTest() {
 }
 
 func TestUserControllerSuite(t *testing.T) {
+	t.Setenv("CLIENT_HOST", "http://localhost")
+	t.Setenv("CLIENT_PORT", "3000")
+	t.Setenv("BACKEND_HOST", "http://localhost")
+	t.Setenv("BACKEND_PORT", "8080")
+	helpers.SetModelClientAddress()
+	helpers.SetModelBackendAddress()
 	suite.Run(t, new(UserControllerTestSuite))
 }
 

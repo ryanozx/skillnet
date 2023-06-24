@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"time"
 
@@ -116,7 +117,7 @@ func (profile *UserView) GetUserMinimal() *UserMinimal {
 }
 
 func (user *User) GenerateProfileURL() {
-	const profileUrlPrefix = "http://localhost:3000/profile/"
+	var profileUrlPrefix = fmt.Sprintf("%s/profile/", ClientAddress)
 	url := profileUrlPrefix + user.Username
 	user.UserView.URL = url
 }
