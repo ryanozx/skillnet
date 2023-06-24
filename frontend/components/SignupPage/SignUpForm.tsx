@@ -19,7 +19,7 @@ export default function SignUpForm() {
         form_data.append('email', email);
         form_data.append('username', username);
         form_data.append('password', password);
-        var url = 'http://localhost:8080/signup'
+        const url = 'http://localhost:8080/signup'
     
         axios.post(url, form_data, {withCredentials: true})
             .then((res) => {

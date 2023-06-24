@@ -142,7 +142,11 @@ func (s *UserControllerTestSuite) Test_CreateUser_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, defaultCreds)
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"testuser", "12345", "abc@gmail.com"})
 	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
 	s.api.CreateUser(c)
 
@@ -159,15 +163,15 @@ func (s *UserControllerTestSuite) Test_CreateUser_OK() {
 	}
 }
 
-func (s *UserControllerTestSuite) Test_CreateUser_EmptyUserPass() {
+func (s *UserControllerTestSuite) Test_CreateUser_EmptyUsername() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 
-	userCreds := models.UserCredentials{
-		Username: "",
-		Password: "",
-	}
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, userCreds)
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"", "12345", "abc@gmail.com"})
 
 	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
 	s.api.CreateUser(c)
@@ -180,7 +184,59 @@ func (s *UserControllerTestSuite) Test_CreateUser_EmptyUserPass() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingUserCredentials); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingSignupCredentials); !isEqual {
+		s.T().Error(errStr)
+	}
+}
+
+func (s *UserControllerTestSuite) Test_CreateUser_EmptyPassword() {
+	c, w := helpers.CreateTestContextAndRecorder()
+	helpers.AddStoreToContext(c, s.store)
+
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"testuser", "", "abc@gmail.com"})
+
+	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
+	s.api.CreateUser(c)
+
+	b, _ := io.ReadAll(w.Body)
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
+		s.T().Error(errStr)
+	}
+	m, err := helpers.ParseJSONString(b)
+	if err != nil {
+		s.T().Error(err)
+	}
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingSignupCredentials); !isEqual {
+		s.T().Error(errStr)
+	}
+}
+
+func (s *UserControllerTestSuite) Test_CreateUser_EmptyEmail() {
+	c, w := helpers.CreateTestContextAndRecorder()
+	helpers.AddStoreToContext(c, s.store)
+
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"testuser", "12345", ""})
+
+	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
+	s.api.CreateUser(c)
+
+	b, _ := io.ReadAll(w.Body)
+	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
+		s.T().Error(errStr)
+	}
+	m, err := helpers.ParseJSONString(b)
+	if err != nil {
+		s.T().Error(err)
+	}
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingSignupCredentials); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -189,7 +245,11 @@ func (s *UserControllerTestSuite) Test_CreateUser_UsernameConflict() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, defaultCreds)
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"testuser", "12345", "abc@gmail.com"})
 	s.dbHandler.SetMockCreateUserFunc(&defaultUser, gorm.ErrDuplicatedKey)
 	s.api.CreateUser(c)
 
@@ -210,7 +270,11 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotCreate() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, defaultCreds)
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"testuser", "12345", "abc@gmail.com"})
 	s.dbHandler.SetMockCreateUserFunc(&defaultUser, errTest)
 	s.api.CreateUser(c)
 
@@ -232,7 +296,11 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotSaveSession() {
 	s.store.SetSaveError(errTest)
 	helpers.AddStoreToContext(c, s.store)
 
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, defaultCreds)
+	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+		Username string
+		Password string
+		Email    string
+	}{"testuser", "12345", "abc@gmail.com"})
 	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
 	s.api.CreateUser(c)
 

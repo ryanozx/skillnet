@@ -7,7 +7,7 @@ import InfoSection from './InfoSection';
 import ProjectDisplay from './ProjectDisplay';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { User } from '../../types';
+import { User, ProjectView } from '../../types';
 import { useUser } from '../../userContext';
 
 
@@ -20,7 +20,7 @@ export default function ProfileInfo({username}: {username: string}) {
         Title: "",
         ProfilePic: "",
         Username: "",
-        Projects: []
+        Projects: [] as ProjectView[],
     });
     const [profileState, setProfileState] = useState<string>("loading");
 
@@ -73,7 +73,7 @@ export default function ProfileInfo({username}: {username: string}) {
               user={user}
               {...(profileState === "self" && { setUser })}
             />
-            <ProjectDisplay />
+            <ProjectDisplay projects={ user.Projects }/>
           </VStack>
         </Box>
       );

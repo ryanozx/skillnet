@@ -1,4 +1,5 @@
 import React from "react";
+import {useEffect} from "react";
 import ProfileInfo from "../../components/profilePage/ProfileInfo";
 import DefaultLayoutContainer from "../../components/base/DefaultLayoutContainer";
 import { useRouter } from 'next/router';
@@ -8,8 +9,9 @@ import ProfilePageContainer from "../../components/profilePage/ProfilePageContai
 
 export default function ProfilePage() { 
     const router = useRouter();
-    const { username } = router.query;
+    const {isReady, query} = router;
+    
     return (
-        <ProfilePageContainer username={username as string}/>
+        <ProfilePageContainer username={query.username as string}/>
     );
 }

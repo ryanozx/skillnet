@@ -78,7 +78,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
             const sessionId = sessionStorage.getItem('sessionId');
             console.log('API call to get the current privacy setting of user');
             axios
-                .get('your-privacy-endpoint', {
+                .get('privacy-endpoint', {
                 headers: {
                     Authorization: `Bearer ${sessionId}`
                 }
@@ -130,7 +130,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
 
     return (
         
-        <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'md', md: '2xl' }}>
+        <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'md', md: '2xl' }} closeOnOverlayClick={false}>
             <ModalOverlay />
             <ModalContent>
                 <Tabs index={activeTab} onChange={handleTabChange}>

@@ -1,7 +1,6 @@
 package helpers
 
 import (
-	"fmt"
 	"log"
 	"strings"
 
@@ -20,9 +19,12 @@ func IsEmptyUserPass(user *models.UserCredentials) bool {
 	return strings.Trim(user.Username, " ") == "" || strings.Trim(user.Password, " ") == ""
 }
 
+func IsSignupUserCredsEmpty(user *models.SignupUserCredentials) bool {
+	return IsEmptyUserPass(&user.UserCredentials) || strings.Trim(user.Email, " ") == ""
+}
+
 func IsValidSession(session SessionGetter) bool {
 	userID := session.Get(IdKey)
-	fmt.Println(userID)
 	return userID != nil
 }
 
@@ -38,6 +40,16 @@ func ExtractUserCredentials(ctx *gin.Context) *models.UserCredentials {
 	return &models.UserCredentials{
 		Username: username,
 		Password: password,
+	}
+}
+
+func ExtractSignupUserCredentials(ctx *gin.Context) *models.SignupUserCredentials {
+	const emailKey = "email"
+	email := ctx.PostForm(emailKey)
+	userCreds := ExtractUserCredentials(ctx)
+	return &models.SignupUserCredentials{
+		UserCredentials: *userCreds,
+		Email:           email,
 	}
 }
 

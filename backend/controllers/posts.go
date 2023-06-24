@@ -5,6 +5,8 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -70,18 +72,26 @@ func (a *APIEnv) DeletePost(ctx *gin.Context) {
 }
 
 func (a *APIEnv) GetPosts(ctx *gin.Context) {
-	posts, err := a.PostDBHandler.GetPosts()
+	cutoff := ctx.DefaultQuery("cutoff", "")
+	userID := helpers.GetUserIdFromContext(ctx)
+	posts, newCutoff, err := a.PostDBHandler.GetPosts(cutoff, userID)
+	log.Println(err)
 	// If unable to retrieve posts, return status code 404 Not Found
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
-	helpers.OutputData(ctx, posts)
+	postViewArray := models.PostViewArray{
+		Posts:       posts,
+		NextPageURL: fmt.Sprintf("http://localhost:8080/auth/posts?cutoff=%d", newCutoff),
+	}
+	helpers.OutputData(ctx, postViewArray)
 }
 
 func (a *APIEnv) GetPostByID(ctx *gin.Context) {
 	postID := helpers.GetPostIdFromContext(ctx)
-	post, err := a.PostDBHandler.GetPostByID(postID)
+	userID := helpers.GetPostIdFromContext(ctx)
+	post, err := a.PostDBHandler.GetPostByID(postID, userID)
 	// If unable to retrieve post, return status code 404 Not Found
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)

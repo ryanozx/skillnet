@@ -30,7 +30,7 @@ export const FormSubmit: React.FC<FormSubmitProps> = ({ username, password }) =>
                     duration: 5000,
                     isClosable: true,
                 });
-                router.push("/profile/me");
+                router.push("/feed");
             })
             .catch((error) => {
                 console.log(error);
