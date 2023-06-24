@@ -31,6 +31,7 @@
     "yarn": "^1.22.19"
   },
   "devDependencies": {
+    "@types/estree": "^1.0.1",
     "@types/react-redux": "^7.1.25",
     "@types/redux": "^3.6.0",
     "@types/redux-thunk": "^2.1.0"
