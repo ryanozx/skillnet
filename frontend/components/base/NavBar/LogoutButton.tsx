@@ -11,8 +11,8 @@ const LogoutButton: React.FC = () => {
     const router = useRouter();
 
     const handleClick: MouseEventHandler = () => {
-        var url = 'http://localhost:8080/auth/logout'
-        axios.post(url, {}, {withCredentials: true})
+        const base_url = process.env.BACKEND_BASE_URL;
+        axios.post(base_url + '/auth/logout', {}, {withCredentials: true})
             .then((res) => {
                 console.log(res);
                 toast({

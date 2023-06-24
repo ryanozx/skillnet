@@ -17,7 +17,8 @@ export default function EditPostModel(props : EditPostModalProps) {
     const toast = useToast();
     
     const handleClose = () => props.setIsOpen(false);
-    const postURL = `http://localhost:8080/auth/posts/${props.postComponent.ID}`;
+    const base_url = process.env.BACKEND_BASE_URL;
+    const postURL = base_url + `/auth/posts/${props.postComponent.ID}`;
 
     const loadText = () => {
         setText(props.postComponent.Content);

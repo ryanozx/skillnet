@@ -22,7 +22,8 @@ const ImageCropper: React.FC<ImageCropperProps> = ({ isOpen, onClose, onCropped,
 
     const saveCroppedImage = async () => {
         const imageElement = cropperRef?.current;
-        const url = "http://localhost:8080/auth/user/photo";
+        const base_url = process.env.BACKEND_BASE_URL;
+        const url = base_url + "/auth/user/photo";
         if (imageElement?.cropper) {
             const croppedCanvas = imageElement.cropper.getCroppedCanvas();
             croppedCanvas.toBlob(async (blob) => {
