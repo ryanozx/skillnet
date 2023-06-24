@@ -24,8 +24,8 @@ const CropperComponent: React.FC<CropperComponentProps> = ({profilePic, setUser}
     };
   
     const handleCroppedImage = (dataUrl: string) => {
-        const url = "http://localhost:8080/auth/user"
-        axios.patch(url, {
+        const base_url = process.env.BACKEND_BASE_URL;
+        axios.patch(base_url + '/auth/user', {
                 profilepic: dataUrl,
             }, {
                 withCredentials: true,

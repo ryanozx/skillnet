@@ -22,6 +22,7 @@ type APIEnv struct {
 	PostDBHandler database.PostDBHandler
 	UserDBHandler database.UserDBHandler
 	AuthDBHandler database.AuthDBHandler
+	LikeDBHandler database.LikeAPIHandler
 	GoogleCloud   *storage.Client
 }
 

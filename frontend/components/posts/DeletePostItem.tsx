@@ -11,7 +11,8 @@ interface DeletePostItemProps {
 export default function DeletePostItem(props : DeletePostItemProps) {
     const {isOpen, onOpen, onClose} = useDisclosure();
     const cancelRef = useRef<HTMLButtonElement>(null);
-    const postURL = `http://localhost:8080/auth/posts/${props.post.ID}`;
+    const base_url = process.env.BACKEND_BASE_URL;
+    const postURL = base_url + `/auth/posts/${props.post.ID}`;
     const toast = useToast();
 
     const handleDelete = () => {

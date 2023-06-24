@@ -19,7 +19,8 @@ export default function SignUpForm() {
         form_data.append('email', email);
         form_data.append('username', username);
         form_data.append('password', password);
-        const url = 'http://localhost:8080/signup'
+        const base_url = process.env.BACKEND_BASE_URL;
+        const url = base_url + '/signup';
     
         axios.post(url, form_data, {withCredentials: true})
             .then((res) => {

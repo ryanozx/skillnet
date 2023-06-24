@@ -9,7 +9,8 @@ export default function Feed() {
     const [posts, setPosts] = useState<React.JSX.Element[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [url, setURL] = useState("http://localhost:8080/auth/posts")
+    const base_url = process.env.BACKEND_BASE_URL;
+    const [url, setURL] = useState(base_url + "/auth/posts")
 
     const updateFeed = async() => {
         if (!isLoading) {
@@ -17,11 +18,17 @@ export default function Feed() {
             setIsLoading(true);
             setError(null);
 
+            console.log("Fetching from: ", url);
+
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData
             .then((response) => {
-                setPosts([...posts, ...response.data["data"]["Posts"].map((postdata : PostView) => <Post key={postdata.Post.ID} {...postdata}/>)])
-                setURL(response.data["data"]["NextPageURL"])
+                if (response.data["data"]["Posts"] != null)
+                {
+                    setPosts([...posts, ...response.data["data"]["Posts"].map((postdata : PostView) => <Post key={postdata.Post.ID} {...postdata}/>)]);
+                }
+                setURL(response.data["data"]["NextPageURL"]);
+                console.log(url);
             })
             .catch((error) => {
                 console.log(error);
@@ -46,7 +53,7 @@ export default function Feed() {
         <InfiniteScroll
             dataLength={posts.length}
             next={updateFeed}
-            hasMore={url != "http://localhost:8080/auth/posts?cutoff=1"}
+            hasMore={url != (base_url + "/auth/posts?cutoff=0")}
             loader={<Box paddingBlock="10px">
             <Text textAlign="center">Loading...</Text>
         </Box>}
