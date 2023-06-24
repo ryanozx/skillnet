@@ -177,18 +177,3 @@ func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
 
 	rg.Private().POST("/user/photo", api.PostUserPicture)
 }
-
-func setupPhotoAPI(rg RouterGrouper, api PhotoAPIer) {
-	// api.InitialisePhotoHandler()
-	registerPhotoRoutes(rg, api)
-}
-
-type PhotoAPIer interface {
-	PostUserPicture(*gin.Context)
-}
-
-func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
-	// rg.Public().POST("/testupload", api.PostUserPicture)
-
-	rg.Private().POST("/user/photo", api.PostUserPicture)
-}
