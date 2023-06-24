@@ -8,7 +8,12 @@ export interface User {
     Title?: string;
     ProfilePic?: string;
     Username: string;
-    Projects?: ProjectView[];
+    Projects: ProjectView[];
+}
+
+export interface Projects {
+    ProjectList: ProjectView[];
+    NextPageURL: string;
 }
 
 export interface ProjectView {

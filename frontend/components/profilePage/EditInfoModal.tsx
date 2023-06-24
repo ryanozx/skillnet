@@ -78,7 +78,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
             const sessionId = sessionStorage.getItem('sessionId');
             console.log('API call to get the current privacy setting of user');
             axios
-                .get('your-privacy-endpoint', {
+                .get('privacy-endpoint', {
                 headers: {
                     Authorization: `Bearer ${sessionId}`
                 }
