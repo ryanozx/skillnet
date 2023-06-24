@@ -2,8 +2,11 @@ package helpers
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+
+	"github.com/ryanozx/skillnet/models"
 )
 
 type BaseEnv struct {
@@ -129,4 +132,26 @@ func RetrieveClientEnv() *BaseEnv {
 		Port: port,
 	}
 	return &env
+}
+
+func RetrieveBackendEnv() *BaseEnv {
+	host := os.Getenv("BACKEND_HOST")
+	port := os.Getenv("BACKEND_PORT")
+	env := BaseEnv{
+		Host: host,
+		Port: port,
+	}
+	return &env
+}
+
+func SetModelClientAddress() {
+	clientEnv := RetrieveClientEnv()
+	models.ClientAddress = clientEnv.Address()
+	log.Println("Set client address to:", models.ClientAddress)
+}
+
+func SetModelBackendAddress() {
+	backendEnv := RetrieveBackendEnv()
+	models.BackendAddress = backendEnv.Address()
+	log.Println("Set backend address to:", models.BackendAddress)
 }

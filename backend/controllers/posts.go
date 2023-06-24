@@ -83,8 +83,9 @@ func (a *APIEnv) GetPosts(ctx *gin.Context) {
 	}
 	postViewArray := models.PostViewArray{
 		Posts:       posts,
-		NextPageURL: fmt.Sprintf("http://localhost:8080/auth/posts?cutoff=%d", newCutoff),
+		NextPageURL: fmt.Sprintf("%s/auth/posts?cutoff=%d", models.BackendAddress, newCutoff),
 	}
+	log.Println("NextPageURL: ", postViewArray.NextPageURL)
 	helpers.OutputData(ctx, postViewArray)
 }
 

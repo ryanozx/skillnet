@@ -9,8 +9,9 @@ The response body will contain one of three keys:
 package controllers
 
 import (
-	"cloud.google.com/go/storage"
 	"errors"
+
+	"cloud.google.com/go/storage"
 	"github.com/ryanozx/skillnet/database"
 	"gorm.io/gorm"
 )
@@ -21,6 +22,7 @@ type APIEnv struct {
 	PostDBHandler database.PostDBHandler
 	UserDBHandler database.UserDBHandler
 	AuthDBHandler database.AuthDBHandler
+	LikeDBHandler database.LikeAPIHandler
 	GoogleCloud   *storage.Client
 }
 

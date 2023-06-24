@@ -24,12 +24,18 @@ func (s *serverConfig) setupRoutes() {
 	routerGroup := s.RouterGroups()
 	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud)
 
+	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
+	// does not need to be read everytime we require the client address or backend address
+	helpers.SetModelClientAddress()
+	helpers.SetModelBackendAddress()
+
 	// Register routes - routes are grouped by features for greater
 	// modularity
 	setupPostAPI(routerGroup, apiEnv)
 	setupUserAPI(routerGroup, apiEnv)
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
+	setupLikeAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -176,4 +182,20 @@ func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
 	// rg.Public().POST("/testupload", api.PostUserPicture)
 
 	rg.Private().POST("/user/photo", api.PostUserPicture)
+}
+
+func setupLikeAPI(rg RouterGrouper, api LikeAPIer) {
+	api.InitialiseLikeHandler()
+	registerLikeRoutes(rg, api)
+}
+
+type LikeAPIer interface {
+	InitialiseLikeHandler()
+	PostLike(*gin.Context)
+	DeleteLike(*gin.Context)
+}
+
+func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
+	rg.Private().POST("/likes/:id", api.PostLike)
+	rg.Private().DELETE("/likes/:id", api.DeleteLike)
 }
