@@ -2,8 +2,5 @@
     "scripts": {
         "setup": "cd frontend && npm install",
         "start": "cd frontend && npm run dev"
-    },
-    "dependencies": {
-        "boxicons": "^2.1.4"
     }
 }

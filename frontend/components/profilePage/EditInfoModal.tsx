@@ -97,7 +97,8 @@ export default function EditProfileModal(props: EditProfileModalProps) {
     }, [isOpen]);
 
     const handleSave = () => {
-        const url = "http://localhost:8080/auth/user"
+        const base_url = process.env.BACKEND_BASE_URL;
+        const url = base_url + "/auth/user"
         axios.patch(url, {
                 name: form.name,
                 title: form.title,

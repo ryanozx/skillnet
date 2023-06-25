@@ -7,8 +7,9 @@ export function preventAuthAccess(Component: any) {
     return function AuthenticatedComponent(props: any) {
         const router = useRouter();
         const [loading, setLoading] = useState(true);
+        const base_url = process.env.BACKEND_BASE_URL
         useEffect(() => {
-            axios.get('http://localhost:8080/auth/user', { withCredentials: true })
+            axios.get(base_url + '/auth/user', { withCredentials: true })
                 .then((res) => {
                     // if we get a successful response, the user is logged in, so redirect
                     const {Username} = res.data.data;
@@ -32,8 +33,9 @@ export function requireAuth(Component: any) {
     return function AuthenticatedComponent(props: any) {
         const router = useRouter();
         const [loading, setLoading] = useState(true);
+        const base_url = process.env.BACKEND_BASE_URL;
         useEffect(() => {
-            axios.get('http://localhost:8080/auth/user', { withCredentials: true })
+            axios.get(base_url + '/auth/user', { withCredentials: true })
                 .then((res) => {
                     // if we get a successful response, the user is logged in, so redirect
                     setLoading(false);

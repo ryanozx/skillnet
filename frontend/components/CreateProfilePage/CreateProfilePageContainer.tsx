@@ -26,10 +26,11 @@ export default requireAuth(function CreateProfilePageContainer() {
 
     const router = useRouter();
     const toast = useToast();
+    const base_url = process.env.BACKEND_BASE_URL;
 
     useEffect(() => {
         axios
-        .get('http://localhost:8080/auth/user', { withCredentials: true })
+        .get(base_url + '/auth/user', { withCredentials: true })
         .then((res) => {
             const { AboutMe, Name, Title, ProfilePic } = res.data.data;
             setForm({
@@ -49,7 +50,8 @@ export default requireAuth(function CreateProfilePageContainer() {
     };
 
     const handleSubmit = () => {
-        axios.patch('http://localhost:8080/auth/user', form, { withCredentials: true })
+        const base_url = process.env.BACKEND_BASE_URL;
+        axios.patch(base_url + '/auth/user', form, { withCredentials: true })
             .then((res) => {
                 toast({
                     title: "Form submission successful.",

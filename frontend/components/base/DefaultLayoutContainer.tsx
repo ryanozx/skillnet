@@ -25,7 +25,8 @@ export default requireAuth(function DefaultLayoutContainer({ children }: Default
 
     useEffect(() => {
         if (needUpdate) {
-            axios.get('http://localhost:8080/auth/user', { withCredentials: true })
+            const base_url = process.env.BACKEND_BASE_URL;
+            axios.get(base_url + '/auth/user', { withCredentials: true })
                 .then((res) => {
                     const { ProfilePic, Username } = res.data.data;
                     setProfilePic(ProfilePic);

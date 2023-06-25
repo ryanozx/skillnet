@@ -19,7 +19,8 @@ export default function CreatePostCard(props : CreatePostProps) {
     }
 
     const onSubmit = () => {
-        axios.post("http://localhost:8080/auth/posts", {"content": text}, {withCredentials: true})
+        const base_url = process.env.BACKEND_BASE_URL;
+        axios.post(base_url + "/auth/posts", {"content": text}, {withCredentials: true})
         .then(res => {
             props.addPostHandler(res.data["data"]);
             toast({
