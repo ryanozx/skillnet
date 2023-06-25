@@ -5,3 +5,5 @@ data
 
 /backend/tmp
 /backend/google-keyfile.json
+
+/frontend/next.config.js
