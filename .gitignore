@@ -4,6 +4,6 @@ data
 **/node_modules
 
 /backend/tmp
+
 /backend/google-keyfile.json
 
-/frontend/next.config.js
