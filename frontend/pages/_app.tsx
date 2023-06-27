@@ -1,6 +1,5 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import { UserProvider } from '../userContext';
 
 interface MyAppProps {

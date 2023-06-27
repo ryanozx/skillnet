@@ -9,7 +9,8 @@ export default function Feed() {
     const [posts, setPosts] = useState<React.JSX.Element[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [url, setURL] = useState("http://localhost:8080/auth/posts")
+    const base_url = process.env.BACKEND_BASE_URL;
+    const [url, setURL] = useState(base_url + "/auth/posts")
 
     const updateFeed = async() => {
         if (!isLoading) {
@@ -52,7 +53,7 @@ export default function Feed() {
         <InfiniteScroll
             dataLength={posts.length}
             next={updateFeed}
-            hasMore={url != "http://localhost:8080/auth/posts?cutoff=0"}
+            hasMore={url != (base_url + "/auth/posts?cutoff=0")}
             loader={<Box paddingBlock="10px">
             <Text textAlign="center">Loading...</Text>
         </Box>}

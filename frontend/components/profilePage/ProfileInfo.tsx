@@ -25,8 +25,9 @@ export default function ProfileInfo({username}: {username: string}) {
     const [profileState, setProfileState] = useState<string>("loading");
 
     useEffect(() => {
-        const currentUrl = "http://localhost:8080/auth/user";
-        const profileUrl = "http://localhost:8080/users/" + username;
+        const base_url = process.env.BACKEND_BASE_URL;
+        const currentUrl = base_url + "/auth/user";
+        const profileUrl = base_url + "/users/" + username;
         if (username) {
             axios.get(currentUrl, { withCredentials: true })
             .then((res) => {
