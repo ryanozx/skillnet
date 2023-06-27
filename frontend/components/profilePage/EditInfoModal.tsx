@@ -36,6 +36,7 @@ interface EditProfileModalProps {
 }  
 
 export default function EditProfileModal(props: EditProfileModalProps) {
+export default function EditProfileModal(props: EditProfileModalProps) {
     const { handleOpen, handleClose, isOpen, setIsOpen, setUser } = props;
     const toast = useToast();
     const [activeTab, setActiveTab] = useState(0);

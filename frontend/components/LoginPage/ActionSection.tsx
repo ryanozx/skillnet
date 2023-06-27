@@ -1,9 +1,9 @@
 import React, { MouseEventHandler } from 'react';
 import {Stack, FormControl, FormLabel, Input, Button, Checkbox} from '@chakra-ui/react';
-import SignUpSection from './SignUpSection';
+import SignUpSection from './SignUpRedirect';
 
 interface ActionSectionProps {
-    onSubmit: React.MouseEventHandler<HTMLButtonElement>;
+    onSubmit: MouseEventHandler<HTMLButtonElement>;
 }
 
 export default function ActionSection({onSubmit}: ActionSectionProps) {
