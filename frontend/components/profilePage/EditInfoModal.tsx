@@ -36,7 +36,6 @@ interface EditProfileModalProps {
 }  
 
 export default function EditProfileModal(props: EditProfileModalProps) {
-export default function EditProfileModal(props: EditProfileModalProps) {
     const { handleOpen, handleClose, isOpen, setIsOpen, setUser } = props;
     const toast = useToast();
     const [activeTab, setActiveTab] = useState(0);
@@ -131,7 +130,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
     };
 
     return (
-        
+        <>
         <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'md', md: '2xl' }} closeOnOverlayClick={false}>
             <ModalOverlay />
             <ModalContent>
@@ -158,8 +157,8 @@ export default function EditProfileModal(props: EditProfileModalProps) {
                     </Button>                
                 </ModalFooter>
             </ModalContent>
-            </Modal>
-
+        </Modal>
+        </>
     );
 };
 
