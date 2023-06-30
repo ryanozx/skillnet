@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button, Link, Stack } from '@chakra-ui/react';
 
-export const CallToActionButtons = () => (
+const CallToActionButtons = () => (
     <Stack
         direction={'column'}
         spacing={3}
@@ -27,3 +27,5 @@ export const CallToActionButtons = () => (
         </Link>
     </Stack>
 );
+
+export default CallToActionButtons;
