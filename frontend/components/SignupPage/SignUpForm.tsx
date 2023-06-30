@@ -1,11 +1,9 @@
 import React, { useState, MouseEventHandler } from 'react';
 import { Stack, useToast } from '@chakra-ui/react';
 import LoginRedirect from './LoginRedirect';
-import axios from 'axios';
-import { useRouter } from 'next/router';
 import { EmailInput } from './EmailInput';
 import { UsernameInput } from './UsernameInput';
-import { SubmitButton } from './SignUpButton';
+import { SignUpButton } from './SignUpButton';
 import { PasswordInput } from './PasswordInput';
 
 type UserSignupForm = {
@@ -26,11 +24,11 @@ export default function SignUpForm() {
 
     return (
         <Stack spacing={4}>
-            <UsernameInput data-testid="username-input" value={form.username} onChange={handleInputChange} />
-            <EmailInput data-testid="email-input" value={form.email} onChange={handleInputChange} />
-            <PasswordInput data-testid="password-input" value={form.password} onChange={handleInputChange} />
-            <SubmitButton data-testid="submit-button" form={form} />
-            <LoginRedirect />
+            <UsernameInput data-testid="username" value={form.username} onChange={handleInputChange} />
+            <EmailInput data-testid="email" value={form.email} onChange={handleInputChange} />
+            <PasswordInput data-testid="password" value={form.password} onChange={handleInputChange} />
+            <SignUpButton data-testid="submit" form={form} />
+            <LoginRedirect data-testid="redirect" />
         </Stack>
     );
     

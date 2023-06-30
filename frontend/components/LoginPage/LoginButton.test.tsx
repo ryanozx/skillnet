@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react';
-import { SignUpButton  } from './SignUpButton';
+import { LoginButton } from './LoginButton';
 import axios from 'axios';
 import { useRouter } from 'next/router';
 import MockAdapter from "axios-mock-adapter";
@@ -20,29 +20,25 @@ const mockRouter = useRouter as jest.Mock;
 const mockToast = useToast as jest.Mock;
 
 const url = process.env.BACKEND_BASE_URL + '/login';
+const username = 'username';
+const password = 'password';
 
-describe('SignUpButton', () => {
-    const mockForm = {
-        username: 'username',
-        email: 'test@test.com',
-        password: 'password',
-    };
-
-    const url = process.env.BACKEND_BASE_URL + '/signup';
+describe('LoginButton', () => {
 
     beforeEach(() => {
-        mockAxios.resetHistory();
-        mockRouter.mockClear();
-        mockToast.mockClear();
+        mockAxios.resetHistory(); // Clears all history of requests
+        mockRouter.mockClear(); // Clears all instances of this mock function
+        mockToast.mockClear(); // Clears all instances of this mock function
     });
-
+    
     afterEach(() => {
-        mockAxios.reset();
+        mockAxios.reset(); // Removes any mock handlers
     });
+    
 
-    it('should render a submit button', () => {
-        const { getByRole } = render(<SignUpButton form={mockForm} />);
-        const button = getByRole('button', { name: 'Sign up' });
+    it('should render a login button', () => {
+        const { getByRole } = render(<LoginButton username={username} password={password} />);
+        const button = getByRole('button', { name: 'Sign in' });
         expect(button).toBeInTheDocument();
     });
 
@@ -53,10 +49,10 @@ describe('SignUpButton', () => {
         mockRouter.mockReturnValue({ push });
         const toast = jest.fn();
         mockToast.mockReturnValue(toast);
-
+      
         // Render and click
-        const { getByRole } = render(<SignUpButton  form={mockForm} />);
-        const button = getByRole('button', { name: 'Sign up' });
+        const { getByRole } = render(<LoginButton username={username} password={password} />);
+        const button = getByRole('button', { name: 'Sign in' });
         await act(async () => {
             fireEvent.click(button);
         });
@@ -64,10 +60,10 @@ describe('SignUpButton', () => {
         // Assertions
         expect(mockAxios.history.post[0].url).toEqual(url);
         expect(mockAxios.history.post[0].withCredentials).toEqual(true);
-        expect(push).toHaveBeenCalledWith('/create-profile');
+        expect(push).toHaveBeenCalledWith('/feed');
         expect(toast).toHaveBeenCalledWith({
             title: "Form submission successful.",
-            description: "Account successfully created.",
+            description: "We've received your form data.",
             status: "success",
             duration: 5000,
             isClosable: true,
@@ -76,14 +72,14 @@ describe('SignUpButton', () => {
 
     it('should show error toast on request failure', async () => {
         // Setup
-        const errorResponse = { message: 'Some error' };
+        const errorResponse = { error: 'Some error' };
         mockAxios.onPost(url).reply(500, errorResponse);
         const toast = jest.fn();
         mockToast.mockReturnValue(toast);
-
+      
         // Render and click
-        const { getByRole } = render(<SignUpButton  form={mockForm} />);
-        const button = getByRole('button', { name: 'Sign up' });
+        const { getByRole } = render(<LoginButton username={username} password={password} />);
+        const button = getByRole('button', { name: 'Sign in' });
         await act(async () => {
             fireEvent.click(button);
         });
@@ -93,12 +89,10 @@ describe('SignUpButton', () => {
         expect(mockAxios.history.post[0].withCredentials).toEqual(true);
         expect(toast).toHaveBeenCalledWith({
             title: "An error occurred.",
-            description: errorResponse.message,
+            description: errorResponse.error,
             status: "error",
             duration: 5000,
             isClosable: true,
         });
     });
 });
-
-

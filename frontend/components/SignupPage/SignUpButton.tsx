@@ -12,7 +12,7 @@ interface SubmitButtonProps {
     form: UserSignupForm;
 }
 
-export const SubmitButton = ({ form }: SubmitButtonProps) => {
+export const SignUpButton = ({ form }: SubmitButtonProps) => {
     const { username, email, password } = form;
     const toast = useToast();
     const router = useRouter();
@@ -50,8 +50,8 @@ export const SubmitButton = ({ form }: SubmitButtonProps) => {
     return(
         <Stack spacing={10} pt={2}>
             <Button
+                data-testid="signup-button"
                 type="submit"
-                loadingText="Submitting"
                 size="lg"
                 bg={'blue.400'}
                 color={'white'}

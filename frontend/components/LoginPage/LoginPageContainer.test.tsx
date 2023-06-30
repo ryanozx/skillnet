@@ -1,24 +1,26 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import SignUpPageContainer from './SignUpPageContainer';
+import LoginPageContainer from './LoginPageContainer';
 import { preventAuthAccess } from '../../withAuthRedirect';
 
+// Mock the components to isolate the container component testing
 jest.mock('./FormHeading', () => () => <div data-testid="form-heading" />);
-jest.mock('./SignUpForm', () => () => <div data-testid="sign-up-form" />);
+jest.mock('./LoginForm', () => () => <div data-testid="login-form" />);
 jest.mock('../../withAuthRedirect', () => ({
     preventAuthAccess: jest.fn((Component) => Component),
-    requireAuth: jest.fn((Component) => Component),
 }));
-  
-describe('SignUpPageContainer', () => {
-    it('renders the FormHeading and SignUpForm components', () => {
-        const { getByTestId } = render(<SignUpPageContainer />);
+
+describe('LoginPageContainer', () => {
+    it('renders the FormHeading and LoginForm components', () => {
+        const { getByTestId } = render(<LoginPageContainer />);
         
         expect(getByTestId('form-heading')).toBeInTheDocument();
-        expect(getByTestId('sign-up-form')).toBeInTheDocument();
+        expect(getByTestId('login-form')).toBeInTheDocument();
     });
 
     it('calls preventAuthAccess to prevent authenticated user from visiting this page', () => {
         expect(preventAuthAccess).toHaveBeenCalled();
     });
+
 });
+
