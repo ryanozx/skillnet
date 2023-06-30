@@ -6,14 +6,11 @@ import { preventAuthAccess } from '../../withAuthRedirect';
 
 jest.mock('./FormHeading', () => () => <div data-testid="form-heading" />);
 jest.mock('./SignUpForm', () => () => <div data-testid="sign-up-form" />);
-// jest.mock('../../withAuthDirect', () => (Component: ReactJSXElement) => Component);
 jest.mock('../../withAuthRedirect', () => ({
     preventAuthAccess: jest.fn((Component) => Component),
     requireAuth: jest.fn((Component) => Component),
-  }));
+}));
   
-  // Then in your test you can do:
-//   expect(requireAuth).toHaveBeenCalled();
 describe('SignUpPageContainer', () => {
     it('renders the FormHeading and SignUpForm components', () => {
         const { getByTestId } = render(<SignUpPageContainer />);

@@ -8,13 +8,13 @@ import {
 
 interface UsernameInputProps {
     value: string;
-    onChange: (newUsername: string) => void;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const UsernameInput: React.FC<UsernameInputProps> = ({ value, onChange }) => (
     <FormControl id="username" isRequired>
         <FormLabel>Username</FormLabel>
-        <Input type="text" value={value} onChange={e => onChange(e.target.value)} />
+        <Input data-testid="username-input" type="text" name="username" value={value} onChange={onChange} />
     </FormControl>
 );
 

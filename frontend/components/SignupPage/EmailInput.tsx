@@ -7,13 +7,13 @@ import { useRouter } from 'next/router';
 
 interface EmailInputProps {
     value: string;
-    onChange: (newEmail: string) => void;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const EmailInput: React.FC<EmailInputProps> = ({ value, onChange }) => (
     <FormControl id="email" isRequired>
         <FormLabel>Email address</FormLabel>
-        <Input data-testid="email-input" type="email" value={value} onChange={e => onChange(e.target.value)} />
+        <Input data-testid="email-input" type="email" name="email" value={value} onChange={onChange} />
     </FormControl>
 );
 

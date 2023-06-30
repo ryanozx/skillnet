@@ -1,43 +1,30 @@
-// import React from 'react';
-// import { render, fireEvent, waitFor } from '@testing-library/react';
-// import axios from 'axios';
-// import { useRouter } from 'next/router';
-// import { useToast } from '@chakra-ui/react';
-// import SignUpForm from './SignUpForm';
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react';
+import SignUpForm from './SignUpForm';
 
-// jest.mock('axios');
-// jest.mock('next/router', () => ({
-//     useRouter: jest.fn(),
-// }));
+jest.mock('next/router', () => require('next-router-mock'));
 
-// jest.mock('@chakra-ui/react', () => ({
-//     useToast: jest.fn(),
-// }));
+describe('SignUpForm', () => {
+    it('updates email input value when typing', () => {
+        const { getByTestId } = render(<SignUpForm />);
+        const emailInput = getByTestId('email-input') as HTMLInputElement;
+        fireEvent.change(emailInput, { target: { value: 'test@email.com' } });
+        expect(emailInput.value).toBe('test@email.com');
+    });
 
-// describe('SignUpForm', () => {
-//     it('calls the signup API and redirects on successful submission', async () => {
-//         const router = {
-//             push: jest.fn(),
-//         };
-//         const toast = jest.fn();
-//         (useRouter as jest.Mock).mockReturnValue(router);
-//         (useToast as jest.Mock).mockReturnValue(toast);
-//         (axios.post as jest.Mock).mockResolvedValue({});
+    it('updates username input value when typing', () => {
+        const { getByTestId } = render(<SignUpForm />);
+        const usernameInput = getByTestId('username-input') as HTMLInputElement;
+        fireEvent.change(usernameInput, { target: { value: 'username123' } });
+        expect(usernameInput.value).toBe('username123');
+    });
 
-//         const { getByTestId } = render(<SignUpForm />);
-//         fireEvent.change(getByTestId('username-input'), { target: { value: 'test' } });
-//         fireEvent.change(getByTestId('email-input'), { target: { value: 'test@example.com' } });
-//         fireEvent.change(getByTestId('password-input'), { target: { value: 'password' } });
-//         fireEvent.click(getByTestId('submit-button'));
+    it('calls the onChange handler when typing into password input', () => {
+        const { getByTestId } = render(<SignUpForm />);
+        const passwordInput = getByTestId('password-input') as HTMLInputElement;
+        const testValue = 'password123';
+        fireEvent.change(passwordInput, { target: { value: testValue } });
+        expect(passwordInput.value).toBe(testValue);
+    });
+});
 
-//         await waitFor(() => expect(axios.post).toHaveBeenCalled());
-//         expect(router.push).toHaveBeenCalledWith('/create-profile');
-//         expect(toast).toHaveBeenCalledWith({
-//             title: "Form submission successful.",
-//             description: "Account successfully created.",
-//             status: "success",
-//             duration: 5000,
-//             isClosable: true,
-//         });
-//     });
-// });

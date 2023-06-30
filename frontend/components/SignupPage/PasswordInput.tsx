@@ -7,7 +7,7 @@ import { useRouter } from 'next/router';
 
 interface PasswordInputProps {
     value: string;
-    onChange: (newPassword: string) => void;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const PasswordInput: React.FC<PasswordInputProps> = ({ value, onChange }) => {
@@ -17,7 +17,12 @@ export const PasswordInput: React.FC<PasswordInputProps> = ({ value, onChange })
         <FormControl id="password" isRequired>
             <FormLabel>Password</FormLabel>
             <InputGroup>
-                <Input aria-label="Password" type={showPassword ? 'text' : 'password'} value={value} onChange={e => onChange(e.target.value)} />
+                <Input 
+                    data-testid="password-input"
+                    type={showPassword ? 'text' : 'password'} 
+                    name="password" 
+                    value={ value } 
+                    onChange={ onChange } />
                 <InputRightElement h={'full'}>
                     <Button
                         variant={'ghost'}
