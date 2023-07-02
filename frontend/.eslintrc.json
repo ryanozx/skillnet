@@ -1,47 +1,12 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true,
-        "jest": true
-    },
-    "extends": [
-        "standard-with-typescript",
-        "plugin:react/recommended",
-        "plugin:@typescript-eslint/recommended",
-        "prettier",
-        "eslint:recommended",
-        "plugin:react-hooks/recommended"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "project": ["tsconfig.json"],
-        "ecmaFeatures": {
-            "jsx": true
-        },
-        "ecmaVersion": "latest",
-        "sourceType": "module",
-        "extraFileExtensions": [".json"]
-    },
-    "plugins": [
-        "react",
-        "@typescript-eslint",
-        "react-hooks",
-        "prettier"
-    ],
-    "rules": {
-        "react/react-in-jsx-scope": "off",
-        "@typescript-eslint/explicit-function-return-type": "off",
-        "camelcase": "error",
-        "spaced-comment": "error",
-        "quotes": ["error", "single"],
-        "no-duplicate-imports": "error"
-    },
-    "settings": {
-        "import/resolver": {
-            "typescript": {}
-        },
-        "react": {
-            "version": "detect"
-        }
-    }
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "error",
+    "@typescript-eslint/no-explicit-any": "error"
+  }
 }
