@@ -17,7 +17,8 @@ export default preventAuthAccess(function HomePageContainer() {
                     as={Box}
                     textAlign={'center'}
                     spacing={{ base: 8, md: 14 }}
-                    py={{ base: 20, md: 36 }}>
+                    py={{ base: 20, md: 36 }}
+                >
                     <HomePageHeader />
                     <CallToActionButtons />        
                 </Stack>

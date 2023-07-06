@@ -9,7 +9,6 @@ describe('LoginForm', () => {
         const { getByTestId } = render(<LoginForm />);
         const usernameInput = getByTestId('username-input');
         expect(usernameInput).toBeInTheDocument();
-        screen.debug()
     });
 
     it('should render PasswordInput', () => {

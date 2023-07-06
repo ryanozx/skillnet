@@ -23,7 +23,7 @@
     "boxicons": "^2.1.4",
     "dotenv": "^16.3.1",
     "framer-motion": "^10.12.10",
-    "jest": "^29.5.0",
+    "jest": "^29.6.0",
     "jest-environment-jsdom": "^29.5.0",
     "jest-mock-axios": "^4.7.2",
     "next": "latest",
