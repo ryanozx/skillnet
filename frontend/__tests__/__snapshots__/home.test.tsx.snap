@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Home page renders correctly 1`] = `
+<DocumentFragment>
+  <div
+    class="chakra-container css-1qt3bbd"
+  >
+    <div
+      class="chakra-stack css-ilebpv"
+    >
+      <h2
+        class="chakra-heading css-ezczds"
+        data-testid="home-page-header"
+      >
+        SkillNet 
+        <br />
+        <hr
+          aria-orientation="horizontal"
+          class="chakra-divider css-nkr49l"
+        />
+        <span
+          class="chakra-text css-1ou2t5u"
+          data-testid="home-page-subheader"
+        >
+          Empower your ideas
+        </span>
+      </h2>
+      <div
+        class="chakra-stack css-1pe0sil"
+      >
+        <a
+          class="chakra-link css-0"
+          href="/login"
+        >
+          <button
+            class="chakra-button css-xyvrol"
+            type="button"
+          >
+            Log In
+          </button>
+        </a>
+        <a
+          class="chakra-link css-0"
+          href="/signup"
+        >
+          <button
+            class="chakra-button css-4xx2wk"
+            type="button"
+          >
+            Sign Up
+          </button>
+        </a>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -5,7 +5,8 @@ import {
 import React, { useState } from "react";
 import { UsernameInput } from './UsernameInput';
 import { PasswordInput } from './PasswordInput';
-import { FormSubmit } from './FormSubmit';
+import { LoginButton } from './LoginButton';
+import SignUpRedirect from './SignUpRedirect';
 
 type UserLoginForm = {
     username: string;
@@ -29,9 +30,10 @@ export default function LoginForm() {
             w={{ base: '90vw', md: '60vw', lg: '30vw' }}
         >
             <Stack spacing={4}>
-                <UsernameInput value={form.username} onChange={handleInputChange}/>
-                <PasswordInput value={form.password} onChange={handleInputChange}/>
-                <FormSubmit username={form.username} password={form.password}/>
+                <UsernameInput data-testid="username-input-component" value={form.username} onChange={handleInputChange}/>
+                <PasswordInput data-testid="password-input-component" value={form.password} onChange={handleInputChange}/>
+                <LoginButton data-testid="login-button" username={form.username} password={form.password}/>
+                <SignUpRedirect />
             </Stack>
         </Box>
     );

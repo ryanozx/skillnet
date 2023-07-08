@@ -2,5 +2,8 @@
     "scripts": {
         "setup": "cd frontend && npm install",
         "start": "cd frontend && npm run dev"
+    },
+    "dependencies": {
+        "yarn": "^1.22.19"
     }
 }
