@@ -1,93 +1,35 @@
 import React, { useState, MouseEventHandler } from 'react';
-import { Stack, Button, FormControl, FormLabel, Input, InputGroup, InputRightElement, useToast } from '@chakra-ui/react';
+import { Stack, useToast } from '@chakra-ui/react';
 import LoginRedirect from './LoginRedirect';
-import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
-import axios from 'axios';
-import { useRouter } from 'next/router';
+import { EmailInput } from './EmailInput';
+import { UsernameInput } from './UsernameInput';
+import { SignUpButton } from './SignUpButton';
+import { PasswordInput } from './PasswordInput';
 
+type UserSignupForm = {
+    username: string;
+    email: string;
+    password: string;
+};
 
 export default function SignUpForm() {
-    const [showPassword, setShowPassword] = useState<boolean>(false);
-    const [username, setUsername] = useState<string>('');
-    const [email, setEmail] = useState<string>('');
-    const [password, setPassword] = useState<string>('');
-    const toast = useToast();
-    const router = useRouter();
-
-    const handleClick: MouseEventHandler = () => {        
-        var form_data = new FormData();
-        form_data.append('email', email);
-        form_data.append('username', username);
-        form_data.append('password', password);
-        const base_url = process.env.BACKEND_BASE_URL;
-        const url = base_url + '/signup';
-    
-        axios.post(url, form_data, {withCredentials: true})
-            .then((res) => {
-                router.push('/create-profile');
-                toast({
-                    title: "Form submission successful.",
-                    description: "Account successfully created.",
-                    status: "success",
-                    duration: 5000,
-                    isClosable: true,
-                });
-                
-            })
-            .catch((error) => {
-                console.log(error);
-                toast({
-                    title: "An error occurred.",
-                    description: error.response.data.message,
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                });
-            });
-    }
+    const [form, setForm] = useState<UserSignupForm>({ username: "", email: "", password: "" });
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setForm({
+            ...form,
+            [name]: value
+        });
+    };
 
     return (
-
         <Stack spacing={4}>
-            <FormControl id="username" isRequired>
-                <FormLabel>Username</FormLabel>
-                <Input type="text" value={username} onChange={e => setUsername(e.target.value)} />
-            </FormControl>
-            <FormControl id="email" isRequired>
-                <FormLabel>Email address</FormLabel>
-                <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-            </FormControl>
-            <FormControl id="password" isRequired>
-                <FormLabel>Password</FormLabel>
-                <InputGroup>
-                    <Input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} />
-                    <InputRightElement h={'full'}>
-                        <Button
-                            variant={'ghost'}
-                            onClick={() =>
-                                setShowPassword((showPassword) => !showPassword)
-                            }>
-                            {showPassword ? <ViewIcon /> : <ViewOffIcon />}
-                        </Button>
-                    </InputRightElement>
-                </InputGroup>
-            </FormControl>
-            <Stack spacing={10} pt={2}>
-                <Button
-                    type="submit"
-                    loadingText="Submitting"
-                    size="lg"
-                    bg={'blue.400'}
-                    color={'white'}
-                    _hover={{
-                        bg: 'blue.500',
-                    }}
-                    onClick={handleClick}>
-                    Sign up
-                </Button>
-            </Stack>
-            <LoginRedirect />
+            <UsernameInput data-testid="username" value={form.username} onChange={handleInputChange} />
+            <EmailInput data-testid="email" value={form.email} onChange={handleInputChange} />
+            <PasswordInput data-testid="password" value={form.password} onChange={handleInputChange} />
+            <SignUpButton data-testid="submit" form={form} />
+            <LoginRedirect data-testid="redirect" />
         </Stack>
-
     );
+    
 }
