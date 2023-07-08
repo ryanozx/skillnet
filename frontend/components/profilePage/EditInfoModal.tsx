@@ -130,7 +130,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
     };
 
     return (
-        
+        <>
         <Modal isOpen={isOpen} onClose={handleClose} size={{ base: 'md', md: '2xl' }} closeOnOverlayClick={false}>
             <ModalOverlay />
             <ModalContent>
@@ -157,8 +157,8 @@ export default function EditProfileModal(props: EditProfileModalProps) {
                     </Button>                
                 </ModalFooter>
             </ModalContent>
-            </Modal>
-
+        </Modal>
+        </>
     );
 };
 

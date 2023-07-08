@@ -6,12 +6,12 @@ import React, { MouseEventHandler } from "react";
 import axios from "axios";
 import { useRouter } from 'next/router'; 
 
-interface FormSubmitProps {
+interface LoginButtonProps {
     username: string;
     password: string;
 }
 
-export const FormSubmit: React.FC<FormSubmitProps> = ({ username, password }) => {
+export const LoginButton: React.FC<LoginButtonProps> = ({ username, password }) => {
     const toast = useToast();
     const router = useRouter();
 
@@ -19,10 +19,9 @@ export const FormSubmit: React.FC<FormSubmitProps> = ({ username, password }) =>
         var form_data = new FormData();
         form_data.append('username', username);
         form_data.append('password', password);
-        const base_url = process.env.BACKEND_BASE_URL
+        const base_url = process.env.BACKEND_BASE_URL;
         axios.post(base_url + '/login', form_data, {withCredentials: true})
             .then((res) => {
-                console.log(res);
                 toast({
                     title: "Form submission successful.",
                     description: "We've received your form data.",
@@ -33,7 +32,6 @@ export const FormSubmit: React.FC<FormSubmitProps> = ({ username, password }) =>
                 router.push("/feed");
             })
             .catch((error) => {
-                console.log(error);
                 toast({
                     title: "An error occurred.",
                     description: error.response.data.error,
@@ -45,7 +43,12 @@ export const FormSubmit: React.FC<FormSubmitProps> = ({ username, password }) =>
     };
 
     return (
-        <Button onClick={onSubmit} colorScheme="teal" size="lg" fontSize="md">
+        <Button 
+            data-testid="login-button"
+            onClick={onSubmit} 
+            colorScheme="teal" 
+            size="lg" 
+            fontSize="md">
             Sign in
         </Button>
     );
