@@ -30,7 +30,7 @@ var (
 			Title: null.NewString("Tester", true),
 			UserMinimal: models.UserMinimal{
 				Name: "Test User",
-				URL:  "localhost:8080/user/testuser",
+				URL:  "http://localhost:3000/profile/testuser",
 			},
 		},
 	}

@@ -26,7 +26,7 @@ type PostView struct {
 	CommentsArray `json:"Comments"`
 	IsEditable    bool
 	Liked         bool
-	LikeCount     uint
+	LikeCount     uint64
 }
 
 // MultimediaContent will be used to represent multimedia resources
@@ -42,7 +42,7 @@ func (post *Post) PostView(userID string) *PostView {
 		Post:        *post,
 		UserMinimal: *post.User.UserMinimal(),
 		IsEditable:  userID == post.UserID,
-		Liked:       len(post.Likes) > 0,
+		Liked:       len(post.Likes) > 0 && post.Likes[0].UserID == userID,
 	}
 	return &postView
 }

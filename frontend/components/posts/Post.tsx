@@ -11,6 +11,7 @@ export interface PostView {
     Post: PostComponent,
     IsEditable: boolean,
     Liked: boolean,
+    LikeCount: number,
 }
 
 interface User {
@@ -33,6 +34,7 @@ export default function Post(post : PostView) {
     const [currPost, setCurrPost] = useState<PostView>(post);
     const [isDeleted, setIsDeleted] = useState<boolean>(false);
     const [isLiked, setIsLiked] = useState<boolean>(post.Liked);
+    const [likeCount, setLikeCount] = useState<number>(post.LikeCount);
     const notEdited = currPost.Post.UpdatedAt == currPost.Post.CreatedAt;
     const timeStamp = new Date(currPost.Post.UpdatedAt).toLocaleString("en-GB", {
         dateStyle: "medium",
@@ -90,6 +92,15 @@ export default function Post(post : PostView) {
                     justify="space-between"
                     flexWrap="wrap"
                     paddingBlockEnd="0px"
+                    paddingInlineStart="20px"
+                    paddingInlineEnd="0px"
+                >
+                    <Text color="gray">{likeCount}{likeCount === 1 ? " like" : " likes"}</Text>
+                </CardFooter>
+                <CardFooter
+                    justify="space-between"
+                    flexWrap="wrap"
+                    paddingBlock="5px"
                     paddingInline="0px"
                     sx={{
                         "& > button": {
@@ -97,7 +108,12 @@ export default function Post(post : PostView) {
                         }
                     }}
                 >
-                    <LikeButton PostID={currPost.Post.ID} Liked={isLiked} SetLikedHandler={setIsLiked}/>
+                    <LikeButton 
+                        Liked={isLiked}
+                        PostID={currPost.Post.ID}  
+                        SetLikeCountHandler={setLikeCount}
+                        SetLikedHandler={setIsLiked} 
+                        />
                     <Button flex="1" variant="outline" leftIcon={<BiComment />}>
                         Comment
                     </Button>

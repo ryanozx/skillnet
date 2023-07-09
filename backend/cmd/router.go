@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/ryanozx/skillnet/controllers"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/middleware"
@@ -22,7 +23,10 @@ func (s *serverConfig) setupRoutes() {
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
-	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud)
+	apiEnv := &controllers.APIEnv{
+		DB:          s.db,
+		GoogleCloud: s.GoogleCloud,
+	}
 
 	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
 	// does not need to be read everytime we require the client address or backend address
@@ -35,7 +39,7 @@ func (s *serverConfig) setupRoutes() {
 	setupUserAPI(routerGroup, apiEnv)
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
-	setupLikeAPI(routerGroup, apiEnv)
+	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -184,13 +188,13 @@ func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
 	rg.Private().POST("/user/photo", api.PostUserPicture)
 }
 
-func setupLikeAPI(rg RouterGrouper, api LikeAPIer) {
-	api.InitialiseLikeHandler()
+func setupLikeAPI(rg RouterGrouper, api LikeAPIer, client *redis.Client) {
+	api.InitialiseLikeHandler(client)
 	registerLikeRoutes(rg, api)
 }
 
 type LikeAPIer interface {
-	InitialiseLikeHandler()
+	InitialiseLikeHandler(*redis.Client)
 	PostLike(*gin.Context)
 	DeleteLike(*gin.Context)
 }

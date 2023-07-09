@@ -4,12 +4,27 @@ Contains controllers for authentication.
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
+)
+
+// Messages
+const (
+	GetLoginOKMsg       = "OK"
+	LoginSuccessfulMsg  = "Logged in"
+	SuccessfulLogoutMsg = "Logged out successfully"
+)
+
+// Errors
+var (
+	ErrAlreadyLoggedIn          = errors.New("already logged in")
+	ErrIncorrectUserCredentials = errors.New("incorrect username or password")
+	ErrMissingUserCredentials   = errors.New("missing username or password")
 )
 
 func (a *APIEnv) InitialiseAuthHandler() {
