@@ -22,7 +22,7 @@ func (s *serverConfig) setupRoutes() {
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
-	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud)
+	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud, s.redis)
 
 	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
 	// does not need to be read everytime we require the client address or backend address
@@ -36,6 +36,7 @@ func (s *serverConfig) setupRoutes() {
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
 	setupLikeAPI(routerGroup, apiEnv)
+	setupNotificationAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -198,4 +199,22 @@ type LikeAPIer interface {
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
 	rg.Private().POST("/likes/:id", api.PostLike)
 	rg.Private().DELETE("/likes/:id", api.DeleteLike)
+}
+
+func setupNotificationAPI(rg RouterGrouper, api NotificationAPIer) {
+	// api.InitialiseNotificationHandler()
+	registerNotificationRoutes(rg, api)
+}
+
+type NotificationAPIer interface {
+	// InitialiseNotificationHandler()
+	GetNotifications(*gin.Context)
+	PostNotification(*gin.Context)
+	PatchNotification(*gin.Context)
+}
+
+func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
+	rg.Private().GET("/notifications", api.GetNotifications)
+	rg.Private().POST("/notifications", api.PostNotification)
+	rg.Private().PATCH("/notifications/:id", api.PatchNotification)
 }

@@ -12,6 +12,7 @@ import (
 	"errors"
 
 	"cloud.google.com/go/storage"
+	goredis "github.com/redis/go-redis/v9"
 	"github.com/ryanozx/skillnet/database"
 	"gorm.io/gorm"
 )
@@ -19,6 +20,7 @@ import (
 // APIEnv is a wrapper for the shared database instance
 type APIEnv struct {
 	DB            *gorm.DB
+	Redis         *goredis.Client
 	PostDBHandler database.PostDBHandler
 	UserDBHandler database.UserDBHandler
 	AuthDBHandler database.AuthDBHandler
@@ -27,10 +29,11 @@ type APIEnv struct {
 }
 
 // Creates an APIEnv object from a Database object
-func CreateAPIEnv(db *gorm.DB, gc *storage.Client) *APIEnv {
+func CreateAPIEnv(db *gorm.DB, gc *storage.Client, redis *goredis.Client) *APIEnv {
 	apiEnv := &APIEnv{
 		DB:          db,
 		GoogleCloud: gc,
+		Redis:       redis,
 	}
 	return apiEnv
 }
