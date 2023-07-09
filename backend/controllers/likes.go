@@ -32,19 +32,21 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 	postId := helpers.GetPostIdFromContext(ctx)
 	userId := helpers.GetUserIdFromContext(ctx)
 
-	postIDNum, err := strconv.ParseUint(postId, 10, 64)
+	// Ensure that postID is an unsigned integer
+	postIdNum, err := strconv.ParseUint(postId, 10, 64)
 
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
 		return
 	}
 
-	newLike := models.Like{
+	newLike := &models.Like{
+		ID:     helpers.GenerateLikeID(userId, postId),
 		UserID: userId,
-		PostID: uint(postIDNum),
+		PostID: uint(postIdNum),
 	}
 
-	like, err := a.LikeDBHandler.CreateLike(&newLike)
+	like, err := a.LikeDBHandler.CreateLike(newLike)
 
 	if err == gorm.ErrDuplicatedKey {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrAlreadyLiked)
@@ -60,7 +62,15 @@ func (a *APIEnv) DeleteLike(ctx *gin.Context) {
 	postId := helpers.GetPostIdFromContext(ctx)
 	userId := helpers.GetUserIdFromContext(ctx)
 
-	err := a.LikeDBHandler.DeleteLike(userId, postId)
+	// Ensure that postID is an unsigned integer
+	_, err := strconv.ParseUint(postId, 10, 64)
+
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
+		return
+	}
+
+	err = a.LikeDBHandler.DeleteLike(userId, postId)
 
 	if err == gorm.ErrRecordNotFound {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)

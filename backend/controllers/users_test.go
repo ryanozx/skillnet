@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -19,8 +18,6 @@ const (
 )
 
 var (
-	// errTest is a test error that can be used to simulate an unexpected error returned by the database helper functions
-	errTest      = errors.New("test error")
 	defaultCreds = models.UserCredentials{
 		Username: "testuser",
 		Password: "12345",
@@ -281,7 +278,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotCreate() {
 		Password string
 		Email    string
 	}{"testuser", "12345", "abc@gmail.com"})
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, errTest)
+	s.dbHandler.SetMockCreateUserFunc(&defaultUser, ErrTest)
 	s.api.CreateUser(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -292,14 +289,14 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotCreate() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrTest); !isEqual {
 		s.T().Error(errStr)
 	}
 }
 
 func (s *UserControllerTestSuite) Test_CreateUser_CannotSaveSession() {
 	c, w := helpers.CreateTestContextAndRecorder()
-	s.store.SetSaveError(errTest)
+	s.store.SetSaveError(ErrTest)
 	helpers.AddStoreToContext(c, s.store)
 
 	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
@@ -327,7 +324,7 @@ func (s *UserControllerTestSuite) Test_CreateUser_CannotSaveSession() {
 func (s *UserControllerTestSuite) Test_DeleteUser_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(nil)
 	s.api.DeleteUser(c)
@@ -348,7 +345,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_OK() {
 func (s *UserControllerTestSuite) Test_DeleteUser_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(gorm.ErrRecordNotFound)
 	s.api.DeleteUser(c)
@@ -369,9 +366,9 @@ func (s *UserControllerTestSuite) Test_DeleteUser_NotFound() {
 func (s *UserControllerTestSuite) Test_DeleteUser_CannotDelete() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
-	s.dbHandler.SetMockDeleteUserFunc(errTest)
+	s.dbHandler.SetMockDeleteUserFunc(ErrTest)
 	s.api.DeleteUser(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -382,7 +379,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_CannotDelete() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, errTest); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrTest); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -390,8 +387,8 @@ func (s *UserControllerTestSuite) Test_DeleteUser_CannotDelete() {
 func (s *UserControllerTestSuite) Test_DeleteUser_CannotClearSession() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	s.store.SetSaveError(errTest)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	s.store.SetSaveError(ErrTest)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(nil)
 	s.api.DeleteUser(c)
@@ -434,7 +431,7 @@ func (s *UserControllerTestSuite) Test_GetProfile_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 
-	s.dbHandler.SetMockGetUserByUsernameFunc(&defaultUser, errTest)
+	s.dbHandler.SetMockGetUserByUsernameFunc(&defaultUser, ErrTest)
 	s.api.GetProfile(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -453,7 +450,7 @@ func (s *UserControllerTestSuite) Test_GetProfile_NotFound() {
 func (s *UserControllerTestSuite) Test_GetSelfProfile_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	s.dbHandler.SetMockGetUserByIDFunc(&defaultUser, nil)
 	s.api.GetSelfProfile(c)
@@ -474,9 +471,9 @@ func (s *UserControllerTestSuite) Test_GetSelfProfile_OK() {
 func (s *UserControllerTestSuite) Test_GetSelfProfile_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
-	s.dbHandler.SetMockGetUserByIDFunc(&defaultUser, errTest)
+	s.dbHandler.SetMockGetUserByIDFunc(&defaultUser, ErrTest)
 	s.api.GetSelfProfile(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -496,7 +493,7 @@ func (s *UserControllerTestSuite) Test_GetSelfProfile_NotFound() {
 func (s *UserControllerTestSuite) Test_UpdateUser_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, defaultUser)
 	if err != nil {
@@ -523,7 +520,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_OK() {
 func (s *UserControllerTestSuite) Test_UpdateUser_BadRequest() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	s.dbHandler.SetMockUpdateUserFunc(&defaultUser, nil)
 	s.api.UpdateUser(c)
@@ -544,7 +541,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_BadRequest() {
 func (s *UserControllerTestSuite) Test_UpdateUser_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, defaultUser)
 	if err != nil {
@@ -571,7 +568,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_NotFound() {
 func (s *UserControllerTestSuite) Test_UpdateUser_CannotUpdate() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, defaultUser)
 	if err != nil {
@@ -579,7 +576,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_CannotUpdate() {
 	}
 	c.Request = req
 
-	s.dbHandler.SetMockUpdateUserFunc(&defaultUser, errTest)
+	s.dbHandler.SetMockUpdateUserFunc(&defaultUser, ErrTest)
 	s.api.UpdateUser(c)
 
 	b, _ := io.ReadAll(w.Body)

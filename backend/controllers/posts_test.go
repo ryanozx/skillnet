@@ -135,7 +135,7 @@ func (h *PostDBTestHandler) ResetFuncs() {
 func (s *PostControllerTestSuite) Test_CreatePost_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, newTestPost)
 	if err != nil {
@@ -153,7 +153,7 @@ func (s *PostControllerTestSuite) Test_CreatePost_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostView](m, defaultPostView); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, defaultPostView); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -161,7 +161,7 @@ func (s *PostControllerTestSuite) Test_CreatePost_OK() {
 func (s *PostControllerTestSuite) Test_CreatePost_BadRequest() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	s.dbHandler.SetMockCreatePostFunc(&defaultPostView, nil)
 	s.api.CreatePost(c)
@@ -182,14 +182,14 @@ func (s *PostControllerTestSuite) Test_CreatePost_BadRequest() {
 func (s *PostControllerTestSuite) Test_CreatePost_CannotCreate() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, newTestPost)
 	if err != nil {
 		s.T().Error(err)
 	}
 	c.Request = req
-	s.dbHandler.SetMockCreatePostFunc(&defaultPostView, errTest)
+	s.dbHandler.SetMockCreatePostFunc(&defaultPostView, ErrTest)
 	s.api.CreatePost(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -209,8 +209,8 @@ func (s *PostControllerTestSuite) Test_CreatePost_CannotCreate() {
 func (s *PostControllerTestSuite) Test_DeletePost_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	s.dbHandler.SetMockDeletePostFunc(nil)
 	s.api.DeletePost(c)
@@ -231,8 +231,8 @@ func (s *PostControllerTestSuite) Test_DeletePost_OK() {
 func (s *PostControllerTestSuite) Test_DeletePost_CannotFindPost() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	s.dbHandler.SetMockDeletePostFunc(gorm.ErrRecordNotFound)
 	s.api.DeletePost(c)
@@ -253,8 +253,8 @@ func (s *PostControllerTestSuite) Test_DeletePost_CannotFindPost() {
 func (s *PostControllerTestSuite) Test_DeletePost_NotOwner() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	s.dbHandler.SetMockDeletePostFunc(database.ErrNotOwner)
 	s.api.DeletePost(c)
@@ -275,10 +275,10 @@ func (s *PostControllerTestSuite) Test_DeletePost_NotOwner() {
 func (s *PostControllerTestSuite) Test_DeletePost_CannotDelete() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
-	s.dbHandler.SetMockDeletePostFunc(errTest)
+	s.dbHandler.SetMockDeletePostFunc(ErrTest)
 	s.api.DeletePost(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -299,7 +299,7 @@ func (s *PostControllerTestSuite) Test_GetPosts_OK() {
 	helpers.SetModelBackendAddress()
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	expectedPostViews := []models.PostView{defaultPostView}
 	expectedArr := models.PostViewArray{
@@ -318,7 +318,7 @@ func (s *PostControllerTestSuite) Test_GetPosts_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostViewArray](m, expectedArr); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, expectedArr); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -326,7 +326,7 @@ func (s *PostControllerTestSuite) Test_GetPosts_OK() {
 func (s *PostControllerTestSuite) Test_GetPosts_DiffCutoff() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	expectedPostViews := []models.PostView{defaultPostView}
 	expectedArr := models.PostViewArray{
@@ -345,7 +345,7 @@ func (s *PostControllerTestSuite) Test_GetPosts_DiffCutoff() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostViewArray](m, expectedArr); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, expectedArr); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -353,11 +353,11 @@ func (s *PostControllerTestSuite) Test_GetPosts_DiffCutoff() {
 func (s *PostControllerTestSuite) Test_GetPosts_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
 
 	expected := []models.PostView{defaultPostView}
 
-	s.dbHandler.SetMockGetPostsFunc(expected, 0, errTest)
+	s.dbHandler.SetMockGetPostsFunc(expected, 0, ErrTest)
 	s.api.GetPosts(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -377,7 +377,7 @@ func (s *PostControllerTestSuite) Test_GetPosts_NotFound() {
 func (s *PostControllerTestSuite) Test_GetPostByID_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	s.dbHandler.SetMockGetPostByIDFunc(&defaultPostView, nil)
 	s.api.GetPostByID(c)
@@ -390,7 +390,7 @@ func (s *PostControllerTestSuite) Test_GetPostByID_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostView](m, defaultPostView); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, defaultPostView); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -398,9 +398,9 @@ func (s *PostControllerTestSuite) Test_GetPostByID_OK() {
 func (s *PostControllerTestSuite) Test_GetPostByID_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
-	s.dbHandler.SetMockGetPostByIDFunc(&defaultPostView, errTest)
+	s.dbHandler.SetMockGetPostByIDFunc(&defaultPostView, ErrTest)
 	s.api.GetPostByID(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -420,8 +420,8 @@ func (s *PostControllerTestSuite) Test_GetPostByID_NotFound() {
 func (s *PostControllerTestSuite) Test_UpdatePost_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
 	if err != nil {
@@ -439,7 +439,7 @@ func (s *PostControllerTestSuite) Test_UpdatePost_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostView](m, defaultPostView); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, defaultPostView); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -447,8 +447,8 @@ func (s *PostControllerTestSuite) Test_UpdatePost_OK() {
 func (s *PostControllerTestSuite) Test_UpdatePost_BadRequest() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	s.dbHandler.SetMockUpdatePostFunc(&defaultPostView, nil)
 	s.api.UpdatePost(c)
@@ -469,8 +469,8 @@ func (s *PostControllerTestSuite) Test_UpdatePost_BadRequest() {
 func (s *PostControllerTestSuite) Test_UpdatePost_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
 	if err != nil {
@@ -496,8 +496,8 @@ func (s *PostControllerTestSuite) Test_UpdatePost_NotFound() {
 func (s *PostControllerTestSuite) Test_UpdatePost_NotOwner() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
 	if err != nil {
@@ -523,15 +523,15 @@ func (s *PostControllerTestSuite) Test_UpdatePost_NotOwner() {
 func (s *PostControllerTestSuite) Test_UpdatePost_CannotUpdate() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.IdKey, testUserID)
-	helpers.AddParamsToContext(c, "id", testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, "postid", testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
 	if err != nil {
 		s.T().Error(err)
 	}
 	c.Request = req
-	s.dbHandler.SetMockUpdatePostFunc(&defaultPostView, errTest)
+	s.dbHandler.SetMockUpdatePostFunc(&defaultPostView, ErrTest)
 	s.api.UpdatePost(c)
 
 	b, _ := io.ReadAll(w.Body)

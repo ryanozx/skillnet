@@ -23,7 +23,7 @@ func AuthRequired(ctx *gin.Context) {
 		ctx.Abort()
 	}
 	userID := session.Get("userID")
-	helpers.AddParamsToContext(ctx, helpers.IdKey, userID)
+	helpers.AddParamsToContext(ctx, helpers.UserIdKey, userID)
 	ctx.Next()
 }
 

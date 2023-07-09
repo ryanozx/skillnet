@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
 )
@@ -15,9 +16,11 @@ type LikeDB struct {
 }
 
 func (db *LikeDB) CreateLike(like *models.Like) (*models.Like, error) {
-	return nil, nil
+	result := db.DB.Create(like)
+	return like, result.Error
 }
 
 func (db *LikeDB) DeleteLike(userID string, postID string) error {
-	return nil
+	err := db.DB.Unscoped().Delete(&models.Like{}, "id = ?", helpers.GenerateLikeID(userID, postID)).Error
+	return err
 }

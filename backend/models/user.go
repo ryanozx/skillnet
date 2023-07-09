@@ -49,6 +49,7 @@ type User struct {
 	UserView        `gorm:"embedded"`
 	UserCredentials `gorm:"embedded"`
 	Email           string `gorm:"not null"`
+	Likes           []Like `json:"null" gorm:"constraint:OnDelete:CASCADE"`
 }
 
 func (userCreds *SignupUserCredentials) NewUser() *User {

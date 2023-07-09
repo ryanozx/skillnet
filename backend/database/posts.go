@@ -53,12 +53,12 @@ func (db *PostDB) GetPosts(cutoff string, userID string) ([]models.PostView, uin
 
 	if cutoff == "" {
 		// Retrieve all posts from database
-		query := db.DB.Limit(postsToReturn).Joins("User").Order("posts.id desc").Find(&posts)
+		query := db.DB.Limit(postsToReturn).Joins("User").Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND posts.user_id = likes.user_id)").Order("posts.id desc").Find(&posts)
 		if err := query.Find(&posts).Error; err != nil {
 			return postViews, 0, err
 		}
 	} else {
-		query := db.DB.Where("posts.id < ?", cutoff).Joins("User").Limit(postsToReturn).Order("posts.id desc").Find(&posts)
+		query := db.DB.Where("posts.id < ?", cutoff).Joins("User").Limit(postsToReturn).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND posts.user_id = likes.user_id)").Order("posts.id desc").Find(&posts)
 		if err := query.Find(&posts).Error; err != nil {
 			return postViews, 0, err
 		}
@@ -76,7 +76,7 @@ func (db *PostDB) GetPosts(cutoff string, userID string) ([]models.PostView, uin
 
 func (db *PostDB) GetPostByID(id string, userID string) (*models.PostView, error) {
 	post := models.Post{}
-	err := db.DB.Joins("User").First(&post, id).Error
+	err := db.DB.Joins("User").First(&post, id).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND posts.user_id = likes.user_id)").Error
 	postView := post.PostView(userID)
 	return postView, err
 }
@@ -90,7 +90,7 @@ func (db *PostDB) UpdatePost(post *models.Post, postid string, userID string) (*
 		return postView, err
 	}
 	resPost := &models.Post{}
-	result := db.DB.Model(resPost).Clauses(clause.Returning{}).Where("id = ?", postid).Updates(post)
+	result := db.DB.Model(resPost).Clauses(clause.Returning{}).Where("id = ?", postid).Updates(post).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND posts.user_id = likes.user_id)")
 	err = result.Error
 	postView.Post = *resPost
 	return postView, err

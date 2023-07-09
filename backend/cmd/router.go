@@ -113,12 +113,12 @@ type PostAPIer interface {
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
 	// Public routes
 	rg.Private().GET("/posts", api.GetPosts)
-	rg.Private().GET("/posts/:id", api.GetPostByID)
+	rg.Private().GET("/posts/:postid", api.GetPostByID)
 
 	// Private routes
 	rg.Private().POST("/posts", api.CreatePost)
-	rg.Private().PATCH("/posts/:id", api.UpdatePost)
-	rg.Private().DELETE("/posts/:id", api.DeletePost)
+	rg.Private().PATCH("/posts/:postid", api.UpdatePost)
+	rg.Private().DELETE("/posts/:postid", api.DeletePost)
 }
 
 // Sets up User API
@@ -196,6 +196,6 @@ type LikeAPIer interface {
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
-	rg.Private().POST("/likes/:id", api.PostLike)
-	rg.Private().DELETE("/likes/:id", api.DeleteLike)
+	rg.Private().POST("/likes/:postid", api.PostLike)
+	rg.Private().DELETE("/likes/:postid", api.DeleteLike)
 }

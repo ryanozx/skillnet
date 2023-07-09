@@ -60,6 +60,8 @@ var (
 	ErrPasswordEncryptFailed    = errors.New("password encryption failed")
 	ErrPostNotFound             = errors.New("post not found")
 	ErrSessionClearFailed       = errors.New("failed to clear session")
-	ErrUserNotFound             = errors.New("user not found")
-	ErrUsernameAlreadyExists    = errors.New("username already exists")
+	// ErrTest is a test error that can be used to simulate an unexpected error returned by the database helper functions
+	ErrTest                  = errors.New("test error")
+	ErrUserNotFound          = errors.New("user not found")
+	ErrUsernameAlreadyExists = errors.New("username already exists")
 )

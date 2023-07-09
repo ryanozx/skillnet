@@ -147,7 +147,7 @@ func (suite *TestSuiteEnv) insertTestPost(findPath string) (models.Post, string)
 func (api *APIEnv) setGetPostRouter(url string) (*http.Request, *httptest.ResponseRecorder, error) {
 	testHandler := TestRequestHandler{
 		handler:     api.GetPostByID,
-		routerRoute: "/posts/:id",
+		routerRoute: "/posts/:postid",
 		method:      GET,
 	}
 	return testHandler.generateReqAndResponse(url, nil)
@@ -221,7 +221,7 @@ func (suite *TestSuiteEnv) Test_UpdatePost_OK() {
 func (api *APIEnv) setUpdatePostRouter(url string, body *bytes.Buffer) (*http.Request, *httptest.ResponseRecorder, error) {
 	testHandler := TestRequestHandler{
 		handler:     api.UpdatePost,
-		routerRoute: "/auth/posts/:id",
+		routerRoute: "/auth/posts/:postid",
 		method:      PATCH,
 	}
 	return testHandler.generateReqAndResponse(url, body)
@@ -252,7 +252,7 @@ func (suite *TestSuiteEnv) Test_DeletePost_OK() {
 func (api *APIEnv) setDeletePostRouter(url string) (*http.Request, *httptest.ResponseRecorder, error) {
 	testHandler := TestRequestHandler{
 		handler:     api.DeletePost,
-		routerRoute: "/auth/posts/:id",
+		routerRoute: "/auth/posts/:postid",
 		method:      DELETE,
 	}
 	return testHandler.generateReqAndResponse(url, nil)

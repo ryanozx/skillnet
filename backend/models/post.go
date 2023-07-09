@@ -16,6 +16,7 @@ type Post struct {
 	UserID  string `json:"-" gorm:"<-:create; not null"`
 	User    User
 	Content string `gorm:"not null"`
+	Likes   []Like `json:"null" gorm:"constraint:OnDelete:CASCADE"`
 }
 
 // PostView represents the information that the client receives
@@ -24,6 +25,8 @@ type PostView struct {
 	UserMinimal   `json:"User"`
 	CommentsArray `json:"Comments"`
 	IsEditable    bool
+	Liked         bool
+	LikeCount     uint
 }
 
 // MultimediaContent will be used to represent multimedia resources
@@ -39,6 +42,7 @@ func (post *Post) PostView(userID string) *PostView {
 		Post:        *post,
 		UserMinimal: *post.User.UserMinimal(),
 		IsEditable:  userID == post.UserID,
+		Liked:       len(post.Likes) > 0,
 	}
 	return &postView
 }

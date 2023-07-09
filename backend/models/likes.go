@@ -1,7 +1,7 @@
 package models
 
 type Like struct {
-	ID     uint
+	ID     string
 	UserID string
 	PostID uint
 }
