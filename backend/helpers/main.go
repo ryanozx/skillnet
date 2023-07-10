@@ -8,6 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	PostIdKey = "postid"
+)
+
 func getParamFromContext(ctx ParamGetter, key string) string {
 	return ctx.Param(key)
 }
@@ -17,17 +21,16 @@ type ParamGetter interface {
 }
 
 // Retrieves postID from context; the postID is inserted into the context
-// by the router when parsing ("/posts/:id")
+// by the router when parsing ("/posts/:postid")
 func GetPostIdFromContext(ctx ParamGetter) string {
-	const postIDKey = "id"
-	postID := getParamFromContext(ctx, postIDKey)
+	postID := getParamFromContext(ctx, PostIdKey)
 	return postID
 }
 
 // Retrieves userID from context; will be non-empty in private routes since
 // AuthRequired adds userID as a parameter in the context
 func GetUserIdFromContext(ctx ParamGetter) string {
-	userID := getParamFromContext(ctx, IdKey)
+	userID := getParamFromContext(ctx, UserIdKey)
 	return userID
 }
 

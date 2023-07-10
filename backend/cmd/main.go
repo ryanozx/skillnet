@@ -31,6 +31,7 @@ type serverConfig struct {
 	store       redis.Store
 	redis       *goredis.Client
 	router      *gin.Engine
+	likesRedis  *goredis.Client
 	GoogleCloud *storage.Client
 }
 
@@ -39,13 +40,16 @@ type serverConfig struct {
 func initialiseProdServer() *serverConfig {
 	router := gin.Default()
 	db := database.ConnectProdDatabase()
-	store := setupStore()
+
 	redis := setupRedis()
 	GoogleCloud := setupGoogleCloud()
+	store := setupSessionStore()
+	likesRedis := setupCache(1)
 	server := serverConfig{
 		db:          db,
 		router:      router,
 		store:       store,
+		likesRedis:  likesRedis,
 		redis:       redis,
 		GoogleCloud: GoogleCloud,
 	}
@@ -53,7 +57,8 @@ func initialiseProdServer() *serverConfig {
 }
 
 // Sets up the Redis store from environmental variables
-func setupStore() redis.Store {
+
+func setupSessionStore() redis.Store {
 	env := helpers.RetrieveRedisEnv()
 	redisAddress := env.Address()
 	const redisNetwork = "tcp"
@@ -74,6 +79,20 @@ func setupRedis() *goredis.Client {
 		Password: "",
 	})
 	return client
+}
+
+func setupCache(dbNum int) *goredis.Client {
+	env := helpers.RetrieveRedisEnv()
+	redisAddress := env.Address()
+	rdb := goredis.NewClient(&goredis.Options{
+		Addr:     redisAddress,
+		Password: "",
+		DB:       dbNum,
+	})
+	if rdb == nil {
+		panic("Cannot set up Redis DB!")
+	}
+	return rdb
 }
 
 func setupGoogleCloud() *storage.Client {

@@ -16,6 +16,19 @@ import (
 	"gorm.io/gorm"
 )
 
+// Messages
+const (
+	PostDeletedMsg = "Post successfully deleted"
+)
+
+// Errors
+var (
+	ErrCannotCreatePost = errors.New("cannot create post")
+	ErrCannotDeletePost = errors.New("cannot delete post")
+	ErrCannotUpdatePost = errors.New("cannot update post")
+	ErrPostNotFound     = errors.New("post not found")
+)
+
 func (a *APIEnv) InitialisePostHandler() {
 	a.PostDBHandler = &database.PostDB{
 		DB: a.DB,
@@ -45,7 +58,7 @@ func (a *APIEnv) CreatePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotCreatePost)
 		return
 	}
-	helpers.OutputData(ctx, post)
+	helpers.OutputData(ctx, post.PostView(userID))
 }
 
 func (a *APIEnv) DeletePost(ctx *gin.Context) {
@@ -74,16 +87,30 @@ func (a *APIEnv) DeletePost(ctx *gin.Context) {
 func (a *APIEnv) GetPosts(ctx *gin.Context) {
 	cutoff := ctx.DefaultQuery("cutoff", "")
 	userID := helpers.GetUserIdFromContext(ctx)
-	posts, newCutoff, err := a.PostDBHandler.GetPosts(cutoff, userID)
+	posts, err := a.PostDBHandler.GetPosts(cutoff, userID)
 	log.Println(err)
 	// If unable to retrieve posts, return status code 404 Not Found
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
+	var smallestID uint = 0
+	var postViews []models.PostView
+	// Fill in user details for each post using userID of post creator
+	for _, post := range posts {
+		smallestID = post.ID
+		postView := post.PostView(userID)
+		likeCount, err := a.LikesCacheHandler.GetCacheCount(ctx, fmt.Sprintf("%v", post.ID))
+		if err != nil {
+			continue
+		}
+		postView.LikeCount = likeCount
+		postViews = append(postViews, *postView)
+	}
+
 	postViewArray := models.PostViewArray{
-		Posts:       posts,
-		NextPageURL: fmt.Sprintf("%s/auth/posts?cutoff=%d", models.BackendAddress, newCutoff),
+		Posts:       postViews,
+		NextPageURL: fmt.Sprintf("%s/auth/posts?cutoff=%d", models.BackendAddress, smallestID),
 	}
 	helpers.OutputData(ctx, postViewArray)
 }
@@ -97,7 +124,13 @@ func (a *APIEnv) GetPostByID(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
-	helpers.OutputData(ctx, post)
+	postView := post.PostView(userID)
+	likeCount, err := a.LikesCacheHandler.GetCacheCount(ctx, fmt.Sprintf("%v", post.ID))
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+	}
+	postView.LikeCount = likeCount
+	helpers.OutputData(ctx, postView)
 }
 
 func (a *APIEnv) UpdatePost(ctx *gin.Context) {
@@ -129,5 +162,5 @@ func (a *APIEnv) UpdatePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrCannotUpdatePost)
 		return
 	}
-	helpers.OutputData(ctx, post)
+	helpers.OutputData(ctx, post.PostView(userID))
 }

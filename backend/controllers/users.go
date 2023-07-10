@@ -13,6 +13,22 @@ import (
 	"gorm.io/gorm"
 )
 
+// Errors
+const (
+	SuccessfulAccountCreationMsg = "Account successfully created and logged in"
+	SuccessfulAccountDeleteMsg   = "User successfully deleted"
+)
+
+// Messages
+var (
+	ErrCannotUpdateUser         = errors.New("cannot update user")
+	ErrCreateAccountNoCookie    = errors.New("account successfully created but cookie not set")
+	ErrMissingSignupCredentials = errors.New("missing username, password, or email")
+	ErrPasswordEncryptFailed    = errors.New("password encryption failed")
+	ErrUserNotFound             = errors.New("user not found")
+	ErrUsernameAlreadyExists    = errors.New("username already exists")
+)
+
 func (a *APIEnv) InitialiseUserHandler() {
 	a.UserDBHandler = &database.UserDB{
 		DB: a.DB,
