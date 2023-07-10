@@ -55,8 +55,7 @@ func establishConnection(env DataSourceNamer) (*gorm.DB, error) {
 // Performs migration automatically based on schemas specified in method body
 func autoMigrate(database *gorm.DB) {
 	log.Println("Running migrations")
-	database.AutoMigrate(&models.Post{})
-	database.AutoMigrate(&models.User{})
+	database.AutoMigrate(&models.Post{}, &models.User{}, &models.Like{})
 	// Add more schemas above as necessary
 }
 

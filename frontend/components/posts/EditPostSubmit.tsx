@@ -29,7 +29,7 @@ export default function EditPostSubmit(props : EditPostSubmitProps) {
         .catch(err => {
             console.log(err);
             toast({
-                title: "An error occurred.",
+                title: "Failed to update post.",
                 description: err.response.data.error,
                 status: "error",
                 duration: 5000,

@@ -1,7 +1,12 @@
 package models
 
 type Like struct {
-	ID     uint
+	ID     string `json:"-"`
 	UserID string
 	PostID uint
+}
+
+type LikeUpdate struct {
+	Like      Like
+	LikeCount uint64
 }
