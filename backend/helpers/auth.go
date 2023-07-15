@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	IdKey             = "userID"
+	UserIdKey         = "userID"
 	RouteIfSuccessful = "/posts"
 )
 
@@ -24,7 +24,7 @@ func IsSignupUserCredsEmpty(user *models.SignupUserCredentials) bool {
 }
 
 func IsValidSession(session SessionGetter) bool {
-	userID := session.Get(IdKey)
+	userID := session.Get(UserIdKey)
 	return userID != nil
 }
 
@@ -55,7 +55,7 @@ func ExtractSignupUserCredentials(ctx *gin.Context) *models.SignupUserCredential
 
 func SaveSession(ctx *gin.Context, user *models.User) error {
 	session := sessions.Default(ctx)
-	session.Set(IdKey, user.ID)
+	session.Set(UserIdKey, user.ID)
 	log.Printf("Saving userID: %v", user.ID)
 	if err := session.Save(); err != nil {
 		return err

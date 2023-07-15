@@ -15,6 +15,9 @@ module.exports = {
   env: {
     BACKEND_BASE_URL: envConfig.BACKEND_BASE_URL
   },
+    // env: {
+    //     BACKEND_BASE_URL: 'http://localhost:8080'
+    // }
 };
 
 

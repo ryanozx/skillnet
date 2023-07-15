@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/ryanozx/skillnet/controllers"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/middleware"
@@ -22,7 +23,7 @@ func (s *serverConfig) setupRoutes() {
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
-	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud)
+	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud, s.redis)
 
 	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
 	// does not need to be read everytime we require the client address or backend address
@@ -35,7 +36,8 @@ func (s *serverConfig) setupRoutes() {
 	setupUserAPI(routerGroup, apiEnv)
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
-	setupLikeAPI(routerGroup, apiEnv)
+	setupNotificationAPI(routerGroup, apiEnv)
+	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -113,12 +115,12 @@ type PostAPIer interface {
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
 	// Public routes
 	rg.Private().GET("/posts", api.GetPosts)
-	rg.Private().GET("/posts/:id", api.GetPostByID)
+	rg.Private().GET("/posts/:postid", api.GetPostByID)
 
 	// Private routes
 	rg.Private().POST("/posts", api.CreatePost)
-	rg.Private().PATCH("/posts/:id", api.UpdatePost)
-	rg.Private().DELETE("/posts/:id", api.DeletePost)
+	rg.Private().PATCH("/posts/:postid", api.UpdatePost)
+	rg.Private().DELETE("/posts/:postid", api.DeletePost)
 }
 
 // Sets up User API
@@ -184,18 +186,37 @@ func registerPhotoRoutes(rg RouterGrouper, api PhotoAPIer) {
 	rg.Private().POST("/user/photo", api.PostUserPicture)
 }
 
-func setupLikeAPI(rg RouterGrouper, api LikeAPIer) {
-	api.InitialiseLikeHandler()
+func setupLikeAPI(rg RouterGrouper, api LikeAPIer, client *redis.Client) {
+	api.InitialiseLikeHandler(client)
 	registerLikeRoutes(rg, api)
 }
 
 type LikeAPIer interface {
-	InitialiseLikeHandler()
+	InitialiseLikeHandler(*redis.Client)
 	PostLike(*gin.Context)
 	DeleteLike(*gin.Context)
+	CreateLikeNotification(*gin.Context)
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
-	rg.Private().POST("/likes/:id", api.PostLike)
-	rg.Private().DELETE("/likes/:id", api.DeleteLike)
+	rg.Private().POST("/likes/:postid", api.PostLike)
+	rg.Private().DELETE("/likes/:postid", api.DeleteLike)
+}
+
+func setupNotificationAPI(rg RouterGrouper, api NotificationAPIer) {
+	// api.InitialiseNotificationHandler()
+	registerNotificationRoutes(rg, api)
+}
+
+type NotificationAPIer interface {
+	// InitialiseNotificationHandler()
+	GetNotifications(*gin.Context)
+	PostNotification(*gin.Context)
+	PatchNotification(*gin.Context)
+}
+
+func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
+	rg.Private().GET("/notifications", api.GetNotifications)
+	rg.Private().POST("/notifications", api.PostNotification)
+	rg.Private().PATCH("/notifications/:id", api.PatchNotification)
 }
