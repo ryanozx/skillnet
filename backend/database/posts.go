@@ -19,6 +19,7 @@ type PostDBHandler interface {
 	GetPosts(string, string) ([]models.Post, error)
 	GetPostByID(string, string) (*models.Post, error)
 	UpdatePost(*models.Post, string, string) (*models.Post, error)
+	GetPostByPostID(string) (*models.Post, error)
 }
 
 // PostDB implements PostDBHandler
@@ -67,6 +68,12 @@ func (db *PostDB) GetPosts(cutoff string, userID string) ([]models.Post, error) 
 func (db *PostDB) GetPostByID(id string, userID string) (*models.Post, error) {
 	post := models.Post{}
 	err := db.DB.Joins("User").First(&post, id).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND likes.user_id = ?)", userID).Error
+	return &post, err
+}
+
+func (db *PostDB) GetPostByPostID(id string) (*models.Post, error) {
+	post := models.Post{}
+	err := db.DB.Joins("User").First(&post, "posts.ID = ?", id).Error
 	return &post, err
 }
 
