@@ -13,28 +13,29 @@ interface NavBarProps {
     username: string;
 }
 
-export default function NavBar(props: any) {
+export default function NavBar(props: NavBarProps) {
     const { profilePic, username } = props;
     const isDesktop = useBreakpointValue({ base: false, lg: true });
     const toast = useToast();
 
     const [eventSource, setEventSource] = useState<EventSource | null>(null);
+    const [notifications, setNotifications] = useState<string[]>([]);
+    const [hasNewNotifications, setHasNewNotifications] = useState<boolean>(false);
 
     useEffect(() => {
-        console.log("this is being ran");
         if (!eventSource) {
-            console.log("this is being ran too");
             const source = new EventSource(process.env.BACKEND_BASE_URL + '/auth/notifications', {
                 withCredentials: true,
             });
     
             source.onmessage = function (event) {
-                // const notification = JSON.parse(event.data);
-                console.log("event: " + event.data);
-                // Display the notification. For simplicity, let's use toast here.
+                const notification = JSON.parse(event.data)
+
+                setNotifications(prevNotifications => [notification.content, ...prevNotifications]);
+                setHasNewNotifications(true);
                 toast({
                     title: "New notification",
-                    description: event.data,
+                    description: notification.content,  
                     status: "info",
                     duration: 5000,
                     isClosable: true,
@@ -52,15 +53,28 @@ export default function NavBar(props: any) {
         return () => {
             eventSource?.close();
         };
-    }, [eventSource]);    
+    }, [eventSource]);
+    
     
     return (
         <Box>
             <Flex py={2} px={4} borderBottom={1} align={'center'}>
                 {isDesktop ? (
-                    <DesktopNav profilePic={profilePic} username={username}/>
+                    <DesktopNav 
+                        profilePic={profilePic} 
+                        username={username} 
+                        notifications={notifications}
+                        hasNewNotifications={hasNewNotifications}
+                        setHasNewNotifications={setHasNewNotifications}
+                        />
                 ) : (
-                    <MobileNav profilePic={profilePic} username={username}/>
+                    <MobileNav 
+                        profilePic={profilePic} 
+                        username={username} 
+                        notifications={notifications}
+                        hasNewNotifications={hasNewNotifications}
+                        setHasNewNotifications={setHasNewNotifications}
+                        />
                 )}
             </Flex>
         </Box>

@@ -195,6 +195,7 @@ type LikeAPIer interface {
 	InitialiseLikeHandler(*redis.Client)
 	PostLike(*gin.Context)
 	DeleteLike(*gin.Context)
+	CreateLikeNotification(*gin.Context)
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {

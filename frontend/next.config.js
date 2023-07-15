@@ -12,9 +12,12 @@ const dotenvConfig = dotenv.config({ path: path.join(parentDir, '.env') });
 const envConfig = dotenvConfig.error ? process.env : dotenvConfig.parsed;
 
 module.exports = {
-  env: {
-    BACKEND_BASE_URL: envConfig.BACKEND_BASE_URL
-  },
+//   env: {
+//     BACKEND_BASE_URL: envConfig.BACKEND_BASE_URL
+//   },
+    env: {
+        BACKEND_BASE_URL: 'http://localhost:8080'
+    }
 };
 
 
