@@ -63,7 +63,12 @@ func (db *PostDB) GetPosts(cutoff *helpers.NullableUint, userID string) ([]model
 
 func (db *PostDB) GetPostByID(postID uint, userID string) (*models.Post, error) {
 	post := models.Post{}
-	err := db.DB.Joins("User").First(&post, postID).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND likes.user_id = ?)", userID).Error
+	var err error
+	if userID == "" {
+		err = db.DB.Joins("User").First(&post, postID).Error
+	} else {
+		err = db.DB.Joins("User").First(&post, postID).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND likes.user_id = ?)", userID).Error
+	}
 	return &post, err
 }
 

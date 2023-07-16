@@ -12,7 +12,7 @@ interface LikeProps {
 
 export default function LikeButton(props : LikeProps) {
     const baseURL = process.env.BACKEND_BASE_URL;
-    const likeURL = baseURL + "/auth/likes/" + props.PostID.toString();
+    const likeURL = baseURL + "/auth/likes/" + props.PostID;
     const toast = useToast();
 
     const postLike = () => {

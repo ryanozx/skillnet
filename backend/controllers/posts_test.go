@@ -21,6 +21,7 @@ var (
 	defaultPostView = models.PostView{
 		Post: models.Post{
 			Content: "Hello world!",
+			User:    defaultUser,
 		},
 		UserMinimal: defaultUserMinimal,
 	}

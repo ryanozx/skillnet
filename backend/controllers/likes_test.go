@@ -29,28 +29,33 @@ var (
 
 type LikeControllerTestSuite struct {
 	suite.Suite
-	api          APIEnv
-	dbHandler    *LikeDBTestHandler
-	cacheHandler *helpers.TestCache
-	store        *helpers.MockSessionStore
+	api                APIEnv
+	dbHandler          *LikeDBTestHandler
+	cacheHandler       *helpers.TestCache
+	store              *helpers.MockSessionStore
+	notificationPoster *helpers.TestNotificationCreator
 }
 
 func (s *LikeControllerTestSuite) SetupSuite() {
 	dbHandler := LikeDBTestHandler{}
 	cacheHandler := helpers.TestCache{}
+	notificationCreator := helpers.TestNotificationCreator{}
 	api := APIEnv{
-		LikeDBHandler:     &dbHandler,
-		LikesCacheHandler: &cacheHandler,
+		LikeDBHandler:      &dbHandler,
+		LikesCacheHandler:  &cacheHandler,
+		NotificationPoster: &notificationCreator,
 	}
 	s.api = api
 	s.dbHandler = &dbHandler
 	s.cacheHandler = &cacheHandler
 	s.store = helpers.MakeMockStore()
+	s.notificationPoster = &notificationCreator
 }
 
 func (s *LikeControllerTestSuite) TearDownTest() {
 	s.dbHandler.ResetFuncs()
 	s.store.Reset()
+	s.notificationPoster.ResetFuncs()
 }
 
 func TestLikeControllerSuite(t *testing.T) {
@@ -60,9 +65,10 @@ func TestLikeControllerSuite(t *testing.T) {
 
 // Mock DB Handler
 type LikeDBTestHandler struct {
-	CreateLikeFunc func(*models.Like) (*models.Like, error)
-	DeleteLikeFunc func(string, uint) error
-	GetCountFunc   func(uint) (uint64, error)
+	CreateLikeFunc  func(*models.Like) (*models.Like, error)
+	DeleteLikeFunc  func(string, uint) error
+	GetCountFunc    func(uint) (uint64, error)
+	GetLikeByIDFunc func(string) (*models.Like, error)
 }
 
 func (h *LikeDBTestHandler) CreateLike(newLike *models.Like) (*models.Like, error) {
@@ -75,6 +81,10 @@ func (h *LikeDBTestHandler) DeleteLike(userID string, postID uint) error {
 
 func (h *LikeDBTestHandler) GetValue(postID uint) (uint64, error) {
 	return h.GetCountFunc(postID)
+}
+
+func (h *LikeDBTestHandler) GetLikeByID(likeID string) (*models.Like, error) {
+	return h.GetLikeByIDFunc(likeID)
 }
 
 func (h *LikeDBTestHandler) SetMockCreateLikeFunc(like *models.Like, err error) {
@@ -92,6 +102,12 @@ func (h *LikeDBTestHandler) SetMockDeleteLikeFunc(err error) {
 func (h *LikeDBTestHandler) SetMockGetLikeCountFunc(count uint64, err error) {
 	h.GetCountFunc = func(postID uint) (uint64, error) {
 		return count, err
+	}
+}
+
+func (h *LikeDBTestHandler) SetMockGetLikeByIDFunc(like *models.Like, err error) {
+	h.GetLikeByIDFunc = func(likeID string) (*models.Like, error) {
+		return like, err
 	}
 }
 
@@ -114,6 +130,7 @@ func (s *LikeControllerTestSuite) Test_CreateLike_OK() {
 	c.Request = req
 	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
 	s.cacheHandler.SetMockSetCacheValFunc(1, nil)
+	s.notificationPoster.SetMockPostNotificationFromEventFunc(nil)
 	s.api.PostLike(c)
 
 	b, _ := io.ReadAll(w.Body)

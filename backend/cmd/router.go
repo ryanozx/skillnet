@@ -26,6 +26,7 @@ func (s *serverConfig) setupRoutes() {
 	apiEnv := &controllers.APIEnv{
 		DB:          s.db,
 		GoogleCloud: s.GoogleCloud,
+		NotifRedis:  s.notifRedis,
 	}
 
 	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
@@ -41,6 +42,7 @@ func (s *serverConfig) setupRoutes() {
 	setupPhotoAPI(routerGroup, apiEnv)
 	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
 	setupCommentAPI(routerGroup, apiEnv, s.commentsRedis)
+	setupNotificationAPI(routerGroup, apiEnv, s.notifRedis)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -231,4 +233,18 @@ func registerCommentRoutes(rg RouterGrouper, api CommentAPIer) {
 	rg.Private().POST(commentRoute, api.CreateComment)
 	rg.Private().PATCH(commentRouteWithID, api.UpdateComment)
 	rg.Private().DELETE(commentRouteWithID, api.DeleteComment)
+}
+
+func setupNotificationAPI(rg RouterGrouper, api NotificationAPIer, client *redis.Client) {
+	api.InitialiseNotificationHandler(client)
+	registerNotificationRoutes(rg, api)
+}
+
+type NotificationAPIer interface {
+	InitialiseNotificationHandler(*redis.Client)
+	GetNotifications(*gin.Context)
+}
+
+func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
+	rg.Private().GET("/notifications", api.GetNotifications)
 }

@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -19,9 +20,11 @@ const (
 
 // Errors
 var (
-	ErrAlreadyLiked      = errors.New("already liked")
-	ErrLikeNotRegistered = errors.New("like not registered")
-	ErrUnlikeFailed      = errors.New("failed to unlike")
+	ErrAlreadyLiked          = errors.New("already liked")
+	ErrLikeCountFailed       = errors.New("unable to retrieve like count")
+	ErrLikeNotRegistered     = errors.New("like not registered")
+	ErrUnlikeFailed          = errors.New("failed to unlike")
+	ErrUpdateLikeCountFailed = errors.New("failed to update like count")
 )
 
 func (a *APIEnv) InitialiseLikeHandler(client *redis.Client) {
@@ -67,12 +70,39 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 		return
 	}
 
+	notif := models.Notification{
+		SenderId:   userID,
+		CreatedAt:  time.Now(),
+		ReceiverId: like.Post.UserID,
+		Content:    like.User.Username + " liked your post",
+	}
+
+	// Even if there is an error in creating the notification server-side,
+	// this should not throw an error client-side
+	a.NotificationPoster.PostNotificationFromEvent(ctx, &notif)
+
 	output := models.LikeUpdate{
 		Like:      *like,
 		LikeCount: newLikeCount,
 	}
+
 	helpers.OutputData(ctx, output)
 }
+
+// func (a *APIEnv) CreateLikeNotification(ctx *gin.Context, userID string, postID uint) error {
+// 	notif := models.Notification{
+// 		SenderId:  userID,
+// 		CreatedAt: time.Now(),
+// 	}
+// 	post, err := a.PostDBHandler.GetPostByID(postID, "")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	notif.ReceiverId = post.UserID
+// 	username := post.User.Username
+// 	notif.Content = username + " liked your post"
+// 	return a.PostNotificationFromEvent(ctx, notif)
+// }
 
 func (a *APIEnv) DeleteLike(ctx *gin.Context) {
 	userID := helpers.GetUserIDFromContext(ctx)

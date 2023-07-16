@@ -79,8 +79,9 @@ type User struct {
 	ID              string `gorm:"<-:create" json:"-"` // UserID will never be revealed to the client; it will never change
 	UserView        `gorm:"embedded"`
 	UserCredentials `gorm:"embedded"`
-	Email           string `gorm:"not null"`
-	Likes           []Like `json:"null" gorm:"constraint:OnDelete:CASCADE"`
+	Email           string    `gorm:"not null"`
+	Likes           []Like    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Comments        []Comment `json:"-" gorm:"constraint:OnDelete:CASCADE"`
 }
 
 func (user *User) TestFormat() *User {

@@ -23,6 +23,7 @@ import (
 // APIEnv is a wrapper for the shared database instance
 type APIEnv struct {
 	DB                   *gorm.DB
+	NotifRedis           *redis.Client
 	PostDBHandler        database.PostDBHandler
 	UserDBHandler        database.UserDBHandler
 	AuthDBHandler        database.AuthDBHandler
@@ -31,6 +32,7 @@ type APIEnv struct {
 	GoogleCloud          *storage.Client
 	LikesCacheHandler    CacheHandler
 	CommentsCacheHandler CacheHandler
+	NotificationPoster   NotificationPoster
 }
 
 // General

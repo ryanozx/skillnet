@@ -6,6 +6,8 @@ type Like struct {
 	ID        string    `json:"-"`
 	CreatedAt time.Time `gorm:"<-:create" json:"-"`
 	UserID    string    `json:"-"`
+	User      User      `json:"-"`
+	Post      Post      `json:"-"`
 	PostID    uint
 }
 

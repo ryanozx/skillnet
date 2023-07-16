@@ -14,6 +14,7 @@ import (
 
 	gcs "github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/ryanozx/skillnet/models"
 )
 
 type MockSessionStore struct {
@@ -220,6 +221,24 @@ func (c *TestCache) SetMockSetCacheValFunc(count uint64, err error) {
 func (c *TestCache) ResetFuncs() {
 	c.GetCacheValFunc = nil
 	c.SetCacheValFunc = nil
+}
+
+type TestNotificationCreator struct {
+	PostNotificationFromEventFunc func(context *gin.Context, notif *models.Notification) error
+}
+
+func (nc *TestNotificationCreator) PostNotificationFromEvent(context *gin.Context, notif *models.Notification) error {
+	return nc.PostNotificationFromEventFunc(context, notif)
+}
+
+func (nc *TestNotificationCreator) SetMockPostNotificationFromEventFunc(err error) {
+	nc.PostNotificationFromEventFunc = func(context *gin.Context, notif *models.Notification) error {
+		return err
+	}
+}
+
+func (nc *TestNotificationCreator) ResetFuncs() {
+	nc.PostNotificationFromEventFunc = nil
 }
 
 func SetEnvVars(t *testing.T) {

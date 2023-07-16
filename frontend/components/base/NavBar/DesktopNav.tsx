@@ -13,10 +13,13 @@ import NotificationBell from './NotificationBell';
 interface DesktopNavProps {
     profilePic: string;
     username: string;
+    notifications: string[];
+    hasNewNotifications: boolean;
+    setHasNewNotifications: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function DesktopNav (props: DesktopNavProps) {  
-    const { profilePic, username } = props;
+    const { profilePic, username, notifications, hasNewNotifications, setHasNewNotifications } = props;
     return (
         <Flex 
             flex={1}  
@@ -36,7 +39,10 @@ export default function DesktopNav (props: DesktopNavProps) {
                 <Searchbar/>
             </Box>
             <HStack spacing={6}>
-                <NotificationBell/>
+                <NotificationBell 
+                    notifications={notifications} 
+                    hasNewNotifications={hasNewNotifications} 
+                    setHasNewNotifications={setHasNewNotifications}/>
                 <ProfileButton profilePic={profilePic} username={username}/>
             </HStack>
         </Flex>
