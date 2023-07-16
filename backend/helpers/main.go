@@ -90,7 +90,7 @@ var ErrNotOwner = errors.New("unauthorised action")
 
 func getUnsignedValFromContext(ctx ParamGetter, key string) (uint, error) {
 	valStr := getParamFromContext(ctx, key)
-	val, err := strconv.ParseUint(valStr, 10, 64)
+	val, err := strconv.ParseUint(valStr, 10, 32)
 	return uint(val), err
 }
 
@@ -100,7 +100,7 @@ type DefaultQueryer interface {
 
 func getUnsignedValFromQuery(ctx DefaultQueryer, key string) (uint, error) {
 	valStr := ctx.DefaultQuery(key, "")
-	val, err := strconv.ParseUint(valStr, 10, 64)
+	val, err := strconv.ParseUint(valStr, 10, 32)
 	return uint(val), err
 }
 

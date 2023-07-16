@@ -20,7 +20,7 @@ func ParseNullableUint(str string) (*NullableUint, error) {
 		output.hasValue = false
 		return &output, nil
 	}
-	val, err := strconv.ParseUint(str, 10, 64)
+	val, err := strconv.ParseUint(str, 10, 32)
 	if err != nil {
 		return &output, err
 	}

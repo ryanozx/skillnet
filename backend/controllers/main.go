@@ -62,7 +62,7 @@ func (c *Cache) GetCacheVal(ctx context.Context, key uint) (uint64, error) {
 	if err == redis.Nil {
 		return c.SetCacheVal(ctx, key)
 	}
-	return strconv.ParseUint(val, 10, 64)
+	return strconv.ParseUint(val, 10, 32)
 }
 
 func (c *Cache) SetCacheVal(ctx context.Context, id uint) (uint64, error) {
