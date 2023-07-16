@@ -57,6 +57,7 @@ func initialiseProdServer() *serverConfig {
 }
 
 // Sets up the Redis store from environmental variables
+
 func setupSessionStore() redis.Store {
 	env := helpers.RetrieveRedisEnv()
 	redisAddress := env.Address()
