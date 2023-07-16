@@ -27,11 +27,12 @@ func main() {
 // serverConfig contains the essentials to run the backend - a router,
 // a Redis database for fast reads, and a database for persistent data
 type serverConfig struct {
-	db          *gorm.DB
-	store       redis.Store
-	router      *gin.Engine
-	likesRedis  *goredis.Client
-	GoogleCloud *storage.Client
+	db            *gorm.DB
+	store         redis.Store
+	router        *gin.Engine
+	likesRedis    *goredis.Client
+	commentsRedis *goredis.Client
+	GoogleCloud   *storage.Client
 }
 
 // Returns a server configuration with the production database (as defined
@@ -41,11 +42,13 @@ func initialiseProdServer() *serverConfig {
 	db := database.ConnectProdDatabase()
 	store := setupSessionStore()
 	likesRedis := setupCache(1)
+	commentsRedis := setupCache(2)
 	server := serverConfig{
-		db:         db,
-		router:     router,
-		store:      store,
-		likesRedis: likesRedis,
+		db:            db,
+		router:        router,
+		store:         store,
+		likesRedis:    likesRedis,
+		commentsRedis: commentsRedis,
 	}
 	server.setupGoogleCloud()
 	return &server

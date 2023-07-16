@@ -1,15 +1,17 @@
 package helpers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	PostIdKey = "postid"
+	CutoffKey = "cutoff"
 )
 
 func getParamFromContext(ctx ParamGetter, key string) string {
@@ -20,48 +22,46 @@ type ParamGetter interface {
 	Param(string) string
 }
 
-// Retrieves postID from context; the postID is inserted into the context
-// by the router when parsing ("/posts/:postid")
-func GetPostIdFromContext(ctx ParamGetter) string {
-	postID := getParamFromContext(ctx, PostIdKey)
-	return postID
-}
-
-// Retrieves userID from context; will be non-empty in private routes since
-// AuthRequired adds userID as a parameter in the context
-func GetUserIdFromContext(ctx ParamGetter) string {
-	userID := getParamFromContext(ctx, UserIdKey)
-	return userID
-}
-
 // Retrieves username from context; the username is inserted into the context
-// by the router whe parsing ("/users/:username")
+// by the router when parsing ("/users/:username")
 func GetUsernameFromContext(ctx ParamGetter) string {
 	const usernameKey = "username"
 	username := getParamFromContext(ctx, usernameKey)
 	return username
 }
 
-func AddParamsToContext(ctx *gin.Context, key string, val interface{}) {
+func AddParamsToContext(ctx AddParamer, key string, val interface{}) {
 	ctx.AddParam(key, fmt.Sprintf("%v", val))
+}
+
+type AddParamer interface {
+	AddParam(key string, value string)
 }
 
 // bindInput is used by the handler functions to bind the JSON in the
 // request to some struct
-func BindInput(ctx *gin.Context, obj interface{}) error {
+func BindInput(ctx BindJSONer, obj interface{}) error {
 	err := ctx.BindJSON(obj)
 	return err
 }
 
+type BindJSONer interface {
+	BindJSON(obj any) error
+}
+
 // Serialises data as JSON into response body with status code 200 OK
-func OutputData(ctx *gin.Context, obj any) {
+func OutputData(ctx JSONer, obj any) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"data": obj,
 	})
 }
 
+type JSONer interface {
+	JSON(code int, obj any)
+}
+
 // Adds error message to response body along with error status code
-func OutputError(ctx *gin.Context, statusCode int, err error) {
+func OutputError(ctx JSONer, statusCode int, err error) {
 	log.Println(err.Error())
 	ctx.JSON(statusCode, gin.H{
 		"error": err.Error(),
@@ -69,8 +69,46 @@ func OutputError(ctx *gin.Context, statusCode int, err error) {
 }
 
 // Adds message to response body along with status code 200 OK
-func OutputMessage(ctx *gin.Context, msg string) {
+func OutputMessage(ctx JSONer, msg string) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": msg,
 	})
+}
+
+func CheckUserIsOwner(obj UserIDGetter, userID string) error {
+	if obj.GetUserID() != userID {
+		return ErrNotOwner
+	}
+	return nil
+}
+
+type UserIDGetter interface {
+	GetUserID() string
+}
+
+var ErrNotOwner = errors.New("unauthorised action")
+
+func getUnsignedValFromContext(ctx ParamGetter, key string) (uint, error) {
+	valStr := getParamFromContext(ctx, key)
+	val, err := strconv.ParseUint(valStr, 10, 64)
+	return uint(val), err
+}
+
+type DefaultQueryer interface {
+	DefaultQuery(string, string) string
+}
+
+func getUnsignedValFromQuery(ctx DefaultQueryer, key string) (uint, error) {
+	valStr := ctx.DefaultQuery(key, "")
+	val, err := strconv.ParseUint(valStr, 10, 64)
+	return uint(val), err
+}
+
+func validateUnsignedOrEmptyQuery(ctx DefaultQueryer, key string) (*NullableUint, error) {
+	valStr := ctx.DefaultQuery(key, "")
+	return ParseNullableUint(valStr)
+}
+
+func GetCutoffFromQuery(ctx DefaultQueryer) (*NullableUint, error) {
+	return validateUnsignedOrEmptyQuery(ctx, CutoffKey)
 }

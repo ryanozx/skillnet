@@ -18,7 +18,6 @@ export default function LikeButton(props : LikeProps) {
     const postLike = () => {
         axios.post(likeURL, {}, {withCredentials: true})
         .then(res => {
-            console.log(res)
             props.SetLikeCountHandler(res.data["data"]["LikeCount"])
             props.SetLikedHandler(true);
             console.log("Liked post %d", props.PostID)
@@ -38,7 +37,6 @@ export default function LikeButton(props : LikeProps) {
     const deleteLike = () => {
         axios.delete(likeURL, {withCredentials: true})
         .then(res => {
-            console.log(res)
             props.SetLikeCountHandler(res.data["data"]["LikeCount"])
             props.SetLikedHandler(false);
             console.log("Unliked post %d", props.PostID)

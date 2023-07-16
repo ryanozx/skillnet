@@ -12,13 +12,15 @@ export default function Feed() {
     const base_url = process.env.BACKEND_BASE_URL;
     const [url, setURL] = useState(base_url + "/auth/posts")
 
+    useEffect(() => {
+        updateFeed();
+    }, [])
+
     const updateFeed = async() => {
         if (!isLoading) {
             console.log("Fetching data");
             setIsLoading(true);
             setError(null);
-
-            console.log("Fetching from: ", url);
 
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData
@@ -41,12 +43,8 @@ export default function Feed() {
     }
 
     const addPost = (post : PostView) => {
-        setPosts([<Post key={post.Post.ID} {...post} />, ...posts]);
+        setPosts([<Post key={post.Post.ID} {...post}/>, ...posts]);
     }
-
-    useEffect(() => {
-        updateFeed();
-    }, []);
 
     return (<Box>
         <CreatePostCard addPostHandler={addPost}/>
@@ -54,15 +52,19 @@ export default function Feed() {
             dataLength={posts.length}
             next={updateFeed}
             hasMore={url != (base_url + "/auth/posts?cutoff=0")}
-            loader={<Box paddingBlock="10px">
-            <Text textAlign="center">Loading...</Text>
-        </Box>}
+            loader={
+                <Box paddingBlock="10px">
+                    <Text textAlign="center">Loading...</Text>
+                </Box>
+            }
             endMessage={
                 <Box paddingBlock="10px">
                     <Text textAlign="center">No more posts to load.</Text>
-                </Box>}>
+                </Box>}
+            >
             {posts}
         </InfiniteScroll>
+
         {error && 
         <Box paddingBlock="10px">
             <Text textAlign="center">There was an error in loading the posts.</Text>

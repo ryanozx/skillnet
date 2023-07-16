@@ -12,7 +12,7 @@ interface NavBarProps {
     username: string;
 }
 
-export default function NavBar(props: any) {
+export default function NavBar(props: NavBarProps) {
     const { profilePic, username } = props;
     const isDesktop = useBreakpointValue({ base: false, lg: true });
     

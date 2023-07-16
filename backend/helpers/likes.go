@@ -1,5 +1,7 @@
 package helpers
 
-func GenerateLikeID(userID string, postID string) string {
-	return userID + postID
+import "fmt"
+
+func GenerateLikeID(userID string, postID uint) string {
+	return fmt.Sprintf("%s%v", userID, postID)
 }

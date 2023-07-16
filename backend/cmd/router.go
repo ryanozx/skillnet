@@ -40,6 +40,7 @@ func (s *serverConfig) setupRoutes() {
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
 	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
+	setupCommentAPI(routerGroup, apiEnv, s.commentsRedis)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -115,14 +116,15 @@ type PostAPIer interface {
 }
 
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
-	// Public routes
-	rg.Private().GET("/posts", api.GetPosts)
-	rg.Private().GET("/posts/:postid", api.GetPostByID)
+	const postRoute = "/posts"
+	const postRouteWithID = postRoute + "/:" + helpers.PostIDKey
 
 	// Private routes
-	rg.Private().POST("/posts", api.CreatePost)
-	rg.Private().PATCH("/posts/:postid", api.UpdatePost)
-	rg.Private().DELETE("/posts/:postid", api.DeletePost)
+	rg.Private().GET(postRoute, api.GetPosts)
+	rg.Private().GET(postRouteWithID, api.GetPostByID)
+	rg.Private().POST(postRoute, api.CreatePost)
+	rg.Private().PATCH(postRouteWithID, api.UpdatePost)
+	rg.Private().DELETE(postRouteWithID, api.DeletePost)
 }
 
 // Sets up User API
@@ -200,6 +202,33 @@ type LikeAPIer interface {
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
-	rg.Private().POST("/likes/:postid", api.PostLike)
-	rg.Private().DELETE("/likes/:postid", api.DeleteLike)
+	const likeRouteWithID = "/likes/:" + helpers.PostIDKey
+
+	rg.Private().POST(likeRouteWithID, api.PostLike)
+	rg.Private().DELETE(likeRouteWithID, api.DeleteLike)
+}
+
+func setupCommentAPI(rg RouterGrouper, api CommentAPIer, client *redis.Client) {
+	api.InitialiseCommentHandler(client)
+	registerCommentRoutes(rg, api)
+}
+
+type CommentAPIer interface {
+	InitialiseCommentHandler(*redis.Client)
+	CreateComment(*gin.Context)
+	// Generates comment feed
+	GetComments(*gin.Context)
+	UpdateComment(*gin.Context)
+	DeleteComment(*gin.Context)
+}
+
+func registerCommentRoutes(rg RouterGrouper, api CommentAPIer) {
+	const commentRoute = "/comments"
+	const commentRouteWithID = commentRoute + "/:" + helpers.CommentIDKey
+
+	// Private routes
+	rg.Private().GET(commentRoute, api.GetComments)
+	rg.Private().POST(commentRoute, api.CreateComment)
+	rg.Private().PATCH(commentRouteWithID, api.UpdateComment)
+	rg.Private().DELETE(commentRouteWithID, api.DeleteComment)
 }

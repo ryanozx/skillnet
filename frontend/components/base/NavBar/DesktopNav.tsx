@@ -6,7 +6,7 @@ import {
     HStack
 } from '@chakra-ui/react';
 import Searchbar from '../Searchbar';
-import React, { useState } from 'react';
+import React from 'react';
 import ProfileButton from './ProfileButton';
 import NotificationBell from './NotificationBell';
 

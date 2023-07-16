@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -12,18 +11,15 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	invalidPostID  = "badpostid"
-	negativePostID = "-234"
-)
-
 var (
 	defaultLike = models.Like{
 		UserID: testUserID,
 		PostID: testPostID,
 	}
 	defaultCreateLikeUpdate = models.LikeUpdate{
-		Like:      defaultLike,
+		Like: models.Like{
+			PostID: testPostID,
+		},
 		LikeCount: 1,
 	}
 	defaultDeleteLikeUpdate = models.LikeUpdate{
@@ -35,13 +31,13 @@ type LikeControllerTestSuite struct {
 	suite.Suite
 	api          APIEnv
 	dbHandler    *LikeDBTestHandler
-	cacheHandler *LikeTestCache
+	cacheHandler *helpers.TestCache
 	store        *helpers.MockSessionStore
 }
 
 func (s *LikeControllerTestSuite) SetupSuite() {
 	dbHandler := LikeDBTestHandler{}
-	cacheHandler := LikeTestCache{}
+	cacheHandler := helpers.TestCache{}
 	api := APIEnv{
 		LikeDBHandler:     &dbHandler,
 		LikesCacheHandler: &cacheHandler,
@@ -58,32 +54,27 @@ func (s *LikeControllerTestSuite) TearDownTest() {
 }
 
 func TestLikeControllerSuite(t *testing.T) {
-	t.Setenv("CLIENT_HOST", "http://localhost")
-	t.Setenv("CLIENT_PORT", "3000")
-	t.Setenv("BACKEND_HOST", "http://localhost")
-	t.Setenv("BACKEND_PORT", "8080")
-	helpers.SetModelClientAddress()
-	helpers.SetModelBackendAddress()
+	helpers.SetEnvVars(t)
 	suite.Run(t, new(LikeControllerTestSuite))
 }
 
 // Mock DB Handler
 type LikeDBTestHandler struct {
-	CreateLikeFunc   func(*models.Like) (*models.Like, error)
-	DeleteLikeFunc   func(string, string) error
-	GetLikeCountFunc func(string) (uint64, error)
+	CreateLikeFunc func(*models.Like) (*models.Like, error)
+	DeleteLikeFunc func(string, uint) error
+	GetCountFunc   func(uint) (uint64, error)
 }
 
 func (h *LikeDBTestHandler) CreateLike(newLike *models.Like) (*models.Like, error) {
 	return h.CreateLikeFunc(newLike)
 }
 
-func (h *LikeDBTestHandler) DeleteLike(userID string, postID string) error {
+func (h *LikeDBTestHandler) DeleteLike(userID string, postID uint) error {
 	return h.DeleteLikeFunc(userID, postID)
 }
 
-func (h *LikeDBTestHandler) GetLikeCount(postID string) (uint64, error) {
-	return h.GetLikeCountFunc(postID)
+func (h *LikeDBTestHandler) GetValue(postID uint) (uint64, error) {
+	return h.GetCountFunc(postID)
 }
 
 func (h *LikeDBTestHandler) SetMockCreateLikeFunc(like *models.Like, err error) {
@@ -93,13 +84,13 @@ func (h *LikeDBTestHandler) SetMockCreateLikeFunc(like *models.Like, err error) 
 }
 
 func (h *LikeDBTestHandler) SetMockDeleteLikeFunc(err error) {
-	h.DeleteLikeFunc = func(userID string, postID string) error {
+	h.DeleteLikeFunc = func(userID string, postID uint) error {
 		return err
 	}
 }
 
 func (h *LikeDBTestHandler) SetMockGetLikeCountFunc(count uint64, err error) {
-	h.GetLikeCountFunc = func(postID string) (uint64, error) {
+	h.GetCountFunc = func(postID uint) (uint64, error) {
 		return count, err
 	}
 }
@@ -109,42 +100,12 @@ func (h *LikeDBTestHandler) ResetFuncs() {
 	h.DeleteLikeFunc = nil
 }
 
-type LikeTestCache struct {
-	GetCacheCountFunc func(context.Context, string) (uint64, error)
-	SetCacheCountFunc func(context.Context, string) (uint64, error)
-}
-
-func (c *LikeTestCache) GetCacheCount(ctx context.Context, postID string) (uint64, error) {
-	return c.GetCacheCountFunc(ctx, postID)
-}
-
-func (c *LikeTestCache) SetCacheCount(ctx context.Context, postID string) (uint64, error) {
-	return c.SetCacheCountFunc(ctx, postID)
-}
-
-func (c *LikeTestCache) SetMockGetCacheCountFunc(count uint64, err error) {
-	c.GetCacheCountFunc = func(ctx context.Context, postID string) (uint64, error) {
-		return count, err
-	}
-}
-
-func (c *LikeTestCache) SetMockSetCacheCountFunc(count uint64, err error) {
-	c.SetCacheCountFunc = func(ctx context.Context, postID string) (uint64, error) {
-		return count, err
-	}
-}
-
-func (c *LikeTestCache) ResetFuncs() {
-	c.GetCacheCountFunc = nil
-	c.SetCacheCountFunc = nil
-}
-
 // Create Likes
 func (s *LikeControllerTestSuite) Test_CreateLike_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
 	if err != nil {
@@ -152,7 +113,7 @@ func (s *LikeControllerTestSuite) Test_CreateLike_OK() {
 	}
 	c.Request = req
 	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
-	s.cacheHandler.SetMockSetCacheCountFunc(1, nil)
+	s.cacheHandler.SetMockSetCacheValFunc(1, nil)
 	s.api.PostLike(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -163,7 +124,7 @@ func (s *LikeControllerTestSuite) Test_CreateLike_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, defaultCreateLikeUpdate); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.LikeUpdate](m, &defaultCreateLikeUpdate); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -171,8 +132,8 @@ func (s *LikeControllerTestSuite) Test_CreateLike_OK() {
 func (s *LikeControllerTestSuite) Test_CreateLike_InvalidPostIDString() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, invalidPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, invalidPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
 	if err != nil {
@@ -198,8 +159,8 @@ func (s *LikeControllerTestSuite) Test_CreateLike_InvalidPostIDString() {
 func (s *LikeControllerTestSuite) Test_CreateLike_NegativePostID() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, negativePostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, negativePostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
 	if err != nil {
@@ -225,8 +186,8 @@ func (s *LikeControllerTestSuite) Test_CreateLike_NegativePostID() {
 func (s *LikeControllerTestSuite) Test_CreateLike_DuplicateKey() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
 	if err != nil {
@@ -252,8 +213,8 @@ func (s *LikeControllerTestSuite) Test_CreateLike_DuplicateKey() {
 func (s *LikeControllerTestSuite) Test_CreateLike_CannotCreate() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
 	if err != nil {
@@ -279,8 +240,8 @@ func (s *LikeControllerTestSuite) Test_CreateLike_CannotCreate() {
 func (s *LikeControllerTestSuite) Test_CreateLike_CannotSetCount() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
 	if err != nil {
@@ -288,7 +249,7 @@ func (s *LikeControllerTestSuite) Test_CreateLike_CannotSetCount() {
 	}
 	c.Request = req
 	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
-	s.cacheHandler.SetMockSetCacheCountFunc(1, ErrTest)
+	s.cacheHandler.SetMockSetCacheValFunc(1, ErrTest)
 	s.api.PostLike(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -308,8 +269,8 @@ func (s *LikeControllerTestSuite) Test_CreateLike_CannotSetCount() {
 func (s *LikeControllerTestSuite) Test_DeleteLike_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
 	if err != nil {
@@ -317,7 +278,7 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_OK() {
 	}
 	c.Request = req
 	s.dbHandler.SetMockDeleteLikeFunc(nil)
-	s.cacheHandler.SetMockSetCacheCountFunc(0, nil)
+	s.cacheHandler.SetMockSetCacheValFunc(0, nil)
 	s.api.DeleteLike(c)
 
 	b, _ := io.ReadAll(w.Body)
@@ -328,7 +289,7 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual(m, defaultDeleteLikeUpdate); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.LikeUpdate](m, &defaultDeleteLikeUpdate); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -336,8 +297,8 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_OK() {
 func (s *LikeControllerTestSuite) Test_DeleteLike_InvalidPostIDString() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, invalidPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, invalidPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
 	if err != nil {
@@ -363,8 +324,8 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_InvalidPostIDString() {
 func (s *LikeControllerTestSuite) Test_DeleteLike_NegativePostID() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, negativePostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, negativePostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
 	if err != nil {
@@ -390,8 +351,8 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_NegativePostID() {
 func (s *LikeControllerTestSuite) Test_DeleteLike_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
 	if err != nil {
@@ -417,8 +378,8 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_NotFound() {
 func (s *LikeControllerTestSuite) Test_DeleteLike_CannotDelete() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
 	if err != nil {
@@ -444,8 +405,8 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_CannotDelete() {
 func (s *LikeControllerTestSuite) Test_DeleteLike_CannotSetCount() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIdKey, testPostID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
 	if err != nil {
@@ -453,7 +414,7 @@ func (s *LikeControllerTestSuite) Test_DeleteLike_CannotSetCount() {
 	}
 	c.Request = req
 	s.dbHandler.SetMockDeleteLikeFunc(nil)
-	s.cacheHandler.SetMockSetCacheCountFunc(0, ErrTest)
+	s.cacheHandler.SetMockSetCacheValFunc(0, ErrTest)
 	s.api.DeleteLike(c)
 
 	b, _ := io.ReadAll(w.Body)

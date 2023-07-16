@@ -22,7 +22,7 @@ const (
 // Messages
 var (
 	ErrCannotUpdateUser         = errors.New("cannot update user")
-	ErrCreateAccountNoCookie    = errors.New("account successfully created but cookie not set")
+	ErrCreateAccountNoCookie    = errors.New("account successfully created but cookie not set, please login later")
 	ErrMissingSignupCredentials = errors.New("missing username, password, or email")
 	ErrPasswordEncryptFailed    = errors.New("password encryption failed")
 	ErrUserNotFound             = errors.New("user not found")
@@ -74,7 +74,7 @@ func (a *APIEnv) CreateUser(ctx *gin.Context) {
 
 // Deletes user - assuming Delete Account is implemented
 func (a *APIEnv) DeleteUser(ctx *gin.Context) {
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	err := a.UserDBHandler.DeleteUser(userID)
 	// If user cannot be found in the database return status code 404 Status Not Found
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -113,7 +113,7 @@ func (a *APIEnv) GetProfile(ctx *gin.Context) {
 
 // Returns user's own profile with private information
 func (a *APIEnv) GetSelfProfile(ctx *gin.Context) {
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	user, err := a.UserDBHandler.GetUserByID(userID)
 	// If cannot find use in database, return status code 404 Not Found
 	if err != nil {
@@ -125,7 +125,7 @@ func (a *APIEnv) GetSelfProfile(ctx *gin.Context) {
 
 // Updates user's profile
 func (a *APIEnv) UpdateUser(ctx *gin.Context) {
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	var inputUpdate models.User
 
 	// If request is badly formatted, return status code 400 Bad Request
