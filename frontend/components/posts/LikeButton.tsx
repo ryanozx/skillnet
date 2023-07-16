@@ -27,7 +27,7 @@ export default function LikeButton(props : LikeProps) {
             console.log(err);
             toast({
                 title: "Failed to like post",
-                description: err.response.data.error,
+                description: err.response,
                 status: "error",
                 duration: 5000,
                 isClosable: true,

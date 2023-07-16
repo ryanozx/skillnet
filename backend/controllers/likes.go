@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -76,7 +77,29 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 		Like:      *like,
 		LikeCount: newLikeCount,
 	}
+
+	a.CreateLikeNotification(ctx)
+
 	helpers.OutputData(ctx, output)
+}
+
+func (a *APIEnv) CreateLikeNotification(ctx *gin.Context) {
+	postId := helpers.GetPostIdFromContext(ctx)
+	userId := helpers.GetUserIdFromContext(ctx)
+
+	notif := models.Notification{
+		SenderId:  userId,
+		CreatedAt: time.Now(),
+	}
+	post, err := a.PostDBHandler.GetPostByPostID(postId)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	notif.ReceiverId = post.UserID
+	username := post.User.Username
+	notif.Content = username + " liked your post"
+	a.PostNotificationFromEvent(ctx, notif)
 }
 
 func (a *APIEnv) DeleteLike(ctx *gin.Context) {
