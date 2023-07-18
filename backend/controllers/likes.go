@@ -1,10 +1,8 @@
 package controllers
 
 import (
-	"context"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -33,18 +31,17 @@ func (a *APIEnv) InitialiseLikeHandler(client *redis.Client) {
 	a.LikeDBHandler = &database.LikeDB{
 		DB: a.DB,
 	}
-	a.LikesCacheHandler = &LikesCache{
+	a.LikesCacheHandler = &Cache{
 		redisDB:   client,
 		DBHandler: a.LikeDBHandler,
 	}
 }
 
 func (a *APIEnv) PostLike(ctx *gin.Context) {
-	postId := helpers.GetPostIdFromContext(ctx)
-	userId := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 
 	// Ensure that postID is an unsigned integer
-	postIdNum, err := strconv.ParseUint(postId, 10, 64)
+	postID, err := helpers.GetPostIDFromContext(ctx)
 
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
@@ -52,9 +49,9 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 	}
 
 	newLike := &models.Like{
-		ID:     helpers.GenerateLikeID(userId, postId),
-		UserID: userId,
-		PostID: uint(postIdNum),
+		ID:     helpers.GenerateLikeID(userID, postID),
+		UserID: userID,
+		PostID: postID,
 	}
 
 	like, err := a.LikeDBHandler.CreateLike(newLike)
@@ -67,54 +64,56 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 		return
 	}
 
-	newLikeCount, err := a.LikesCacheHandler.SetCacheCount(ctx, postId)
+	newLikeCount, err := a.LikesCacheHandler.SetCacheVal(ctx, postID)
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusInternalServerError, err)
 		return
 	}
+
+	notif := models.Notification{
+		SenderId:   userID,
+		CreatedAt:  time.Now(),
+		ReceiverId: like.Post.UserID,
+		Content:    like.User.Username + " liked your post",
+	}
+
+	// Even if there is an error in creating the notification server-side,
+	// this should not throw an error client-side
+	a.NotificationPoster.PostNotificationFromEvent(ctx, &notif)
 
 	output := models.LikeUpdate{
 		Like:      *like,
 		LikeCount: newLikeCount,
 	}
 
-	a.CreateLikeNotification(ctx)
-
 	helpers.OutputData(ctx, output)
 }
 
-func (a *APIEnv) CreateLikeNotification(ctx *gin.Context) {
-	postId := helpers.GetPostIdFromContext(ctx)
-	userId := helpers.GetUserIdFromContext(ctx)
-
-	notif := models.Notification{
-		SenderId:  userId,
-		CreatedAt: time.Now(),
-	}
-	post, err := a.PostDBHandler.GetPostByPostID(postId)
-	if err != nil {
-		helpers.OutputError(ctx, http.StatusInternalServerError, err)
-		return
-	}
-	notif.ReceiverId = post.UserID
-	username := post.User.Username
-	notif.Content = username + " liked your post"
-	a.PostNotificationFromEvent(ctx, notif)
-}
+// func (a *APIEnv) CreateLikeNotification(ctx *gin.Context, userID string, postID uint) error {
+// 	notif := models.Notification{
+// 		SenderId:  userID,
+// 		CreatedAt: time.Now(),
+// 	}
+// 	post, err := a.PostDBHandler.GetPostByID(postID, "")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	notif.ReceiverId = post.UserID
+// 	username := post.User.Username
+// 	notif.Content = username + " liked your post"
+// 	return a.PostNotificationFromEvent(ctx, notif)
+// }
 
 func (a *APIEnv) DeleteLike(ctx *gin.Context) {
-	postId := helpers.GetPostIdFromContext(ctx)
-	userId := helpers.GetUserIdFromContext(ctx)
-
-	// Ensure that postID is an unsigned integer
-	_, err := strconv.ParseUint(postId, 10, 64)
+	userID := helpers.GetUserIDFromContext(ctx)
+	postID, err := helpers.GetPostIDFromContext(ctx)
 
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
 		return
 	}
 
-	err = a.LikeDBHandler.DeleteLike(userId, postId)
+	err = a.LikeDBHandler.DeleteLike(userID, postID)
 
 	if err == gorm.ErrRecordNotFound {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
@@ -124,7 +123,7 @@ func (a *APIEnv) DeleteLike(ctx *gin.Context) {
 		return
 	}
 
-	newLikeCount, err := a.LikesCacheHandler.SetCacheCount(ctx, postId)
+	newLikeCount, err := a.LikesCacheHandler.SetCacheVal(ctx, postID)
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusInternalServerError, err)
 		return
@@ -134,31 +133,4 @@ func (a *APIEnv) DeleteLike(ctx *gin.Context) {
 		LikeCount: newLikeCount,
 	}
 	helpers.OutputData(ctx, output)
-}
-
-type LikesCacheHandler interface {
-	GetCacheCount(context.Context, string) (uint64, error)
-	SetCacheCount(context.Context, string) (uint64, error)
-}
-
-type LikesCache struct {
-	redisDB   *redis.Client
-	DBHandler database.LikeDBCountGetter
-}
-
-func (c *LikesCache) GetCacheCount(ctx context.Context, postID string) (uint64, error) {
-	likeVal, err := c.redisDB.Get(ctx, postID).Result()
-	if err == redis.Nil {
-		return c.SetCacheCount(ctx, postID)
-	}
-	return strconv.ParseUint(likeVal, 10, 64)
-}
-
-func (c *LikesCache) SetCacheCount(ctx context.Context, postID string) (uint64, error) {
-	newLikeCount, err := c.DBHandler.GetLikeCount(postID)
-	if err != nil {
-		return newLikeCount, ErrLikeCountFailed
-	}
-	err = c.redisDB.Set(ctx, postID, newLikeCount, 0).Err()
-	return newLikeCount, err
 }

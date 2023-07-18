@@ -1,23 +1,26 @@
 import React, {useState} from "react";
 import {Avatar, Box, Button, Card, CardHeader, CardBody, CardFooter, Flex, Heading, IconButton, Menu, MenuButton, MenuItem, MenuList, Text} from "@chakra-ui/react";
-import {BiComment, BiShare} from "react-icons/bi";
+import {BiShare} from "react-icons/bi";
 import {BsThreeDotsVertical} from "react-icons/bs";
-import EditPostItem from "./EditPostItem";
+import EditPostItem from "./EditPost/EditPostItem";
 import DeletePostItem from "./DeletePostItem";
 import LikeButton from "./LikeButton";
+import CommentButton from "./Comments/CommentButton";
+import {UserMinimal} from "./../../types";
+import { ProfileButtonProps } from "../base/NavBar/ProfileButton";
+
+export interface PostAndComments{
+    post: PostView,
+    profile: ProfileButtonProps
+}
 
 export interface PostView {
-    User: User,
+    User: UserMinimal,
     Post: PostComponent,
     IsEditable: boolean,
     Liked: boolean,
     LikeCount: number,
-}
-
-interface User {
-    Name: string,
-    URL: string,
-    ProfilePic: string,
+    CommentCount: number,
 }
 
 export interface PostComponent {
@@ -27,7 +30,6 @@ export interface PostComponent {
     Content: string,
 }
 
-
 // TODO: Determine number of lines in text content and display Show More
 
 export default function Post(post : PostView) {
@@ -35,6 +37,7 @@ export default function Post(post : PostView) {
     const [isDeleted, setIsDeleted] = useState<boolean>(false);
     const [isLiked, setIsLiked] = useState<boolean>(post.Liked);
     const [likeCount, setLikeCount] = useState<number>(post.LikeCount);
+    const [commentCount, setCommentCount] = useState<number>(post.CommentCount)
     const notEdited = currPost.Post.UpdatedAt == currPost.Post.CreatedAt;
     const timeStamp = new Date(currPost.Post.UpdatedAt).toLocaleString("en-GB", {
         dateStyle: "medium",
@@ -58,14 +61,12 @@ export default function Post(post : PostView) {
                                 />
                             </a>
                             <Box>
-                                <a href={currPost.User.URL}>
-                                    <Heading 
-                                        size="sm"
-                                        _hover={{textDecoration: "underline"}}
-                                        >
-                                        {currPost.User.Name == "" ? "Anonymous User" : currPost.User.Name}
-                                    </Heading>
-                                </a>
+                                <Heading 
+                                    size="sm"
+                                    _hover={{textDecoration: "underline"}}
+                                    >
+                                    <a href={currPost.User.URL}>{currPost.User.Name == "" ? "Anonymous User" : currPost.User.Name}</a>
+                                </Heading>
                                 <Text fontSize="15px">{notEdited ? `Posted on ${timeStamp}` : `Last edited on ${timeStamp}`}</Text>
                             </Box>
                         </Flex>
@@ -92,10 +93,10 @@ export default function Post(post : PostView) {
                     justify="space-between"
                     flexWrap="wrap"
                     paddingBlockEnd="0px"
-                    paddingInlineStart="20px"
-                    paddingInlineEnd="0px"
+                    paddingInline="20px"
                 >
                     <Text color="gray">{likeCount}{likeCount === 1 ? " like" : " likes"}</Text>
+                    <Text color="gray">{commentCount}{commentCount === 1 ? " comment" : " comments"}</Text>
                 </CardFooter>
                 <CardFooter
                     justify="space-between"
@@ -114,9 +115,10 @@ export default function Post(post : PostView) {
                         SetLikeCountHandler={setLikeCount}
                         SetLikedHandler={setIsLiked} 
                         />
-                    <Button flex="1" variant="outline" leftIcon={<BiComment />}>
-                        Comment
-                    </Button>
+                    <CommentButton 
+                        postID={currPost.Post.ID}
+                        setCommentCountHandler={setCommentCount}
+                    />
                     <Button flex="1" variant="outline" leftIcon={<BiShare/>}>
                         Share
                     </Button>

@@ -27,12 +27,13 @@ func main() {
 // serverConfig contains the essentials to run the backend - a router,
 // a Redis database for fast reads, and a database for persistent data
 type serverConfig struct {
-	db          *gorm.DB
-	store       redis.Store
-	redis       *goredis.Client
-	router      *gin.Engine
-	likesRedis  *goredis.Client
-	GoogleCloud *storage.Client
+	db            *gorm.DB
+	store         redis.Store
+	router        *gin.Engine
+	likesRedis    *goredis.Client
+	commentsRedis *goredis.Client
+	notifRedis    *goredis.Client
+	GoogleCloud   *storage.Client
 }
 
 // Returns a server configuration with the production database (as defined
@@ -40,24 +41,25 @@ type serverConfig struct {
 func initialiseProdServer() *serverConfig {
 	router := gin.Default()
 	db := database.ConnectProdDatabase()
-
-	redis := setupRedis()
-	GoogleCloud := setupGoogleCloud()
 	store := setupSessionStore()
-	likesRedis := setupCache(1)
+	//
+	likesRedis := setupRedis(1)
+	commentsRedis := setupRedis(2)
+	notifRedis := setupRedis(3)
+	googleCloud := setupGoogleCloud()
 	server := serverConfig{
-		db:          db,
-		router:      router,
-		store:       store,
-		likesRedis:  likesRedis,
-		redis:       redis,
-		GoogleCloud: GoogleCloud,
+		db:            db,
+		router:        router,
+		store:         store,
+		notifRedis:    notifRedis,
+		likesRedis:    likesRedis,
+		commentsRedis: commentsRedis,
+		GoogleCloud:   googleCloud,
 	}
 	return &server
 }
 
 // Sets up the Redis store from environmental variables
-
 func setupSessionStore() redis.Store {
 	env := helpers.RetrieveRedisEnv()
 	redisAddress := env.Address()
@@ -69,19 +71,7 @@ func setupSessionStore() redis.Store {
 	return store
 }
 
-func setupRedis() *goredis.Client {
-	env := helpers.RetrieveRedisEnv()
-	redisAddress := env.Address()
-	const redisNetwork = "tcp"
-	client := goredis.NewClient(&goredis.Options{
-		Addr:     redisAddress,
-		Network:  redisNetwork,
-		Password: "",
-	})
-	return client
-}
-
-func setupCache(dbNum int) *goredis.Client {
+func setupRedis(dbNum int) *goredis.Client {
 	env := helpers.RetrieveRedisEnv()
 	redisAddress := env.Address()
 	rdb := goredis.NewClient(&goredis.Options{

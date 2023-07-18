@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {MenuItem} from '@chakra-ui/react';
-import EditPostModel from "./EditPostModel";
-import {PostComponent, PostView} from "./Post"
+import EditPostModal from "./EditPostModal";
+import {PostComponent, PostView} from "../Post"
 
 interface EditPostItemProps {
     post: PostComponent;
@@ -19,7 +19,7 @@ export default function EditPostItem(props: EditPostItemProps) {
                 onClick={handleOpen}
             >Edit post
             </MenuItem>
-            <EditPostModel 
+            <EditPostModal 
                 isOpen={isOpen} 
                 postComponent={props.post}
                 setIsOpen={setIsOpen}
