@@ -14,25 +14,28 @@ import (
 )
 
 const (
-	testUserID = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+	testUserID   = "6ba7b810-9dad-11d1-80b4-00c04fd430c8"
+	testUsername = "testuser"
+	testPassword = "12345"
+	testEmail    = "abc@def.com"
+	diffUserID   = "6ba7b812-9dad-11d1-80b4-00c04fd430c"
 )
 
 var (
 	defaultCreds = models.UserCredentials{
-		Username: "testuser",
-		Password: "12345",
+		Username: testUsername,
+		Password: testPassword,
 	}
 	defaultUser = models.User{
-		UserCredentials: models.UserCredentials{
-			Username: "testuser",
-		},
+		UserCredentials: defaultCreds,
 		UserView: models.UserView{
-			Title: null.NewString("Tester", true),
-			UserMinimal: models.UserMinimal{
-				Name: "Test User",
-				URL:  "http://localhost:3000/profile/testuser",
-			},
+			Title:       null.NewString("Tester", true),
+			UserMinimal: defaultUserMinimal,
 		},
+	}
+	defaultUserMinimal = models.UserMinimal{
+		Name: "Test User",
+		URL:  "http://localhost:3000/profile/testuser",
 	}
 	defaultUserView = defaultUser.GetUserView()
 )
@@ -140,191 +143,11 @@ func (h *UserDBTestHandler) ResetFuncs() {
 	h.UpdateUserFunc = nil
 }
 
-// CreateUser
-func (s *UserControllerTestSuite) Test_CreateUser_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"testuser", "12345", "abc@gmail.com"})
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedMessageEqualsActual(m, SuccessfulAccountCreationMsg); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *UserControllerTestSuite) Test_CreateUser_EmptyUsername() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"", "12345", "abc@gmail.com"})
-
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingSignupCredentials); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *UserControllerTestSuite) Test_CreateUser_EmptyPassword() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"testuser", "", "abc@gmail.com"})
-
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingSignupCredentials); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *UserControllerTestSuite) Test_CreateUser_EmptyEmail() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"testuser", "12345", ""})
-
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrMissingSignupCredentials); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *UserControllerTestSuite) Test_CreateUser_UsernameConflict() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"testuser", "12345", "abc@gmail.com"})
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, gorm.ErrDuplicatedKey)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusConflict, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUsernameAlreadyExists); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *UserControllerTestSuite) Test_CreateUser_CannotCreate() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"testuser", "12345", "abc@gmail.com"})
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, ErrTest)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrTest); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *UserControllerTestSuite) Test_CreateUser_CannotSaveSession() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	s.store.SetSaveError(ErrTest)
-	helpers.AddStoreToContext(c, s.store)
-
-	c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
-		Username string
-		Password string
-		Email    string
-	}{"testuser", "12345", "abc@gmail.com"})
-	s.dbHandler.SetMockCreateUserFunc(&defaultUser, nil)
-	s.api.CreateUser(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCreateAccountNoCookie); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
 // DeleteUser
 func (s *UserControllerTestSuite) Test_DeleteUser_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(nil)
 	s.api.DeleteUser(c)
@@ -345,7 +168,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_OK() {
 func (s *UserControllerTestSuite) Test_DeleteUser_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(gorm.ErrRecordNotFound)
 	s.api.DeleteUser(c)
@@ -366,7 +189,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_NotFound() {
 func (s *UserControllerTestSuite) Test_DeleteUser_CannotDelete() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(ErrTest)
 	s.api.DeleteUser(c)
@@ -388,7 +211,7 @@ func (s *UserControllerTestSuite) Test_DeleteUser_CannotClearSession() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
 	s.store.SetSaveError(ErrTest)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockDeleteUserFunc(nil)
 	s.api.DeleteUser(c)
@@ -422,7 +245,7 @@ func (s *UserControllerTestSuite) Test_GetProfile_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.UserView](m, *defaultUserView); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.UserView](m, defaultUserView); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -450,7 +273,7 @@ func (s *UserControllerTestSuite) Test_GetProfile_NotFound() {
 func (s *UserControllerTestSuite) Test_GetSelfProfile_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockGetUserByIDFunc(&defaultUser, nil)
 	s.api.GetSelfProfile(c)
@@ -463,7 +286,7 @@ func (s *UserControllerTestSuite) Test_GetSelfProfile_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.User](m, defaultUser); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.User](m, &defaultUser); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -471,7 +294,7 @@ func (s *UserControllerTestSuite) Test_GetSelfProfile_OK() {
 func (s *UserControllerTestSuite) Test_GetSelfProfile_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockGetUserByIDFunc(&defaultUser, ErrTest)
 	s.api.GetSelfProfile(c)
@@ -493,7 +316,7 @@ func (s *UserControllerTestSuite) Test_GetSelfProfile_NotFound() {
 func (s *UserControllerTestSuite) Test_UpdateUser_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, defaultUser)
 	if err != nil {
@@ -512,7 +335,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_OK() {
 	if err != nil {
 		s.T().Error(err)
 	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.User](m, defaultUser); !isEqual {
+	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.User](m, &defaultUser); !isEqual {
 		s.T().Error(errStr)
 	}
 }
@@ -520,7 +343,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_OK() {
 func (s *UserControllerTestSuite) Test_UpdateUser_BadRequest() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	s.dbHandler.SetMockUpdateUserFunc(&defaultUser, nil)
 	s.api.UpdateUser(c)
@@ -541,7 +364,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_BadRequest() {
 func (s *UserControllerTestSuite) Test_UpdateUser_NotFound() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, defaultUser)
 	if err != nil {
@@ -568,7 +391,7 @@ func (s *UserControllerTestSuite) Test_UpdateUser_NotFound() {
 func (s *UserControllerTestSuite) Test_UpdateUser_CannotUpdate() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIdKey, testUserID)
+	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
 
 	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, defaultUser)
 	if err != nil {
@@ -589,5 +412,130 @@ func (s *UserControllerTestSuite) Test_UpdateUser_CannotUpdate() {
 	}
 	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCannotUpdateUser); !isEqual {
 		s.T().Error(errStr)
+	}
+}
+
+func TestAPIEnv_CreateUser(t *testing.T) {
+	type args struct {
+		Username     string
+		Password     string
+		Email        string
+		UserDBOutput *models.User
+		UserDBError  error
+		StoreError   error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.User]
+	}{
+		{
+			"Create user OK",
+			args{
+				Username:     testUsername,
+				Password:     testPassword,
+				Email:        testEmail,
+				UserDBOutput: &defaultUser,
+				UserDBError:  nil,
+			},
+			helpers.ExpectedJSONOutput[models.User]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedMessage,
+				Message:    SuccessfulAccountCreationMsg,
+			},
+		},
+		{
+			"Create user missing credentials",
+			args{
+				UserDBOutput: &defaultUser,
+				UserDBError:  nil,
+			},
+			helpers.ExpectedJSONOutput[models.User]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrMissingSignupCredentials,
+			},
+		},
+		{
+			"Create user username conflict",
+			args{
+				Username:     testUsername,
+				Password:     testPassword,
+				Email:        testEmail,
+				UserDBOutput: &defaultUser,
+				UserDBError:  gorm.ErrDuplicatedKey,
+			},
+			helpers.ExpectedJSONOutput[models.User]{
+				StatusCode: http.StatusConflict,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrUsernameAlreadyExists,
+			},
+		},
+		{
+			"Create user DB throws error",
+			args{
+				Username:     testUsername,
+				Password:     testPassword,
+				Email:        testEmail,
+				UserDBOutput: &defaultUser,
+				UserDBError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.User]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrTest,
+			},
+		},
+		{
+			"Create user DB cannot save session",
+			args{
+				Username:     testUsername,
+				Password:     testPassword,
+				Email:        testEmail,
+				UserDBOutput: &defaultUser,
+				UserDBError:  nil,
+				StoreError:   ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.User]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrCreateAccountNoCookie,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &UserDBTestHandler{}
+			a := &APIEnv{
+				UserDBHandler: dbTestHandler,
+			}
+
+			c, w := helpers.CreateTestContextAndRecorder()
+			sessionStore := helpers.MakeMockStore()
+			helpers.AddStoreToContext(c, sessionStore)
+
+			c.Request = helpers.GenerateHttpFormDataRequest(http.MethodPost, struct {
+				Username string
+				Password string
+				Email    string
+			}{tt.args.Username, tt.args.Password, tt.args.Email})
+			dbTestHandler.SetMockCreateUserFunc(tt.args.UserDBOutput, tt.args.UserDBError)
+			sessionStore.SetSaveError(tt.args.StoreError)
+			a.CreateUser(c)
+
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
+
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }

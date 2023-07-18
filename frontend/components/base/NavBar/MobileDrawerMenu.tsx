@@ -5,6 +5,7 @@ import {
     DrawerCloseButton,
     DrawerOverlay,
     DrawerHeader,
+    Link,
 } from '@chakra-ui/react';
 import React from 'react';
 import SideBar from '../SideBar/SideBar';
@@ -26,7 +27,9 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({ isOpen, onClose, btnRef }) => {
             <DrawerOverlay />
             <DrawerContent>
                 <DrawerCloseButton />
-                <DrawerHeader>SkillNet</DrawerHeader>
+                <Link href="/feed">
+                    <DrawerHeader>SkillNet</DrawerHeader>
+                </Link>
                 <DrawerBody>
                     <SideBar/>
                 </DrawerBody>

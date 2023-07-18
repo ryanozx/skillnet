@@ -1,7 +1,7 @@
 import React from "react";
 import axios from "axios";
 import {Button, useToast} from "@chakra-ui/react";
-import {PostView} from "./Post";
+import {PostView} from "../Post";
 import { CheckIcon } from '@chakra-ui/icons';
 
 interface EditPostSubmitProps {

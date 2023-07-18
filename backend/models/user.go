@@ -21,16 +21,35 @@ type UserMinimal struct {
 	ProfilePic string
 }
 
+func (user *UserMinimal) TestFormat() *UserMinimal {
+	return user
+}
+
 // UserCredentials handles login information
 type UserCredentials struct {
 	Username string `gorm:"unique; not null"`
 	Password string `gorm:"not null" json:"-"`
 }
 
+func (uc *UserCredentials) TestFormat() *UserCredentials {
+	output := UserCredentials{
+		Username: uc.Username,
+	}
+	return &output
+}
+
 // UserCredentials for signup
 type SignupUserCredentials struct {
 	UserCredentials
 	Email string `gorm:"not null"`
+}
+
+func (creds *SignupUserCredentials) TestFormat() *SignupUserCredentials {
+	output := SignupUserCredentials{
+		UserCredentials: *creds.UserCredentials.TestFormat(),
+		Email:           creds.Email,
+	}
+	return &output
 }
 
 // UserView represents the information a visitor to a user's profile page can see
@@ -43,13 +62,36 @@ type UserView struct {
 	Projects    []ProjectMinimal `gorm:"-:all"`
 }
 
+func (uv *UserView) TestFormat() *UserView {
+	output := UserView{
+		UserMinimal: *uv.UserMinimal.TestFormat(),
+		Title:       uv.Title,
+		Birthday:    uv.Birthday,
+		Location:    uv.Location,
+		AboutMe:     uv.AboutMe,
+		Projects:    uv.Projects,
+	}
+	return &output
+}
+
 // User is the database representation of a user object
 type User struct {
 	ID              string `gorm:"<-:create" json:"-"` // UserID will never be revealed to the client; it will never change
 	UserView        `gorm:"embedded"`
 	UserCredentials `gorm:"embedded"`
-	Email           string `gorm:"not null"`
-	Likes           []Like `json:"null" gorm:"constraint:OnDelete:CASCADE"`
+	Email           string    `gorm:"not null"`
+	Likes           []Like    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Comments        []Comment `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+}
+
+func (user *User) TestFormat() *User {
+	output := User{
+		UserView:        *user.GetUserView(),
+		UserCredentials: *user.UserCredentials.TestFormat(),
+		Email:           user.Email,
+		Likes:           user.Likes,
+	}
+	return &output
 }
 
 func (userCreds *SignupUserCredentials) NewUser() *User {

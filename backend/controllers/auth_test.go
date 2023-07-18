@@ -71,7 +71,7 @@ func (s *AuthControllerTestSuite) Test_GetLogin_OK() {
 func (s *AuthControllerTestSuite) Test_GetLogin_ExistingSession() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	s.store.Set(helpers.UserIdKey, testUserID)
+	s.store.Set(helpers.UserIDKey, testUserID)
 
 	s.api.GetLogin(c)
 
@@ -119,7 +119,7 @@ func (s *AuthControllerTestSuite) Test_PostLogin_OK() {
 func (s *AuthControllerTestSuite) Test_PostLogin_AlreadyLoggedIn() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	s.store.Set(helpers.UserIdKey, testUserID)
+	s.store.Set(helpers.UserIDKey, testUserID)
 
 	expected := defaultLoginUserDBEntry
 	hash, err := bcrypt.GenerateFromPassword([]byte(defaultCreds.Password), bcrypt.DefaultCost)
@@ -271,7 +271,7 @@ func (s *AuthControllerTestSuite) Test_PostLogin_CannotSave() {
 func (s *AuthControllerTestSuite) Test_PostLogout_OK() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	s.store.Set(helpers.UserIdKey, testUserID)
+	s.store.Set(helpers.UserIDKey, testUserID)
 
 	s.api.PostLogout(c)
 
@@ -310,7 +310,7 @@ func (s *AuthControllerTestSuite) Test_PostLogout_InvalidSession() {
 func (s *AuthControllerTestSuite) Test_PostLogout_CannotSave() {
 	c, w := helpers.CreateTestContextAndRecorder()
 	helpers.AddStoreToContext(c, s.store)
-	s.store.Set(helpers.UserIdKey, testUserID)
+	s.store.Set(helpers.UserIDKey, testUserID)
 	s.store.SetSaveError(ErrTest)
 
 	s.api.PostLogout(c)

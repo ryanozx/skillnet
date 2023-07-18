@@ -6,7 +6,6 @@ package controllers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +47,7 @@ func (a *APIEnv) CreatePost(ctx *gin.Context) {
 	// Add userID into the corresponding field in the newPost object so that
 	// the client does not have to pass in any userID, and overwrites any userID
 	// that a malicious client might have passed in.
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 	newPost.UserID = userID
 
 	post, err := a.PostDBHandler.CreatePost(&newPost)
@@ -58,22 +57,28 @@ func (a *APIEnv) CreatePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotCreatePost)
 		return
 	}
-	helpers.OutputData(ctx, post.PostView(userID))
+	helpers.OutputData(ctx, post.PostView(&models.PostViewParams{UserID: userID}))
 }
 
 func (a *APIEnv) DeletePost(ctx *gin.Context) {
-	postID := helpers.GetPostIdFromContext(ctx)
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
 
-	err := a.PostDBHandler.DeletePost(postID, userID)
+	// Ensure that postID is an unsigned integer
+	postID, err := helpers.GetPostIDFromContext(ctx)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
+		return
+	}
+
+	err = a.PostDBHandler.DeletePost(postID, userID)
 	// If post cannot be found in the database return status code 404 Status Not Found
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
 	// If user is not the owner of the post, return status code 401 Unauthorized
-	if errors.Is(err, database.ErrNotOwner) {
-		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner)
+	if errors.Is(err, helpers.ErrNotOwner) {
+		helpers.OutputError(ctx, http.StatusUnauthorized, helpers.ErrNotOwner)
 		return
 	}
 	// If post cannot be deleted for any other reason, return status code 403 Bad Request
@@ -85,10 +90,14 @@ func (a *APIEnv) DeletePost(ctx *gin.Context) {
 }
 
 func (a *APIEnv) GetPosts(ctx *gin.Context) {
-	cutoff := ctx.DefaultQuery("cutoff", "")
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
+	// Ensure that cutoff is an unsigned integer or empty
+	cutoff, err := helpers.GetCutoffFromQuery(ctx)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)
+	}
+
 	posts, err := a.PostDBHandler.GetPosts(cutoff, userID)
-	log.Println(err)
 	// If unable to retrieve posts, return status code 404 Not Found
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
@@ -99,12 +108,19 @@ func (a *APIEnv) GetPosts(ctx *gin.Context) {
 	// Fill in user details for each post using userID of post creator
 	for _, post := range posts {
 		smallestID = post.ID
-		postView := post.PostView(userID)
-		likeCount, err := a.LikesCacheHandler.GetCacheCount(ctx, fmt.Sprintf("%v", post.ID))
+		likeCount, err := a.LikesCacheHandler.GetCacheVal(ctx, post.ID)
 		if err != nil {
 			continue
 		}
-		postView.LikeCount = likeCount
+		commentCount, err := a.CommentsCacheHandler.GetCacheVal(ctx, post.ID)
+		if err != nil {
+			continue
+		}
+		postView := post.PostView(&models.PostViewParams{
+			UserID:       userID,
+			LikeCount:    likeCount,
+			CommentCount: commentCount,
+		})
 		postViews = append(postViews, *postView)
 	}
 
@@ -116,26 +132,50 @@ func (a *APIEnv) GetPosts(ctx *gin.Context) {
 }
 
 func (a *APIEnv) GetPostByID(ctx *gin.Context) {
-	postID := helpers.GetPostIdFromContext(ctx)
-	userID := helpers.GetPostIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
+
+	// Ensure that postID is an unsigned integer
+	postID, err := helpers.GetPostIDFromContext(ctx)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
+		return
+	}
+
 	post, err := a.PostDBHandler.GetPostByID(postID, userID)
 	// If unable to retrieve post, return status code 404 Not Found
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrPostNotFound)
 		return
 	}
-	postView := post.PostView(userID)
-	likeCount, err := a.LikesCacheHandler.GetCacheCount(ctx, fmt.Sprintf("%v", post.ID))
+
+	likeCount, err := a.LikesCacheHandler.GetCacheVal(ctx, post.ID)
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusInternalServerError, err)
 	}
-	postView.LikeCount = likeCount
+
+	commentCount, err := a.CommentsCacheHandler.GetCacheVal(ctx, post.ID)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+	}
+
+	postView := post.PostView(&models.PostViewParams{
+		UserID:       userID,
+		LikeCount:    likeCount,
+		CommentCount: commentCount,
+	})
 	helpers.OutputData(ctx, postView)
 }
 
 func (a *APIEnv) UpdatePost(ctx *gin.Context) {
-	postID := helpers.GetPostIdFromContext(ctx)
-	userID := helpers.GetUserIdFromContext(ctx)
+	userID := helpers.GetUserIDFromContext(ctx)
+
+	// Ensure that postID is an unsigned integer
+	postID, err := helpers.GetPostIDFromContext(ctx)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
+		return
+	}
+
 	var inputUpdate models.Post
 
 	// If unable to bind JSON in request to the Post object, return status
@@ -153,8 +193,8 @@ func (a *APIEnv) UpdatePost(ctx *gin.Context) {
 		return
 	}
 	// If user is not the owner of the post, return status code 401 Unauthorised
-	if errors.Is(err, database.ErrNotOwner) {
-		helpers.OutputError(ctx, http.StatusUnauthorized, database.ErrNotOwner)
+	if errors.Is(err, helpers.ErrNotOwner) {
+		helpers.OutputError(ctx, http.StatusUnauthorized, helpers.ErrNotOwner)
 		return
 	}
 	// If post cannot be updated for any other reason, return status code 403 Bad Request
@@ -162,5 +202,20 @@ func (a *APIEnv) UpdatePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrCannotUpdatePost)
 		return
 	}
-	helpers.OutputData(ctx, post.PostView(userID))
+
+	likeCount, err := a.LikesCacheHandler.GetCacheVal(ctx, post.ID)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+	}
+
+	commentCount, err := a.CommentsCacheHandler.GetCacheVal(ctx, post.ID)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+	}
+
+	helpers.OutputData(ctx, post.PostView(&models.PostViewParams{
+		UserID:       userID,
+		LikeCount:    likeCount,
+		CommentCount: commentCount,
+	}))
 }
