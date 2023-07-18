@@ -28,6 +28,7 @@ func (cvArray *CommentViewsArray) TestFormat() *CommentViewsArray {
 type Comment struct {
 	gorm.Model
 	PostID uint   `gorm:"<-:create; not null"`
+	Post   Post   `json:"-"`
 	UserID string `json:"-" gorm:"<-:create; not null"`
 	User   User   `json:"-"`
 	Text   string

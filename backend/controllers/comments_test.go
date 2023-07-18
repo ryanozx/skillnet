@@ -29,6 +29,7 @@ var (
 		PostID: testPostID,
 		Text:   "TextComment",
 		User:   defaultUser,
+		Post:   defaultPost,
 	}
 	diffCutoffComment = models.Comment{
 		Model: gorm.Model{
@@ -38,6 +39,7 @@ var (
 		PostID: testPostID,
 		Text:   "Diff ID",
 		User:   defaultUser,
+		Post:   defaultPost,
 	}
 )
 
@@ -253,9 +255,11 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dbTestHandler := &CommentsDBTestHandler{}
 			cacheTestHandler := &helpers.TestCache{}
+			notifPoster := &helpers.TestNotificationCreator{}
 			a := &APIEnv{
 				CommentDBHandler:     dbTestHandler,
 				CommentsCacheHandler: cacheTestHandler,
+				NotificationPoster:   notifPoster,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -278,6 +282,7 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 			}
 			dbTestHandler.SetMockCreateCommentFunc(tt.args.CommentDBOutput, tt.args.CommentDBError)
 			cacheTestHandler.SetMockSetCacheValFunc(tt.args.CommentCacheOutput, tt.args.CommentCacheError)
+			notifPoster.SetMockPostNotificationFromEventFunc(nil)
 			a.CreateComment(c)
 
 			b, _ := io.ReadAll(w.Body)

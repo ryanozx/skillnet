@@ -77,6 +77,12 @@ func (a *APIEnv) CreateComment(ctx *gin.Context) {
 		return
 	}
 
+	notif := helpers.GenerateCommentNotification(&comment.User, comment.Post.UserID)
+
+	// Even if there is an error in creating the notification server-side,
+	// this should not throw an error client-side
+	a.NotificationPoster.PostNotificationFromEvent(ctx, notif)
+
 	output := models.CommentUpdate{
 		Comment:      *comment.CommentView(userID),
 		CommentCount: newCommentCount,

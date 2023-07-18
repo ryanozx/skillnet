@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -70,16 +69,11 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 		return
 	}
 
-	notif := models.Notification{
-		SenderId:   userID,
-		CreatedAt:  time.Now(),
-		ReceiverId: like.Post.UserID,
-		Content:    like.User.Username + " liked your post",
-	}
+	notif := helpers.GenerateLikeNotification(&like.User, like.Post.UserID)
 
 	// Even if there is an error in creating the notification server-side,
 	// this should not throw an error client-side
-	a.NotificationPoster.PostNotificationFromEvent(ctx, &notif)
+	a.NotificationPoster.PostNotificationFromEvent(ctx, notif)
 
 	output := models.LikeUpdate{
 		Like:      *like,

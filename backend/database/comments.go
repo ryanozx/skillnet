@@ -64,7 +64,7 @@ func (db *CommentDB) GetComments(postID uint, cutoff *helpers.NullableUint) ([]m
 
 func (db *CommentDB) GetCommentByID(commentID uint) (*models.Comment, error) {
 	comment := models.Comment{}
-	err := db.DB.Joins("User").First(&comment, commentID).Error
+	err := db.DB.Joins("Post").Joins("User").First(&comment, "comments.id = ?", commentID).Error
 	return &comment, err
 }
 
