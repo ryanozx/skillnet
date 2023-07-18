@@ -263,7 +263,6 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
-			helpers.AddStoreToContext(c, helpers.MakeMockStore())
 
 			for paramKey, paramVal := range tt.args.ContextParams {
 				helpers.AddParamsToContext(c, paramKey, paramVal)
@@ -274,11 +273,12 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-				c.Request = req
 
 				for paramKey, paramVal := range tt.args.QueryParams {
 					helpers.AddParamsToQuery(req, paramKey, paramVal)
 				}
+
+				c.Request = req
 			}
 			dbTestHandler.SetMockCreateCommentFunc(tt.args.CommentDBOutput, tt.args.CommentDBError)
 			cacheTestHandler.SetMockSetCacheValFunc(tt.args.CommentCacheOutput, tt.args.CommentCacheError)
@@ -428,7 +428,6 @@ func TestAPIEnv_DeleteComment(t *testing.T) {
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
-			helpers.AddStoreToContext(c, helpers.MakeMockStore())
 
 			for paramKey, paramVal := range tt.args.ContextParams {
 				helpers.AddParamsToContext(c, paramKey, paramVal)
@@ -657,7 +656,6 @@ func TestAPIEnv_GetComments(t *testing.T) {
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
-			helpers.AddStoreToContext(c, helpers.MakeMockStore())
 
 			for paramKey, paramVal := range tt.args.ContextParams {
 				helpers.AddParamsToContext(c, paramKey, paramVal)
@@ -837,7 +835,6 @@ func TestAPIEnv_UpdateComment(t *testing.T) {
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
-			helpers.AddStoreToContext(c, helpers.MakeMockStore())
 
 			for paramKey, paramVal := range tt.args.ContextParams {
 				helpers.AddParamsToContext(c, paramKey, paramVal)

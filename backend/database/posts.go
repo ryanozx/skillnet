@@ -12,7 +12,7 @@ const postsToReturn = 10
 type PostDBHandler interface {
 	CreatePost(*models.Post) (*models.Post, error)
 	DeletePost(uint, string) error
-	GetPosts(*helpers.NullableUint, string) ([]models.Post, error)
+	GetPosts(cutoff *helpers.NullableUint, communityID *helpers.NullableUint, projectID *helpers.NullableUint, userID string) ([]models.Post, error)
 	GetPostByID(uint, string) (*models.Post, error)
 	UpdatePost(*models.Post, uint, string) (*models.Post, error)
 }
@@ -42,21 +42,36 @@ func (db *PostDB) DeletePost(postID uint, userID string) error {
 	return err
 }
 
-func (db *PostDB) GetPosts(cutoff *helpers.NullableUint, userID string) ([]models.Post, error) {
+func (db *PostDB) GetPosts(cutoff *helpers.NullableUint, communityID *helpers.NullableUint,
+	projectID *helpers.NullableUint, userID string) ([]models.Post, error) {
 	var posts []models.Post
 
-	if cutoff.IsNull() {
-		// Retrieve all posts from database
-		query := db.DB.Limit(postsToReturn).Joins("User").Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND likes.user_id = ?)", userID).Order("posts.id desc").Find(&posts)
-		if err := query.Find(&posts).Error; err != nil {
-			return posts, err
-		}
+	var tx *gorm.DB
+
+	if !projectID.IsNull() {
+		// Check if we should filter for project (e.g. project feed)
+		projectIDVal, _ := projectID.GetValue()
+		tx = db.DB.Where("posts.project_id = ?", projectIDVal)
+	} else if !communityID.IsNull() {
+		// Check if we should filter for community (e.g. community feed)
+		communityIDVal, _ := communityID.GetValue()
+		tx = db.DB.Where("posts.community_id = ?", communityIDVal)
 	} else {
+		// Global feed
+		tx = db.DB
+	}
+
+	if !cutoff.IsNull() {
 		cutoffVal, _ := cutoff.GetValue()
-		query := db.DB.Where("posts.id < ?", cutoffVal).Joins("User").Limit(postsToReturn).Preload("Likes").Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND likes.user_id = ?)", userID).Order("posts.id desc").Find(&posts)
-		if err := query.Find(&posts).Error; err != nil {
-			return posts, err
-		}
+		tx = tx.Where("posts.id < ?", cutoffVal)
+	}
+
+	query := tx.Joins("User").Limit(postsToReturn).Preload("Likes").
+		Joins("LEFT JOIN likes ON (posts.ID = likes.post_id AND likes.user_id = ?)", userID).
+		Order("posts.id desc").Find(&posts)
+
+	if err := query.Find(&posts).Error; err != nil {
+		return posts, err
 	}
 	return posts, nil
 }

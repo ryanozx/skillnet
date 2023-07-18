@@ -7,31 +7,30 @@ import (
 
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
-	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
 )
 
 const (
-	testPostID     = 1
-	invalidPostID  = "badpostid"
-	negativePostID = -234
+	testPostID           = 1
+	testDiffCutoffPostID = 10
+	invalidPostID        = "badpostid"
+	negativePostID       = -234
+	testCommunityID      = 1
+	testProjectID        = 1
 )
 
 var (
-	defaultPostView = models.PostView{
-		Post: models.Post{
-			Content: "Hello world!",
-			User:    defaultUser,
-		},
-		UserMinimal: defaultUserMinimal,
-	}
 	defaultPost = models.Post{
+		Model: gorm.Model{
+			ID: testPostID,
+		},
+		UserID:  testUserID,
 		Content: "Hello world!",
 		User:    defaultUser,
 	}
 	diffCutoffPost = models.Post{
 		Model: gorm.Model{
-			ID: 10,
+			ID: testDiffCutoffPostID,
 		},
 		Content: "Hello world!",
 		UserID:  testUserID,
@@ -42,54 +41,10 @@ var (
 	}
 )
 
-type PostControllerTestSuite struct {
-	suite.Suite
-	api                  APIEnv
-	dbHandler            *PostDBTestHandler
-	likesCacheHandler    *helpers.TestCache
-	commentsCacheHandler *helpers.TestCache
-	store                *helpers.MockSessionStore
-}
-
-func (s *PostControllerTestSuite) SetupSuite() {
-	dbHandler := PostDBTestHandler{}
-	likesCacheHandler := helpers.TestCache{}
-	commentsCacheHandler := helpers.TestCache{}
-	api := APIEnv{
-		PostDBHandler:        &dbHandler,
-		LikesCacheHandler:    &likesCacheHandler,
-		CommentsCacheHandler: &commentsCacheHandler,
-	}
-	s.api = api
-	s.dbHandler = &dbHandler
-	s.likesCacheHandler = &likesCacheHandler
-	s.commentsCacheHandler = &commentsCacheHandler
-	s.store = helpers.MakeMockStore()
-}
-
-func (s *PostControllerTestSuite) TearDownTest() {
-	s.dbHandler.ResetFuncs()
-	s.likesCacheHandler.ResetFuncs()
-	s.store.Reset()
-}
-
-func TestPostControllerSuite(t *testing.T) {
-	suite.Run(t, new(PostControllerTestSuite))
-}
-
-func (s *PostControllerTestSuite) SetupTest() {
-	s.T().Setenv("CLIENT_HOST", "http://localhost")
-	s.T().Setenv("CLIENT_PORT", "3000")
-	s.T().Setenv("BACKEND_HOST", "http://localhost")
-	s.T().Setenv("BACKEND_PORT", "8080")
-	helpers.SetModelClientAddress()
-	helpers.SetModelBackendAddress()
-}
-
 type PostDBTestHandler struct {
 	CreatePostFunc  func(*models.Post) (*models.Post, error)
 	DeletePostFunc  func(uint, string) error
-	GetPostsFunc    func(*helpers.NullableUint, string) ([]models.Post, error)
+	GetPostsFunc    func(*helpers.NullableUint, *helpers.NullableUint, *helpers.NullableUint, string) ([]models.Post, error)
 	GetPostByIDFunc func(uint, string) (*models.Post, error)
 	UpdatePostFunc  func(*models.Post, uint, string) (*models.Post, error)
 }
@@ -104,8 +59,9 @@ func (h *PostDBTestHandler) DeletePost(postID uint, userid string) error {
 	return err
 }
 
-func (h *PostDBTestHandler) GetPosts(cutoff *helpers.NullableUint, userID string) ([]models.Post, error) {
-	posts, err := h.GetPostsFunc(cutoff, userID)
+func (h *PostDBTestHandler) GetPosts(cutoff *helpers.NullableUint, communityID *helpers.NullableUint,
+	projectID *helpers.NullableUint, userID string) ([]models.Post, error) {
+	posts, err := h.GetPostsFunc(cutoff, communityID, projectID, userID)
 	return posts, err
 }
 
@@ -132,7 +88,8 @@ func (h *PostDBTestHandler) SetMockDeletePostFunc(err error) {
 }
 
 func (h *PostDBTestHandler) SetMockGetPostsFunc(posts []models.Post, err error) {
-	h.GetPostsFunc = func(cutoff *helpers.NullableUint, userID string) ([]models.Post, error) {
+	h.GetPostsFunc = func(cutoff *helpers.NullableUint, communityID *helpers.NullableUint,
+		projectID *helpers.NullableUint, userID string) ([]models.Post, error) {
 		return posts, err
 	}
 }
@@ -149,437 +106,820 @@ func (h *PostDBTestHandler) SetMockUpdatePostFunc(outputPost *models.Post, err e
 	}
 }
 
-func (h *PostDBTestHandler) ResetFuncs() {
-	h.CreatePostFunc = nil
-	h.DeletePostFunc = nil
-	h.GetPostsFunc = nil
-	h.GetPostByIDFunc = nil
-	h.UpdatePostFunc = nil
-}
+func TestAPIEnv_CreatePost(t *testing.T) {
+	helpers.SetEnvVars(t)
+	type args struct {
+		ContextParams map[string]interface{}
+		QueryParams   map[string]interface{}
+		PostData      *models.Post
+		PostDBOutput  *models.Post
+		PostDBError   error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.PostView]
+	}{
+		{
+			"Create Post - OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostData:     &newTestPost,
+				PostDBOutput: &defaultPost,
+				PostDBError:  nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: defaultPost.PostView(&models.PostViewParams{
+					UserID: testUserID,
+				}),
+			},
+		},
+		{
+			"Create Post - Bad Request",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrBadBinding,
+			},
+		},
+		{
+			"Create Post - Cannot Create",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostData:     &newTestPost,
+				PostDBOutput: &defaultPost,
+				PostDBError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrCannotCreatePost,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &PostDBTestHandler{}
+			likesCacheTestHandler := &helpers.TestCache{}
+			commentsCacheTestHandler := &helpers.TestCache{}
+			a := &APIEnv{
+				PostDBHandler:        dbTestHandler,
+				LikesCacheHandler:    likesCacheTestHandler,
+				CommentsCacheHandler: commentsCacheTestHandler,
+			}
 
-// CreatePosts
-func (s *PostControllerTestSuite) Test_CreatePost_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+			c, w := helpers.CreateTestContextAndRecorder()
 
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, newTestPost)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreatePostFunc(&defaultPost, nil)
-	s.api.CreatePost(c)
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostView](m, &defaultPostView); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			if tt.args.PostData != nil {
+				req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, tt.args.PostData)
+				if err != nil {
+					t.Error(err)
+				}
 
-func (s *PostControllerTestSuite) Test_CreatePost_BadRequest() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+				for paramKey, paramVal := range tt.args.QueryParams {
+					helpers.AddParamsToQuery(req, paramKey, paramVal)
+				}
 
-	s.dbHandler.SetMockCreatePostFunc(&defaultPost, nil)
-	s.api.CreatePost(c)
+				c.Request = req
+			}
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrBadBinding); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			dbTestHandler.SetMockCreatePostFunc(tt.args.PostDBOutput, tt.args.PostDBError)
+			a.CreatePost(c)
 
-func (s *PostControllerTestSuite) Test_CreatePost_CannotCreate() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
 
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, newTestPost)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreatePostFunc(&defaultPost, ErrTest)
-	s.api.CreatePost(c)
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCannotCreatePost); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
 
-// Delete Post
-func (s *PostControllerTestSuite) Test_DeletePost_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	s.dbHandler.SetMockDeletePostFunc(nil)
-	s.api.DeletePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedMessageEqualsActual(m, PostDeletedMsg); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *PostControllerTestSuite) Test_DeletePost_CannotFindPost() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	s.dbHandler.SetMockDeletePostFunc(gorm.ErrRecordNotFound)
-	s.api.DeletePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusNotFound, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
+		})
 	}
 }
 
-func (s *PostControllerTestSuite) Test_DeletePost_NotOwner() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	s.dbHandler.SetMockDeletePostFunc(helpers.ErrNotOwner)
-	s.api.DeletePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusUnauthorized, w.Code); !isEqual {
-		s.T().Error(errStr)
+func TestAPIEnv_DeletePost(t *testing.T) {
+	type args struct {
+		ContextParams map[string]interface{}
+		PostDBError   error
 	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.Post]
+	}{
+		{
+			"Delete Posts OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.Post]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedMessage,
+				Message:    PostDeletedMsg,
+			},
+		},
+		{
+			"Delete Posts - Not found",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBError: gorm.ErrRecordNotFound,
+			},
+			helpers.ExpectedJSONOutput[models.Post]{
+				StatusCode: http.StatusNotFound,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Delete Posts - Not owner",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBError: helpers.ErrNotOwner,
+			},
+			helpers.ExpectedJSONOutput[models.Post]{
+				StatusCode: http.StatusForbidden,
+				JSONType:   helpers.ExpectedError,
+				Error:      helpers.ErrNotOwner,
+			},
+		},
+		{
+			"Delete Posts - Cannot delete",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.Post]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrCannotDeletePost,
+			},
+		},
 	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, helpers.ErrNotOwner); !isEqual {
-		s.T().Error(errStr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &PostDBTestHandler{}
+			a := &APIEnv{
+				PostDBHandler: dbTestHandler,
+			}
+
+			c, w := helpers.CreateTestContextAndRecorder()
+
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
+
+			req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
+			if err != nil {
+				t.Error(err)
+			}
+
+			c.Request = req
+
+			dbTestHandler.SetMockDeletePostFunc(tt.args.PostDBError)
+			a.DeletePost(c)
+
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
+
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }
 
-func (s *PostControllerTestSuite) Test_DeletePost_CannotDelete() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
+func TestAPIEnv_GetPosts(t *testing.T) {
+	helpers.SetEnvVars(t)
 
-	s.dbHandler.SetMockDeletePostFunc(ErrTest)
-	s.api.DeletePost(c)
+	type args struct {
+		ContextParams      map[string]interface{}
+		QueryParams        map[string]interface{}
+		PostDBOutput       []models.Post
+		PostDBError        error
+		LikesCacheVal      uint64
+		LikesCacheError    error
+		CommentsCacheVal   uint64
+		CommentsCacheError error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.PostViewArray]
+	}{
+		{
+			"Get posts OK - global feed",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostDBOutput:       []models.Post{defaultPost},
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts: []models.PostView{*defaultPost.PostView(&models.PostViewParams{
+						UserID:       testUserID,
+						LikeCount:    1,
+						CommentCount: 2,
+					})},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+				},
+			},
+		},
+		{
+			"Get posts OK - different cutoff",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostDBOutput:       []models.Post{diffCutoffPost},
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts: []models.PostView{*diffCutoffPost.PostView(&models.PostViewParams{
+						UserID:       testUserID,
+						LikeCount:    1,
+						CommentCount: 2,
+					})},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testDiffCutoffPostID, map[string]interface{}{}),
+				},
+			},
+		},
+		{
+			"Get posts OK - community feed",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				QueryParams: map[string]interface{}{
+					helpers.CommunityIDQueryKey: testCommunityID,
+				},
+				PostDBOutput:       []models.Post{defaultPost},
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts: []models.PostView{*defaultPost.PostView(&models.PostViewParams{
+						UserID:       testUserID,
+						LikeCount:    1,
+						CommentCount: 2,
+					})},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{
+						helpers.CommunityIDQueryKey: testCommunityID,
+					}),
+				},
+			},
+		},
+		{
+			"Get posts OK - project feed",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				QueryParams: map[string]interface{}{
+					helpers.ProjectIDQueryKey: testProjectID,
+				},
+				PostDBOutput:       []models.Post{defaultPost},
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts: []models.PostView{*defaultPost.PostView(&models.PostViewParams{
+						UserID:       testUserID,
+						LikeCount:    1,
+						CommentCount: 2,
+					})},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{
+						helpers.ProjectIDQueryKey: testProjectID,
+					}),
+				},
+			},
+		},
+		{
+			"Get posts OK - multiple posts",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostDBOutput:       []models.Post{diffCutoffPost, defaultPost},
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts: []models.PostView{
+						*diffCutoffPost.PostView(&models.PostViewParams{
+							UserID:       testUserID,
+							LikeCount:    1,
+							CommentCount: 2,
+						}),
+						*defaultPost.PostView(&models.PostViewParams{
+							UserID:       testUserID,
+							LikeCount:    1,
+							CommentCount: 2,
+						}),
+					},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+				},
+			},
+		},
+		{
+			"Get posts - not found",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostDBOutput: []models.Post{defaultPost},
+				PostDBError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusNotFound,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &PostDBTestHandler{}
+			likesCacheTestHandler := &helpers.TestCache{}
+			commentsCacheTestHandler := &helpers.TestCache{}
+			a := &APIEnv{
+				PostDBHandler:        dbTestHandler,
+				LikesCacheHandler:    likesCacheTestHandler,
+				CommentsCacheHandler: commentsCacheTestHandler,
+			}
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCannotDeletePost); !isEqual {
-		s.T().Error(errStr)
+			c, w := helpers.CreateTestContextAndRecorder()
+
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
+
+			req, err := helpers.GenerateHttpJSONRequest(http.MethodGet, nil)
+			if err != nil {
+				t.Error(err)
+			}
+
+			for paramKey, paramVal := range tt.args.QueryParams {
+				helpers.AddParamsToQuery(req, paramKey, paramVal)
+			}
+
+			c.Request = req
+
+			dbTestHandler.SetMockGetPostsFunc(tt.args.PostDBOutput, tt.args.PostDBError)
+			likesCacheTestHandler.SetMockGetCacheValFunc(tt.args.LikesCacheVal, tt.args.LikesCacheError)
+			commentsCacheTestHandler.SetMockGetCacheValFunc(tt.args.CommentsCacheVal, tt.args.CommentsCacheError)
+			a.GetPosts(c)
+
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
+
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }
 
-// GetPosts
-func (s *PostControllerTestSuite) Test_GetPosts_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-
-	expectedPosts := []models.Post{defaultPost}
-	expectedArr := models.PostViewArray{
-		Posts:       []models.PostView{defaultPostView},
-		NextPageURL: "http://localhost:8080/auth/posts?cutoff=0",
+func TestAPIEnv_GetPostByID(t *testing.T) {
+	type args struct {
+		ContextParams      map[string]interface{}
+		PostDBOutput       *models.Post
+		PostDBError        error
+		LikesCacheVal      uint64
+		LikesCacheError    error
+		CommentsCacheVal   uint64
+		CommentsCacheError error
 	}
-
-	s.dbHandler.SetMockGetPostsFunc(expectedPosts, nil)
-	s.likesCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.commentsCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.api.GetPosts(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.PostView]
+	}{
+		{
+			"Get Post By ID - OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBOutput:       &defaultPost,
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: defaultPost.PostView(&models.PostViewParams{
+					UserID:       testUserID,
+					LikeCount:    1,
+					CommentCount: 2,
+				}),
+			},
+		},
+		{
+			"Get Post By ID - Invalid Post ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: invalidPostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Get Post By ID - Cannot get post",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBOutput: nil,
+				PostDBError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusNotFound,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Get Post By ID - Cannot get likes count",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBOutput:    &defaultPost,
+				PostDBError:     nil,
+				LikesCacheVal:   0,
+				LikesCacheError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrTest,
+			},
+		},
+		{
+			"Get Post By ID - Cannot get comments count",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostDBOutput:       &defaultPost,
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   0,
+				CommentsCacheError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrTest,
+			},
+		},
 	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostViewArray](m, &expectedArr); !isEqual {
-		s.T().Error(errStr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &PostDBTestHandler{}
+			likesCacheTestHandler := &helpers.TestCache{}
+			commentsCacheTestHandler := &helpers.TestCache{}
+			a := &APIEnv{
+				PostDBHandler:        dbTestHandler,
+				LikesCacheHandler:    likesCacheTestHandler,
+				CommentsCacheHandler: commentsCacheTestHandler,
+			}
+
+			c, w := helpers.CreateTestContextAndRecorder()
+
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
+
+			req, err := helpers.GenerateHttpJSONRequest(http.MethodGet, nil)
+			if err != nil {
+				t.Error(err)
+			}
+
+			c.Request = req
+
+			dbTestHandler.SetMockGetPostByIDFunc(tt.args.PostDBOutput, tt.args.PostDBError)
+			likesCacheTestHandler.SetMockGetCacheValFunc(tt.args.LikesCacheVal, tt.args.LikesCacheError)
+			commentsCacheTestHandler.SetMockGetCacheValFunc(tt.args.CommentsCacheVal, tt.args.CommentsCacheError)
+			a.GetPostByID(c)
+
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
+
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }
 
-func (s *PostControllerTestSuite) Test_GetPosts_DiffCutoff() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+func TestAPIEnv_UpdatePost(t *testing.T) {
+	type args struct {
+		ContextParams      map[string]interface{}
+		PostData           *models.Post
+		PostDBOutput       *models.Post
+		PostDBError        error
+		LikesCacheVal      uint64
+		LikesCacheError    error
+		CommentsCacheVal   uint64
+		CommentsCacheError error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.PostView]
+	}{
+		{
+			"Update Post OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostData:           &newTestPost,
+				PostDBOutput:       &defaultPost,
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: defaultPost.PostView(&models.PostViewParams{
+					UserID:       testUserID,
+					LikeCount:    1,
+					CommentCount: 2,
+				}),
+			},
+		},
+		{
+			"Update Post - Invalid Post ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: invalidPostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Update Post - Bad Binding",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrBadBinding,
+			},
+		},
+		{
+			"Update Post - Post Not Found",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostData:     &newTestPost,
+				PostDBOutput: nil,
+				PostDBError:  gorm.ErrRecordNotFound,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusNotFound,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Update Post - Not owner",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: diffUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostData:     &newTestPost,
+				PostDBOutput: nil,
+				PostDBError:  helpers.ErrNotOwner,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusForbidden,
+				JSONType:   helpers.ExpectedError,
+				Error:      helpers.ErrNotOwner,
+			},
+		},
+		{
+			"Update Post - Cannot update",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: diffUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostData:     &newTestPost,
+				PostDBOutput: nil,
+				PostDBError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrCannotUpdatePost,
+			},
+		},
+		{
+			"Update Post - Cannot get likes count",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: diffUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostData:        &newTestPost,
+				PostDBOutput:    &defaultPost,
+				PostDBError:     nil,
+				LikesCacheVal:   0,
+				LikesCacheError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrTest,
+			},
+		},
+		{
+			"Update Post - Cannot get comments count",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: diffUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				PostData:           &newTestPost,
+				PostDBOutput:       &defaultPost,
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   0,
+				CommentsCacheError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostView]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrTest,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &PostDBTestHandler{}
+			likesCacheTestHandler := &helpers.TestCache{}
+			commentsCacheTestHandler := &helpers.TestCache{}
+			a := &APIEnv{
+				PostDBHandler:        dbTestHandler,
+				LikesCacheHandler:    likesCacheTestHandler,
+				CommentsCacheHandler: commentsCacheTestHandler,
+			}
 
-	expectedPosts := []models.Post{diffCutoffPost}
-	expectedArr := models.PostViewArray{
-		Posts: []models.PostView{*diffCutoffPost.PostView(&models.PostViewParams{
-			UserID:       testUserID,
-			CommentCount: 0,
-			LikeCount:    0,
-		})},
-		NextPageURL: "http://localhost:8080/auth/posts?cutoff=10",
-	}
+			c, w := helpers.CreateTestContextAndRecorder()
 
-	s.dbHandler.SetMockGetPostsFunc(expectedPosts, nil)
-	s.likesCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.commentsCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.api.GetPosts(c)
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostViewArray](m, &expectedArr); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			if tt.args.PostData != nil {
+				req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, tt.args.PostData)
+				if err != nil {
+					t.Error(err)
+				}
 
-func (s *PostControllerTestSuite) Test_GetPosts_NotFound() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
+				c.Request = req
+			}
 
-	expected := []models.Post{defaultPost}
+			dbTestHandler.SetMockUpdatePostFunc(tt.args.PostDBOutput, tt.args.PostDBError)
+			likesCacheTestHandler.SetMockGetCacheValFunc(tt.args.LikesCacheVal, tt.args.LikesCacheError)
+			commentsCacheTestHandler.SetMockGetCacheValFunc(tt.args.CommentsCacheVal, tt.args.CommentsCacheError)
+			a.UpdatePost(c)
 
-	s.dbHandler.SetMockGetPostsFunc(expected, ErrTest)
-	s.api.GetPosts(c)
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusNotFound, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
 
-// GetPostByID
-func (s *PostControllerTestSuite) Test_GetPostByID_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	s.dbHandler.SetMockGetPostByIDFunc(&defaultPost, nil)
-	s.likesCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.commentsCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.api.GetPostByID(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostView](m, &defaultPostView); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *PostControllerTestSuite) Test_GetPostByID_NotFound() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	s.dbHandler.SetMockGetPostByIDFunc(&defaultPost, ErrTest)
-	s.api.GetPostByID(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusNotFound, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-// Update Posts
-func (s *PostControllerTestSuite) Test_UpdatePost_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockUpdatePostFunc(&defaultPost, nil)
-	s.likesCacheHandler.SetMockGetCacheValFunc(0, nil)
-	s.api.UpdatePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.PostView](m, &defaultPostView); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *PostControllerTestSuite) Test_UpdatePost_BadRequest() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	s.dbHandler.SetMockUpdatePostFunc(&defaultPost, nil)
-	s.api.UpdatePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrBadBinding); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *PostControllerTestSuite) Test_UpdatePost_NotFound() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockUpdatePostFunc(&defaultPost, gorm.ErrRecordNotFound)
-	s.api.UpdatePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusNotFound, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *PostControllerTestSuite) Test_UpdatePost_NotOwner() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockUpdatePostFunc(&defaultPost, helpers.ErrNotOwner)
-	s.api.UpdatePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusUnauthorized, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, helpers.ErrNotOwner); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *PostControllerTestSuite) Test_UpdatePost_CannotUpdate() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPatch, newTestPost)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockUpdatePostFunc(&defaultPost, ErrTest)
-	s.api.UpdatePost(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrCannotUpdatePost); !isEqual {
-		s.T().Error(errStr)
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }
