@@ -43,6 +43,7 @@ func (s *serverConfig) setupRoutes() {
 	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
 	setupCommentAPI(routerGroup, apiEnv, s.commentsRedis)
 	setupNotificationAPI(routerGroup, apiEnv, s.notifRedis)
+	setupSearchAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -247,4 +248,16 @@ type NotificationAPIer interface {
 
 func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
 	rg.Private().GET("/notifications", api.GetNotifications)
+}
+
+func setupSearchAPI(rg RouterGrouper, api SearchAPIer) {
+	registerSearchRoutes(rg, api)
+}
+
+type SearchAPIer interface {
+	GetSearchResults(*gin.Context)
+}
+
+func registerSearchRoutes(rg RouterGrouper, api SearchAPIer) {
+	rg.Private().GET("/search", api.GetSearchResults)
 }
