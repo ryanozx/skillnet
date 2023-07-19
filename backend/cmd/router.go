@@ -23,7 +23,11 @@ func (s *serverConfig) setupRoutes() {
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
-	apiEnv := controllers.CreateAPIEnv(s.db, s.GoogleCloud, s.redis)
+	apiEnv := &controllers.APIEnv{
+		DB:          s.db,
+		GoogleCloud: s.GoogleCloud,
+		NotifRedis:  s.notifRedis,
+	}
 
 	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
 	// does not need to be read everytime we require the client address or backend address
@@ -36,8 +40,10 @@ func (s *serverConfig) setupRoutes() {
 	setupUserAPI(routerGroup, apiEnv)
 	setupAuthAPI(routerGroup, apiEnv)
 	setupPhotoAPI(routerGroup, apiEnv)
-	setupNotificationAPI(routerGroup, apiEnv)
 	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
+	setupCommentAPI(routerGroup, apiEnv, s.commentsRedis)
+	setupNotificationAPI(routerGroup, apiEnv, s.notifRedis)
+	setupSearchAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -113,14 +119,15 @@ type PostAPIer interface {
 }
 
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
-	// Public routes
-	rg.Private().GET("/posts", api.GetPosts)
-	rg.Private().GET("/posts/:postid", api.GetPostByID)
+	const postRoute = "/posts"
+	const postRouteWithID = postRoute + "/:" + helpers.PostIDKey
 
 	// Private routes
-	rg.Private().POST("/posts", api.CreatePost)
-	rg.Private().PATCH("/posts/:postid", api.UpdatePost)
-	rg.Private().DELETE("/posts/:postid", api.DeletePost)
+	rg.Private().GET(postRoute, api.GetPosts)
+	rg.Private().GET(postRouteWithID, api.GetPostByID)
+	rg.Private().POST(postRoute, api.CreatePost)
+	rg.Private().PATCH(postRouteWithID, api.UpdatePost)
+	rg.Private().DELETE(postRouteWithID, api.DeletePost)
 }
 
 // Sets up User API
@@ -195,28 +202,62 @@ type LikeAPIer interface {
 	InitialiseLikeHandler(*redis.Client)
 	PostLike(*gin.Context)
 	DeleteLike(*gin.Context)
-	CreateLikeNotification(*gin.Context)
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
-	rg.Private().POST("/likes/:postid", api.PostLike)
-	rg.Private().DELETE("/likes/:postid", api.DeleteLike)
+	const likeRouteWithID = "/likes/:" + helpers.PostIDKey
+
+	rg.Private().POST(likeRouteWithID, api.PostLike)
+	rg.Private().DELETE(likeRouteWithID, api.DeleteLike)
 }
 
-func setupNotificationAPI(rg RouterGrouper, api NotificationAPIer) {
-	// api.InitialiseNotificationHandler()
+func setupCommentAPI(rg RouterGrouper, api CommentAPIer, client *redis.Client) {
+	api.InitialiseCommentHandler(client)
+	registerCommentRoutes(rg, api)
+}
+
+type CommentAPIer interface {
+	InitialiseCommentHandler(*redis.Client)
+	CreateComment(*gin.Context)
+	// Generates comment feed
+	GetComments(*gin.Context)
+	UpdateComment(*gin.Context)
+	DeleteComment(*gin.Context)
+}
+
+func registerCommentRoutes(rg RouterGrouper, api CommentAPIer) {
+	const commentRoute = "/comments"
+	const commentRouteWithID = commentRoute + "/:" + helpers.CommentIDKey
+
+	// Private routes
+	rg.Private().GET(commentRoute, api.GetComments)
+	rg.Private().POST(commentRoute, api.CreateComment)
+	rg.Private().PATCH(commentRouteWithID, api.UpdateComment)
+	rg.Private().DELETE(commentRouteWithID, api.DeleteComment)
+}
+
+func setupNotificationAPI(rg RouterGrouper, api NotificationAPIer, client *redis.Client) {
+	api.InitialiseNotificationHandler(client)
 	registerNotificationRoutes(rg, api)
 }
 
 type NotificationAPIer interface {
-	// InitialiseNotificationHandler()
+	InitialiseNotificationHandler(*redis.Client)
 	GetNotifications(*gin.Context)
-	PostNotification(*gin.Context)
-	PatchNotification(*gin.Context)
 }
 
 func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
 	rg.Private().GET("/notifications", api.GetNotifications)
-	rg.Private().POST("/notifications", api.PostNotification)
-	rg.Private().PATCH("/notifications/:id", api.PatchNotification)
+}
+
+func setupSearchAPI(rg RouterGrouper, api SearchAPIer) {
+	registerSearchRoutes(rg, api)
+}
+
+type SearchAPIer interface {
+	GetSearchResults(*gin.Context)
+}
+
+func registerSearchRoutes(rg RouterGrouper, api SearchAPIer) {
+	rg.Private().GET("/search", api.GetSearchResults)
 }

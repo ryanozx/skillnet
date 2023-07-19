@@ -9,7 +9,7 @@ import {
 import LogoutButton from './LogoutButton';
 import ProfileAvatar from './ProfileAvatar';
 
-interface ProfileButtonProps {
+export interface ProfileButtonProps {
     profilePic: string;
     username: string;
 }

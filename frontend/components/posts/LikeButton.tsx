@@ -12,13 +12,12 @@ interface LikeProps {
 
 export default function LikeButton(props : LikeProps) {
     const baseURL = process.env.BACKEND_BASE_URL;
-    const likeURL = baseURL + "/auth/likes/" + props.PostID.toString();
+    const likeURL = baseURL + "/auth/likes/" + props.PostID;
     const toast = useToast();
 
     const postLike = () => {
         axios.post(likeURL, {}, {withCredentials: true})
         .then(res => {
-            console.log(res)
             props.SetLikeCountHandler(res.data["data"]["LikeCount"])
             props.SetLikedHandler(true);
             console.log("Liked post %d", props.PostID)
@@ -27,7 +26,7 @@ export default function LikeButton(props : LikeProps) {
             console.log(err);
             toast({
                 title: "Failed to like post",
-                description: err.response,
+                description: err.response.data.error,
                 status: "error",
                 duration: 5000,
                 isClosable: true,
@@ -38,7 +37,6 @@ export default function LikeButton(props : LikeProps) {
     const deleteLike = () => {
         axios.delete(likeURL, {withCredentials: true})
         .then(res => {
-            console.log(res)
             props.SetLikeCountHandler(res.data["data"]["LikeCount"])
             props.SetLikedHandler(false);
             console.log("Unliked post %d", props.PostID)

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from 'react';
 import { Box, Button, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/react';
 import { BellIcon } from '@chakra-ui/icons';
 

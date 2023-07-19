@@ -1,20 +1,8 @@
 import React, { useState } from 'react';
 import {
-    Modal,
-    ModalOverlay,
-    ModalContent,
-    ModalHeader,
-    ModalCloseButton,
-    ModalBody,
-    ModalFooter,
-    FormControl,
-    FormLabel,
-    Input,
-    Textarea,
-    IconButton,
-    Button,
+    IconButton
 } from '@chakra-ui/react';
-import { EditIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
+import { EditIcon} from '@chakra-ui/icons';
 import EditInfoModal from './EditInfoModal';
 import { User } from '../../types';
 

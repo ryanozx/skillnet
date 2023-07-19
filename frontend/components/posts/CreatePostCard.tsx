@@ -11,6 +11,7 @@ interface CreatePostProps {
 export default function CreatePostCard(props : CreatePostProps) {
     const [showTextField, setShowTextField] = useState<boolean>(false);
     const [text, setText] = useState<string>("");
+    const [submitting, setSubmitting] = useState<boolean>(false);
     const toast = useToast();
 
     const onClose = () => {
@@ -18,8 +19,9 @@ export default function CreatePostCard(props : CreatePostProps) {
         setShowTextField(false);
     }
 
-    const onSubmit = () => {
+    const onSubmit = async() => {
         const base_url = process.env.BACKEND_BASE_URL;
+        setSubmitting(true);
         axios.post(base_url + "/auth/posts", {"content": text}, {withCredentials: true})
         .then(res => {
             props.addPostHandler(res.data["data"]);
@@ -42,13 +44,20 @@ export default function CreatePostCard(props : CreatePostProps) {
                 isClosable: true,
             });
         })
+        .finally(() => {
+            setSubmitting(false);
+        })
     }
 
     return (
-        <>
             <Card bg="transparent" variant="unstyled" maxW="2xl" marginBlockStart="20px" marginInline="auto">
                 {!showTextField && <CardBody display="flex" justifyContent="flex-end">
-                    <Button colorScheme="telegram" leftIcon={<AddIcon></AddIcon>} maxW="40" onClick={() =>setShowTextField(true)}>
+                    <Button 
+                        colorScheme="telegram" 
+                        leftIcon={<AddIcon></AddIcon>} 
+                        maxW="40" 
+                        onClick={() =>setShowTextField(true)}
+                        >
                         Create Post
                     </Button>
                 </CardBody>}
@@ -58,7 +67,14 @@ export default function CreatePostCard(props : CreatePostProps) {
                         <Textarea bg="white" value={text} onChange={e => setText(e.target.value)}/>
                     </CardBody>
                     <CardFooter display="flex" justifyContent="flex-end" paddingInline="0px" paddingBlockStart="15px">
-                        <Button colorScheme="telegram" mr={3} onClick={onSubmit}>
+                        <Button 
+                            colorScheme="telegram" 
+                            mr={3} 
+                            onClick={onSubmit}
+                            isDisabled={text == ""}
+                            isLoading={submitting}
+                            loadingText="Submitting..."
+                            >
                             Submit Post
                         </Button>
                         <Button colorScheme="red" onClick={onClose}>
@@ -68,6 +84,5 @@ export default function CreatePostCard(props : CreatePostProps) {
                 </>
                 }
             </Card>
-        </>
     )
 }

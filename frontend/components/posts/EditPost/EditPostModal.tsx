@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from "react"
-import {PostComponent, PostView} from "./Post"
-import {Modal, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Textarea, useToast} from "@chakra-ui/react";
+import {PostComponent, PostView} from "../Post"
+import {Modal, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Textarea} from "@chakra-ui/react";
 import EditPostSubmit from "./EditPostSubmit";
 import EditPostCancel from "./EditPostCancel";
 
@@ -11,10 +11,9 @@ interface EditPostModalProps {
     updatePostHandler: React.Dispatch<React.SetStateAction<PostView>>;
 }
 
-export default function EditPostModel(props : EditPostModalProps) {
+export default function EditPostModal(props : EditPostModalProps) {
     const [text, setText] = useState<string>("");
     const didMountRef = useRef(false);
-    const toast = useToast();
     
     const handleClose = () => props.setIsOpen(false);
     const base_url = process.env.BACKEND_BASE_URL;

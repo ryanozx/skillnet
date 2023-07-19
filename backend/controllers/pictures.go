@@ -9,8 +9,8 @@ import (
 )
 
 func (a *APIEnv) PostUserPicture(context *gin.Context) {
-	userID := helpers.GetUserIdFromContext(context)
-
+	userID := helpers.GetUserIDFromContext(context)
+	// username := helpers.GetUsernameFromContext(context)
 	file, err := context.FormFile("file")
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

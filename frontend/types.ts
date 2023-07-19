@@ -21,3 +21,9 @@ export interface ProjectView {
     name: string;
     category: string;
 }
+
+export interface UserMinimal {
+    Name: string,
+    URL: string,
+    ProfilePic: string,
+}
