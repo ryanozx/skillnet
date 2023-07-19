@@ -129,31 +129,6 @@ func (a *APIEnv) PostNotification(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
-// func (a *APIEnv) PostNotificationFromEvent(context *gin.Context, notif models.Notification) {
-// 	// Marshalling the notification to JSON
-// 	notifJson, err := json.Marshal(notif)
-// 	if err != nil {
-// 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	// Adding the notification to the receiver's sorted set in Redis
-// 	score := float64(time.Now().Unix())
-// 	receiverKey := fmt.Sprintf("notifications:%s", notif.ReceiverId)
-// 	err = a.Redis.ZAdd(context.Request.Context(), receiverKey, goredis.Z{Score: score, Member: notifJson}).Err()
-// 	if err != nil {
-// 		context.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	// Publish the notification to the receiver's channel
-// 	formattedMessage := "data: " + string(notifJson) + "\n\n"
-// 	err = a.Redis.Publish(context.Request.Context(), receiverKey, formattedMessage).Err()
-// 	if err != nil {
-// 		context.JSON(http.StatusInternalServerError, gin.H{"error": "Error publishing notification"})
-// 		return
-// 	}
-// }
 
 func (a *APIEnv) PatchNotification(context *gin.Context) {
 
