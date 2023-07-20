@@ -129,20 +129,10 @@ func (a *APIEnv) PostNotification(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
+
 func (a *APIEnv) PatchNotification(context *gin.Context) {
 
 }
-
-// CREATE TABLE Notifications (
-//     id SERIAL PRIMARY KEY,
-//     sender_id INT NOT NULL REFERENCES Users(id),
-//     receiver_id INT NOT NULL REFERENCES Users(id),
-//     type VARCHAR(30) NOT NULL,
-//     PostId INT,
-//     CommentId INT,
-//     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-//     read BOOLEAN NOT NULL DEFAULT FALSE
-// );
 
 // func (a *APIEnv) DeleteNotification(context *gin.Context) {
 // 	// Extracting user id and notification id from the request
