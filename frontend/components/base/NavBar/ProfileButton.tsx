@@ -20,7 +20,7 @@ export default function ProfileButton(props: ProfileButtonProps) {
         <Menu>
             <ProfileAvatar profilePic={profilePic}/>
             <MenuList>
-                <MenuItem><Link href={`/profile/${username}`}>View your profile</Link></MenuItem>
+            <Link href={`/profile/${username}`}><MenuItem>View your profile</MenuItem></Link>
                 <MenuDivider />
                 <LogoutButton />
             </MenuList>

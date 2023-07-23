@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import LoadingScreen from './components/base/LoadingScreen';
+
+const loadingText = "Please be patient while we load our demo, we are using a free server ...";
 
 export function preventAuthAccess(Component: any) {
     
@@ -22,11 +25,11 @@ export function preventAuthAccess(Component: any) {
         }, []);
 
         if (loading) {
-            return null; // you can return a loading spinner here if you want
+            return <LoadingScreen loadingText={loadingText}/>
         }
 
         return <Component {...props} />;
-    };
+    }
 }
 
 export function requireAuth(Component: any) {
@@ -48,7 +51,8 @@ export function requireAuth(Component: any) {
         }, []);
 
         if (loading) {
-            return null; // you can return a loading spinner here if you want
+            // return <LoadingScreen loadingText={loadingText}/>
+            return null;
         }
 
         return <Component {...props} />;

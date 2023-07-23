@@ -37,8 +37,8 @@ export default function ProfileInfo({username}: {username: string}) {
                     setUser({
                         AboutMe: AboutMe ? AboutMe : "No description available",
                         Email: Email,
-                        Name: Name ? Name : "No display name",
-                        Title: Title ? Title : "No title available",
+                        Name: Name,
+                        Title: Title,
                         ProfilePic: ProfilePic,
                         Username: username,
                         Projects: Projects,

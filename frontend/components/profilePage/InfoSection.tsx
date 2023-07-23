@@ -8,6 +8,8 @@ interface InfoSectionProps {
     setUser?: React.Dispatch<React.SetStateAction<User>>;
 }
 
+
+
 export default function InfoSection({user, setUser}: InfoSectionProps) {
     return (
         <>
@@ -16,6 +18,7 @@ export default function InfoSection({user, setUser}: InfoSectionProps) {
                 username={user.Username}
                 title={user.Title}
                 profilePic={user.ProfilePic}
+                aboutMe={user.AboutMe}
                 setUser={setUser}/>
             <AboutMe aboutMe={user.AboutMe}></AboutMe>
         </>
