@@ -73,6 +73,10 @@ func (h *UserDBTestHandler) UpdateUser(user *models.User, id string) (*models.Us
 	return updatedUser, err
 }
 
+func (h *UserDBTestHandler) QueryUser(searchTerm string, limit int) ([]models.SearchResult, error) {
+	return nil, nil
+}
+
 func (h *UserDBTestHandler) SetMockCreateUserFunc(user *models.User, err error) {
 	h.CreateUserFunc = func(newUser database.NewUser) (*models.User, error) {
 		return user, err

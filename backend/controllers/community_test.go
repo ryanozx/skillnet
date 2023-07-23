@@ -76,6 +76,10 @@ func (h *CommunityDBTestHandler) UpdateCommunity(update *models.Community, commu
 	return h.UpdateCommunityFunc(update, communityName, userID)
 }
 
+func (h *CommunityDBTestHandler) QueryCommunity(queryString string, cutoff int) ([]models.SearchResult, error) {
+	return nil, nil
+}
+
 func (h *CommunityDBTestHandler) SetMockCreateCommunityFunc(community *models.Community, err error) {
 	h.CreateCommunityFunc = func(newCommunity *models.Community) (*models.Community, error) {
 		return community, err

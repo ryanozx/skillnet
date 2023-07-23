@@ -21,7 +21,6 @@ export default function PopularCommunitiesList() {
     useEffect(() => {
         axios.get(url, {withCredentials: true})
         .then(res => {
-            console.log(res.data.data);
             setPopularCommunities([...popularCommunities, ...res.data.data["Communities"].map(
                 (community : CommunityView) => 
                     <ListItem key={community.Community.ID}>

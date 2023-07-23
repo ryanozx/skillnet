@@ -106,7 +106,7 @@ func (a *APIEnv) GetProjects(ctx *gin.Context) {
 
 	fmt.Print(communityID)
 
-	username := helpers.GetUsernameFromContext(ctx)
+	username := helpers.GetUsernameFromQuery(ctx)
 
 	projects, err := a.ProjectDBHandler.GetProjects(cutoff, communityID, username)
 	// If unable to retrieve projects, return status code 404 Not Found

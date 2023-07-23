@@ -49,9 +49,11 @@ export default function CommunityInfo(props : CommunityInfoProps) {
             .then(res => {
                 setCommunity({...res.data.data["Community"]});
                 setIsOwner(res.data.data["IsOwner"]);
-                props.setCommunityID(community.ID);
-                props.setCommunityLoaded(true);
+                props.setCommunityID(res.data.data["Community"]["ID"])
+            })
+            .then(() => {
                 setLoadedCommunity(true);
+                props.setCommunityLoaded(true);
             })
             .catch((error) => {
                 console.log(error);

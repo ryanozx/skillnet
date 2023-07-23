@@ -21,14 +21,15 @@ export default function Feed(props: FeedProps) {
     const [initialUrlUpdated, setInitialUrlUpdated] = useState<boolean>(false);
 
     useEffect(() => {
-        if (props.ProjectID) {
+        if (props.ProjectID && props.ProjectID != 0) {
             setURL(url + "?project=" + props.ProjectID)
+            setInitialUrlUpdated(true);
         }
-        else if (props.CommunityID) {
+        else if (props.CommunityID && props.CommunityID != 0) {
             setURL(url + "?community=" + props.CommunityID)
+            setInitialUrlUpdated(true);
         }
-        setInitialUrlUpdated(true);
-    }, [])
+    }, [props.ProjectID, props.CommunityID])
 
     useEffect(() => {
         if (initialUrlUpdated)
@@ -41,6 +42,8 @@ export default function Feed(props: FeedProps) {
         if (!isLoading) {
             setIsLoading(true);
             setError(null);
+
+            console.log(url)
             
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData

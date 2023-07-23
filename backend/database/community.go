@@ -1,6 +1,10 @@
 package database
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
@@ -15,6 +19,7 @@ type CommunityDBHandler interface {
 	GetCommunityByName(name string) (*models.Community, error)
 	GetCommunities(*helpers.NullableUint) ([]models.Community, error)
 	UpdateCommunity(*models.Community, string, string) (*models.Community, error)
+	QueryCommunity(string, int) ([]models.SearchResult, error)
 }
 
 type CommunityDB struct {
@@ -70,4 +75,24 @@ func (db *CommunityDB) UpdateCommunity(community *models.Community, communityNam
 	err = result.Error
 	resCommunity.User = communityGet.User
 	return resCommunity, err
+}
+
+func (db *CommunityDB) QueryCommunity(searchTerm string, limit int) ([]models.SearchResult, error) {
+
+	results := []models.SearchResult{}
+	lowerCaseSearchTerm := strings.ToLower(searchTerm) + ":*"
+	tableName := "communities" // replace this with your actual table name
+	query := fmt.Sprintf("to_tsquery('english', '%s') @@ to_tsvector('english', lower(name))", lowerCaseSearchTerm)
+	scoreQuery := fmt.Sprintf("ts_rank(to_tsvector('english', lower(name)), to_tsquery('english', '%s')) as score", lowerCaseSearchTerm)
+	urlPrefix := fmt.Sprintf("CONCAT('%s', '/communities/', name) as url", os.Getenv("FRONTEND_BASE_URL"))
+
+	db.DB.Debug().
+		Table(tableName).
+		Select("name, 'community' as result_type, " + scoreQuery + ", " + urlPrefix).
+		Where(query).
+		Limit(limit).
+		Order("score DESC").
+		Scan(&results)
+
+	return results, nil
 }

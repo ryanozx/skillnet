@@ -26,6 +26,7 @@ export default function CommentsModel(props: CommentModelProps) {
     const [error, setError] = useState(null);
     const baseURL = process.env.BACKEND_BASE_URL;
     const [url, setURL] = useState<string>(baseURL + "/auth/comments?post=" + props.postID)
+    const [noMoreComments, setNoMoreComments] = useState<boolean>(false);
 
     const onClose = () => {
         props.setIsOpen(false);
@@ -35,20 +36,23 @@ export default function CommentsModel(props: CommentModelProps) {
 
     const updateCommentsFeed = async() => {
         if (!isLoading) {
-            console.log("Fetching data");
             setIsLoading(true);
             setError(null);
 
+            console.log(url)
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData
             .then((response) => {
                 if (response.data["data"]["Comments"] != null)
                 {
+                    if (response.data["data"]["Comments"].length === 0) {
+                        setNoMoreComments(true);
+                    }
                     setComments([...comments, ...response.data["data"]["Comments"].map((commentData : CommentView) => <Comment key={commentData.Comment.ID} {...commentData} CommentCountHandler={props.setCommentCountHandler}/>)]);
+                } else {
+                    setNoMoreComments(true);
                 }
-                console.log(response.data["data"]["NextPageURL"]);
                 setURL(response.data["data"]["NextPageURL"]);
-                console.log(url);
             })
             .catch((error) => {
                 console.log(error);
@@ -84,7 +88,7 @@ export default function CommentsModel(props: CommentModelProps) {
                     height={window.innerHeight * 0.6}
                     dataLength={comments.length}
                     next={updateCommentsFeed}
-                    hasMore={url != baseURL + "/auth/comments?post=" + props.postID + "&cutoff=0"}
+                    hasMore={!noMoreComments}
                     loader={
                         <Box paddingBlock="10px">
                             <Text textAlign="center">Loading...</Text>

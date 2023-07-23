@@ -30,7 +30,7 @@ export default function AboutMe({ aboutMe }: { aboutMe: string }) {
                     h={height}
                     overflow="hidden"
                 >
-                    <Text>{aboutMe === "" ? "About Me not available" : aboutMe}</Text>
+                    <Text>{aboutMe ? aboutMe : "No description available"}</Text>
                 </Box>
                 {aboutMe && aboutMe.length > 100 && (
                     <Button onClick={handleClick} size="sm" alignSelf="flex-end">

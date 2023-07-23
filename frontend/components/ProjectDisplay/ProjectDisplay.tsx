@@ -58,6 +58,7 @@ export default function ProjectDisplay (props: ProjectDisplayProps) {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [createModalOpen, setCreateModalOpen] = useState<boolean>(false);
     const [initialUrlUpdated, setInitialUrlUpdated] = useState<boolean>(false);
+    const [noMoreProjects, setNoMoreProjects] = useState<boolean>(false);
 
     const handleSeeAllClick = () => {
         onOpen();
@@ -69,11 +70,12 @@ export default function ProjectDisplay (props: ProjectDisplayProps) {
     useEffect(() => {
         if (props.communityID && props.communityID != 0) {
             setURL(url + "?community=" + props.communityID)
+            setInitialUrlUpdated(true);
         }
         else if (props.username) {
             setURL(url + "?username=" + props.username)
+            setInitialUrlUpdated(true);
         }
-        setInitialUrlUpdated(true);
     }, [props.communityID, props.username])
     
     useEffect(() => {
@@ -89,11 +91,14 @@ export default function ProjectDisplay (props: ProjectDisplayProps) {
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData
             .then((response) => {
-                console.log(response.data.data)
                 if (response.data["data"]["projects"] != null)
                 {
+                    if (response.data["data"]["projects"].length === 0) {
+                        setNoMoreProjects(true);
+                    }
                     setProjects([...projects, ...response.data["data"]["projects"]]);
-                    
+                } else {
+                    setNoMoreProjects(true);
                 }
                 setURL(response.data["data"]["NextPageURL"]);
             })
@@ -156,6 +161,7 @@ export default function ProjectDisplay (props: ProjectDisplayProps) {
                     onClose={onClose}
                     projects={projects}
                     updateProjects={updateProjects}
+                    noMoreProjects={noMoreProjects}
                 />
             </CardBody>
         </Card>);

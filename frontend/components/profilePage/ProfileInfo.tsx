@@ -34,7 +34,6 @@ export default function ProfileInfo({username}: {username: string}) {
                 const currentUser = res.data.data.Username;
                 const isMyProfile = currentUser === username;
                 axios.get(profileUrl, {withCredentials: true}).then((res) => {
-                    console.log("Get", res.data.data);
                     setUser({...res.data.data, 
                         AboutMe: (res.data.data["ShowAboutMe"] || isMyProfile)? res.data.data["AboutMe"] : "",
                         Title: (res.data.data["ShowTitle"] || isMyProfile)? res.data.data["Title"] : "",
@@ -46,8 +45,9 @@ export default function ProfileInfo({username}: {username: string}) {
                     } else {
                         setProfileState("other");
                     }
-                    setLoadedUser(true);
-                }).catch((err) => {    
+                })
+                .then(() => setLoadedUser(true))
+                .catch((err) => {    
                     setProfileState("invalid")
                     console.log(err)
                 });
@@ -74,7 +74,7 @@ export default function ProfileInfo({username}: {username: string}) {
               {...(profileState === "self" && { setUser })}
             />
           </VStack>
-          {loadedUser && <ProjectDisplay username={user.Username} />}
+          {loadedUser && <ProjectDisplay username={username} />}
         </Box>
       );
 };

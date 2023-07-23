@@ -45,6 +45,7 @@ func (s *serverConfig) setupRoutes() {
 	setupNotificationAPI(routerGroup, apiEnv, s.notifRedis)
 	setupCommunityAPI(routerGroup, apiEnv)
 	setupProjectAPI(routerGroup, apiEnv)
+	setupSearchAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -292,4 +293,16 @@ func registerProjectRoutes(rg RouterGrouper, api ProjectAPIer) {
 	rg.Private().POST(helpers.ProjectPath, api.CreateProject)
 	rg.Private().DELETE(projectPathWithID, api.DeleteProject)
 	rg.Private().PATCH(projectPathWithID, api.UpdateProject)
+}
+
+func setupSearchAPI(rg RouterGrouper, api SearchAPIer) {
+	registerSearchRoutes(rg, api)
+}
+
+type SearchAPIer interface {
+	GetSearchResults(*gin.Context)
+}
+
+func registerSearchRoutes(rg RouterGrouper, api SearchAPIer) {
+	rg.Private().GET("/search", api.GetSearchResults)
 }

@@ -1,6 +1,10 @@
 package database
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
@@ -15,6 +19,7 @@ type ProjectDBHandler interface {
 	GetProjectByID(uint) (*models.Project, error)
 	GetProjects(cutoff *helpers.NullableUint, communityID *helpers.NullableUint, username string) ([]models.Project, error)
 	UpdateProject(*models.Project, uint, string) (*models.Project, error)
+	QueryProject(searchTerm string, limit int) ([]models.SearchResult, error)
 }
 
 type ProjectDB struct {
@@ -57,7 +62,7 @@ func (db *ProjectDB) GetProjects(cutoff *helpers.NullableUint, communityID *help
 		communityIDVal, _ := communityID.GetValue()
 		query = query.Where("projects.community_id = ?", communityIDVal).Joins("Community")
 	} else if username != "" {
-		query = query.Where("users.username = ?", username)
+		query = query.Where("\"User\".username = ?", username)
 	}
 
 	query = query.Order("projects.id desc").Limit(projectsToReturn).Find(&projects)
@@ -83,4 +88,24 @@ func (db *ProjectDB) UpdateProject(project *models.Project, projectID uint, user
 	err = result.Error
 	resProject.User = projectGet.User
 	return resProject, err
+}
+
+func (db *ProjectDB) QueryProject(searchTerm string, limit int) ([]models.SearchResult, error) {
+
+	results := []models.SearchResult{}
+	lowerCaseSearchTerm := strings.ToLower(searchTerm) + ":*"
+	tableName := "projects" // replace this with your actual table name
+	query := fmt.Sprintf("to_tsquery('english', '%s') @@ to_tsvector('english', lower(name))", lowerCaseSearchTerm)
+	scoreQuery := fmt.Sprintf("ts_rank(to_tsvector('english', lower(name)), to_tsquery('english', '%s')) as score", lowerCaseSearchTerm)
+	urlPrefix := fmt.Sprintf("CONCAT('%s', '/projects/', id) as url", os.Getenv("FRONTEND_BASE_URL"))
+
+	db.DB.Debug().
+		Table(tableName).
+		Select("name, 'project' as result_type, " + scoreQuery + ", " + urlPrefix).
+		Where(query).
+		Limit(limit).
+		Order("score DESC").
+		Scan(&results)
+
+	return results, nil
 }

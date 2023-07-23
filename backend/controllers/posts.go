@@ -90,7 +90,6 @@ func (a *APIEnv) DeletePost(ctx *gin.Context) {
 
 func (a *APIEnv) GetPosts(ctx *gin.Context) {
 	userID := helpers.GetUserIDFromContext(ctx)
-
 	// Ensure that cutoff is an unsigned integer or empty
 	cutoff, err := helpers.GetCutoffFromQuery(ctx)
 	if err != nil {
