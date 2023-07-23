@@ -9,6 +9,7 @@ interface FeedProps {
     AllowPostAdd: boolean
     CommunityID?: number
     ProjectID?: number
+    isGlobal: boolean
 }
 
 export default function Feed(props: FeedProps) {
@@ -29,7 +30,10 @@ export default function Feed(props: FeedProps) {
             setURL(url + "?community=" + props.CommunityID)
             setInitialUrlUpdated(true);
         }
-    }, [props.ProjectID, props.CommunityID])
+        else if (props.isGlobal) {
+            setInitialUrlUpdated(true);
+        }
+    }, [props.ProjectID, props.CommunityID, props.isGlobal])
 
     useEffect(() => {
         if (initialUrlUpdated)

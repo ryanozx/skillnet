@@ -13,7 +13,7 @@ export default function ProjectPageContainer(props: ProjectPageContainerProps) {
     return (
         <DefaultLayoutContainer>
             {props.projectID && <ProjectInfo ProjectID={props.projectID} setProjectLoaded={setProjectLoaded} setCommunityID={setCommunityID}/>}
-            {projectLoaded && <Feed AllowPostAdd={true} ProjectID={props.projectID} CommunityID={communityID}/>}
+            {projectLoaded && <Feed AllowPostAdd={true} ProjectID={props.projectID} CommunityID={communityID} isGlobal={false}/>}
         </DefaultLayoutContainer>
     )
 }

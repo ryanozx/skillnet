@@ -5,7 +5,7 @@ import Feed from "../../components/posts/Feed";
 export default function ProfilePage() {
     return (
         <DefaultLayoutContainer>
-            <Feed AllowPostAdd={false}/>
+            <Feed AllowPostAdd={false} isGlobal={true}/>
         </DefaultLayoutContainer>
     );
 }

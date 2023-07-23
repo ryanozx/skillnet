@@ -57,7 +57,8 @@ export default function SignUpForm() {
     const toast = useToast();
     const router = useRouter();
 
-    const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {        
+    const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {    
+        e.preventDefault();    
         var form_data = new FormData();
         form_data.append('email', form.email);
         form_data.append('username', form.username);

@@ -13,7 +13,7 @@ export default function CommunityPageContainer(props: CommunityPageContainerProp
     return (
         <DefaultLayoutContainer>
             <CommunityInfo communityName={props.communityName} setCommunityID={setCommunityID} setCommunityLoaded={setCommunityLoaded}/>
-            {communityLoaded && <Feed AllowPostAdd={false} CommunityID={communityID}/>}
+            {communityLoaded && <Feed AllowPostAdd={false} CommunityID={communityID} isGlobal={false}/>}
         </DefaultLayoutContainer>
     )
 }
