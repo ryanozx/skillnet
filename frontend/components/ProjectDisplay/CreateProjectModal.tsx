@@ -16,6 +16,7 @@ import {
 } from "@chakra-ui/react"
 import { useRouter } from "next/router";
 import axios from "axios";
+import { escapeHtml } from "../../types";
 
 interface CreateProjectModalProps {
     isOpen: boolean,
@@ -44,8 +45,8 @@ export default function CreateProjectModal(props : CreateProjectModalProps) {
 
     const handleCreate = () => {
         axios.post(createProjectURL, { 
-                "Name": projectName,
-                "About": aboutProject,
+                "Name": escapeHtml(projectName),
+                "About": escapeHtml(aboutProject),
                 "communityID": props.communityID }, {withCredentials: true})
             .then(res => {
                 toast({

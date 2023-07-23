@@ -4,6 +4,7 @@ import {Button, Modal, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Tex
 import {CloseIcon, CheckIcon} from "@chakra-ui/icons";
 import axios from "axios";
 import { Project } from "./ProjectInfo";
+import { escapeHtml } from "../../types";
 
 interface EditProjectInfoModalProps {
     isOpen: boolean,
@@ -26,7 +27,7 @@ export default function EditProjectInfoModal(props : EditProjectInfoModalProps) 
     };
 
     const onSubmit = () => {
-        axios.patch(projectURL, {"projectInfo": text}, {withCredentials: true})
+        axios.patch(projectURL, {"projectInfo": escapeHtml(text)}, {withCredentials: true})
         .then(res => {
             console.log(res.data.data)
             props.updateProjectHandler({...res.data.data});

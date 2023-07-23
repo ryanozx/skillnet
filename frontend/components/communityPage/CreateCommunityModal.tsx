@@ -17,6 +17,7 @@ import {
 } from "@chakra-ui/react"
 import { useRouter } from "next/router";
 import axios from "axios";
+import { escapeHtml } from "../../types";
 
 interface CreateCommunityModalProps {
     isOpen: boolean,
@@ -45,9 +46,10 @@ export default function CreateCommunityModal(props : CreateCommunityModalProps) 
     }
 
     const handleCreate = () => {
+        const sanitizedName = escapeHtml(communityName);
         axios.post(createCommunityURL, { 
-                "Name": communityName,
-                "About": aboutCommunity }, {withCredentials: true})
+                "Name": sanitizedName,
+                "About": escapeHtml(aboutCommunity) }, {withCredentials: true})
             .then(() => {
                 toast({
                 title: "Community created.",
@@ -56,7 +58,7 @@ export default function CreateCommunityModal(props : CreateCommunityModalProps) 
                 duration: 5000,
                 isClosable: true,
                 });
-                router.push("/communities/" + communityName);
+                router.push("/communities/" + sanitizedName);
                 handleClose();
             })
             .catch((error) => {

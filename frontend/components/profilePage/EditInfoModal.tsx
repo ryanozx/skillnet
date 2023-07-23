@@ -17,6 +17,7 @@ import { CloseIcon, CheckIcon } from '@chakra-ui/icons';
 import BasicInfoForm from './BasicInfoForm';
 import PrivacyForm from './PrivacyForm';
 import { User } from '../../types';
+import { escapeHtml } from '../../types';
 
 export interface FormType {
     name: string;
@@ -76,9 +77,9 @@ export default function EditProfileModal(props: EditProfileModalProps) {
         const base_url = process.env.BACKEND_BASE_URL;
         const url = base_url + "/auth/user"
         axios.patch(url, {
-                "Name": form.name,
-                "Title": form.title,
-                "AboutMe": form.about,
+                "Name": escapeHtml(form.name),
+                "Title": escapeHtml(form.title),
+                "AboutMe": escapeHtml(form.about),
                 "ShowAboutMe": form.privacySettings["about"],
                 "ShowTitle": form.privacySettings["title"],
             }, {

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Stack } from '@chakra-ui/react';
-import LoginRedirect from './LoginRedirect';
 import { EmailInput } from './EmailInput';
 import { UsernameInput } from './UsernameInput';
 import { SignUpButton } from './SignUpButton';
@@ -9,6 +8,7 @@ import { RetypePasswordInput } from './RetypePasswordInput';
 import { useToast } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+import { escapeHtml } from '../../types';
 
 type UserSignupForm = {
     username: string;
@@ -61,7 +61,7 @@ export default function SignUpForm() {
         e.preventDefault();    
         var form_data = new FormData();
         form_data.append('email', form.email);
-        form_data.append('username', form.username);
+        form_data.append('username', escapeHtml(form.username));
         form_data.append('password', form.password);
         const base_url = process.env.BACKEND_BASE_URL;
         const url = base_url + '/signup';

@@ -4,6 +4,7 @@ import {Button, Modal, ModalContent, ModalFooter, ModalHeader, ModalOverlay, Tex
 import {Community} from "./CommunityInfo";
 import {CloseIcon, CheckIcon} from "@chakra-ui/icons";
 import axios from "axios";
+import { escapeHtml } from "../../types";
 
 interface EditCommunityModalProps {
     isOpen: boolean;
@@ -26,7 +27,7 @@ export default function EditCommunityModal(props : EditCommunityModalProps) {
     };
 
     const onSubmit = () => {
-        axios.patch(communityURL, {"about": text}, {withCredentials: true})
+        axios.patch(communityURL, {"about": escapeHtml(text)}, {withCredentials: true})
         .then(res => {
             props.updateCommunityHandler(res.data["data"]["Community"]);
             toast({

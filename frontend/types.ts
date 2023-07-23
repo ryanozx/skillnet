@@ -29,3 +29,20 @@ export interface UserMinimal {
     URL: string,
     ProfilePic: string,
 }
+
+let entityMap: {[char: string]: string}  = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '/': '&#x2F;',
+    '`': '&#x60;',
+    '=': '&#x3D;'
+  };
+  
+ export function escapeHtml (str : string) {
+    return String(str).replace(/[&<>"'`=\/]/g, function (s) {
+      return entityMap[s];
+    });
+  }
