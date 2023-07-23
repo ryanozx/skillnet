@@ -8,11 +8,12 @@ import { useUser } from '../../../userContext';
 
 
 interface CropperComponentProps {
-    profilePic?: string;
-    setUser: React.Dispatch<React.SetStateAction<User>>;
+    user: User,
+    profilePic?: string,
+    setUser: React.Dispatch<React.SetStateAction<User>>,
 }
 
-const CropperComponent: React.FC<CropperComponentProps> = ({profilePic, setUser}) => {
+const CropperComponent: React.FC<CropperComponentProps> = (props : CropperComponentProps) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const [selectedImage, setSelectedImage] = useState<string | undefined>(undefined);
     const toast = useToast();
@@ -26,13 +27,18 @@ const CropperComponent: React.FC<CropperComponentProps> = ({profilePic, setUser}
     const handleCroppedImage = (dataUrl: string) => {
         const base_url = process.env.BACKEND_BASE_URL;
         axios.patch(base_url + '/auth/user', {
-                profilepic: dataUrl,
+                "Name": props.user.Name,
+                "Title": props.user.Title,
+                "AboutMe": props.user.AboutMe,
+                "ShowAboutMe": props.user.ShowAboutMe,
+                "ShowTitle": props.user.ShowTitle,
+                "ProfilePic": dataUrl,
             }, {
                 withCredentials: true,
             })
             .then(res => {
                 const { ProfilePic } = res.data.data;
-                setUser((prevUser: User) => ({
+                props.setUser((prevUser: User) => ({
                     ...prevUser,
                     ProfilePic: ProfilePic
                 }));
@@ -52,7 +58,7 @@ const CropperComponent: React.FC<CropperComponentProps> = ({profilePic, setUser}
 
     return (
         <>
-            <EditPicButton currentProfilePic={profilePic || ""} onValidFile={handleValidFile} />
+            <EditPicButton currentProfilePic={props.profilePic || ""} onValidFile={handleValidFile} />
             <ImageCropper isOpen={isOpen} onClose={onClose} onCropped={handleCroppedImage} imageSrc={selectedImage} />
         </>
     );

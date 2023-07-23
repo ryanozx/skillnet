@@ -24,7 +24,7 @@ export default function BasicInfo(props: BasicInfoProps) {
             <Flex justifyContent={"space-between"} alignItems="flex-start">
                 <HStack spacing={"10"}>
                 {props.setUser ? (
-                    <CropperComponent profilePic={props.user.ProfilePic} setUser={props.setUser} />
+                    <CropperComponent user={props.user} profilePic={props.user.ProfilePic} setUser={props.setUser} />
                     ) : (
                     <Avatar size="2xl" src={props.user.ProfilePic} />
                 )}

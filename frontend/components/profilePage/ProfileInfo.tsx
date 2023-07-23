@@ -27,12 +27,12 @@ export default function ProfileInfo({username}: {username: string}) {
     useEffect(() => {
         const base_url = process.env.BACKEND_BASE_URL;
         const currentUrl = base_url + "/auth/user";
-        const profileUrl = base_url + "/auth/users/" + username;
-        if (username) {
+        if (username && username !== "undefined") {
             axios.get(currentUrl, { withCredentials: true })
             .then((res) => {
                 const currentUser = res.data.data.Username;
                 const isMyProfile = currentUser === username;
+                const profileUrl = base_url + "/auth/users/" + username;
                 axios.get(profileUrl, {withCredentials: true}).then((res) => {
                     setUser({...res.data.data, 
                         AboutMe: (res.data.data["ShowAboutMe"] || isMyProfile)? res.data.data["AboutMe"] : "",
@@ -49,6 +49,7 @@ export default function ProfileInfo({username}: {username: string}) {
                 .then(() => setLoadedUser(true))
                 .catch((err) => {    
                     setProfileState("invalid")
+                    console.log("booo")
                     console.log(err)
                 });
             })

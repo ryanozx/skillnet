@@ -80,6 +80,7 @@ export default function EditProfileModal(props: EditProfileModalProps) {
                 "Name": escapeHtml(form.name),
                 "Title": escapeHtml(form.title),
                 "AboutMe": escapeHtml(form.about),
+                "ProfilePic": props.user.ProfilePic,
                 "ShowAboutMe": form.privacySettings["about"],
                 "ShowTitle": form.privacySettings["title"],
             }, {

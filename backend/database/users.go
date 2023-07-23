@@ -70,6 +70,7 @@ func (db *UserDB) UpdateUser(user *models.User, id string) (*models.User, error)
 		"about_me":      user.AboutMe,
 		"show_about_me": user.ShowAboutMe,
 		"show_title":    user.ShowTitle,
+		"profile_pic":   user.ProfilePic,
 	})
 	return resUser, result.Error
 }
