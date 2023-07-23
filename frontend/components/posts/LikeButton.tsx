@@ -20,7 +20,6 @@ export default function LikeButton(props : LikeProps) {
         .then(res => {
             props.SetLikeCountHandler(res.data["data"]["LikeCount"])
             props.SetLikedHandler(true);
-            console.log("Liked post %d", props.PostID)
         })
         .catch(err => {
             console.log(err);
@@ -39,7 +38,6 @@ export default function LikeButton(props : LikeProps) {
         .then(res => {
             props.SetLikeCountHandler(res.data["data"]["LikeCount"])
             props.SetLikedHandler(false);
-            console.log("Unliked post %d", props.PostID)
         })
         .catch(err => {
             console.log(err);

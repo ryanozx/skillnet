@@ -75,7 +75,6 @@ function Searchbar() {
             axiosInstance
             .get(process.env.BACKEND_BASE_URL + '/auth/search', { params: { q: value }, withCredentials: true })
             .then((response) => {
-                console.log(response.data.data)
                 setDropdownItems(response.data.data);
                 setShowDropdown(value !== '' && dropdownRef.current === document.activeElement);
             })

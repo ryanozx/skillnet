@@ -1,10 +1,7 @@
 package helpers
 
-import (
-	"fmt"
-)
-
 const (
+	CommentPath  = "/comments"
 	CommentIDKey = "commentid"
 )
 
@@ -15,6 +12,7 @@ func GetCommentIDFromContext(ctx ParamGetter) (uint, error) {
 }
 
 func GenerateCommentNextPageURL(backendURL string, postID uint, newCutoff uint) string {
-	nextPageURL := fmt.Sprintf("%s/auth/comments?%s=%d&%s=%d", backendURL, PostIDQueryKey, postID, CutoffKey, newCutoff)
-	return nextPageURL
+	return generateNextPageURL(backendURL, CommentPath, newCutoff, map[string]interface{}{
+		PostIDQueryKey: postID,
+	})
 }

@@ -2,7 +2,9 @@ package helpers
 
 import (
 	"log"
+	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -21,6 +23,46 @@ func IsEmptyUserPass(user *models.UserCredentials) bool {
 
 func IsSignupUserCredsEmpty(user *models.SignupUserCredentials) bool {
 	return IsEmptyUserPass(&user.UserCredentials) || strings.Trim(user.Email, " ") == ""
+}
+
+func ValidatePassword(password string) bool {
+	const passwordMinLength = 8
+	const uppercaseRequired = true
+	const lowercaseRequired = true
+	const numberRequired = true
+	const specialRequired = true
+
+	hasUppercase := false
+	hasLowercase := false
+	hasNumber := false
+	hasSpecial := false
+
+	if len(password) < passwordMinLength {
+		return false
+	}
+
+	for _, c := range password {
+		switch {
+		case unicode.IsNumber(c):
+			hasNumber = true
+		case unicode.IsUpper(c):
+			hasUppercase = true
+		case unicode.IsLower(c):
+			hasLowercase = true
+		case unicode.IsPunct(c) || unicode.IsSymbol(c):
+			hasSpecial = true
+		default:
+		}
+	}
+	return (!uppercaseRequired || hasUppercase) &&
+		(!lowercaseRequired || hasLowercase) &&
+		(!numberRequired || hasNumber) &&
+		(!specialRequired || hasSpecial)
+}
+
+func ValidateEmail(email string) bool {
+	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
+	return emailRegex.MatchString(email)
 }
 
 func IsValidSession(session SessionGetter) bool {

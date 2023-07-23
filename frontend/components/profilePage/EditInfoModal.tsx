@@ -16,9 +16,10 @@ import {
 import { CloseIcon, CheckIcon } from '@chakra-ui/icons';
 import BasicInfoForm from './BasicInfoForm';
 import PrivacyForm from './PrivacyForm';
-import { User, EditableUserInfo } from '../../types';
+import { User } from '../../types';
+import { escapeHtml } from '../../types';
 
-interface FormType {
+export interface FormType {
     name: string;
     title: string;
     about: string;
@@ -28,7 +29,7 @@ interface FormType {
 }
 
 interface EditProfileModalProps {
-    user: EditableUserInfo;
+    user: User;
     setUser: React.Dispatch<React.SetStateAction<User>>;
     handleOpen: () => void;
     handleClose: () => void;
@@ -37,18 +38,16 @@ interface EditProfileModalProps {
 }  
 
 export default function EditProfileModal(props: EditProfileModalProps) {
-    const { handleOpen, handleClose, isOpen, setIsOpen, setUser, user } = props;
+    const { handleClose, isOpen, setIsOpen, setUser } = props;
     const toast = useToast();
     const [activeTab, setActiveTab] = useState(0);
     const [form, setForm] = useState<FormType>({
-        name: user.name,
-        title: user.title,
-        about: user.aboutMe,
+        name: props.user.Name,
+        title: props.user.Title,
+        about: props.user.AboutMe,
         privacySettings: {
-            tagline: false,
-            about: false,
-            projects: false,
-            activity: false
+            title: props.user.ShowTitle,
+            about: props.user.ShowAboutMe,
         }
     });
 
@@ -74,48 +73,20 @@ export default function EditProfileModal(props: EditProfileModalProps) {
         setActiveTab(index);
     };
 
-    useEffect(() => {
-        if (isOpen) {
-            const sessionId = sessionStorage.getItem('sessionId');
-            console.log('API call to get the current privacy setting of user');
-            axios
-                .get('privacy-endpoint', {
-                headers: {
-                    Authorization: `Bearer ${sessionId}`
-                }
-                })
-                .then(response => {
-                setForm(prevState => ({
-                    ...prevState,
-                    privacySettings: response.data
-                }));
-                })
-                .catch(error => {
-                console.error(error);
-                });
-        }
-        
-    }, [isOpen]);
-
     const handleSave = () => {
         const base_url = process.env.BACKEND_BASE_URL;
         const url = base_url + "/auth/user"
         axios.patch(url, {
-                name: form.name,
-                title: form.title,
-                aboutme: form.about,
+                "Name": escapeHtml(form.name),
+                "Title": escapeHtml(form.title),
+                "AboutMe": escapeHtml(form.about),
+                "ShowAboutMe": form.privacySettings["about"],
+                "ShowTitle": form.privacySettings["title"],
             }, {
                 withCredentials: true,
             })
             .then(res => {
-                console.log(res.data); // Log the response data
-                const { AboutMe, Name, Title } = res.data.data;
-                setUser((prevUser: User) => ({
-                    ...prevUser,
-                    AboutMe: AboutMe,
-                    Name: Name,
-                    Title: Title
-                }));
+                setUser({...res.data.data});
                 toast({
                     title: "Profile updated.",
                     description: "We've updated your profile for you.",

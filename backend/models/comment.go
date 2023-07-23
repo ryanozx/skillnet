@@ -28,6 +28,7 @@ func (cvArray *CommentViewsArray) TestFormat() *CommentViewsArray {
 type Comment struct {
 	gorm.Model
 	PostID uint   `gorm:"<-:create; not null"`
+	Post   Post   `json:"-"`
 	UserID string `json:"-" gorm:"<-:create; not null"`
 	User   User   `json:"-"`
 	Text   string
@@ -55,7 +56,7 @@ func (c *Comment) GetUserID() string {
 func (comment *Comment) CommentView(userID string) *CommentView {
 	commentView := CommentView{
 		Comment:     *comment,
-		UserMinimal: *comment.User.UserMinimal(),
+		UserMinimal: *comment.User.GetUserMinimal(),
 		IsEditable:  userID == comment.UserID,
 	}
 	return &commentView

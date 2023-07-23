@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -22,6 +21,7 @@ const (
 var (
 	ErrAlreadyLiked          = errors.New("already liked")
 	ErrLikeCountFailed       = errors.New("unable to retrieve like count")
+	ErrLikeNotFound          = errors.New("like not found")
 	ErrLikeNotRegistered     = errors.New("like not registered")
 	ErrUnlikeFailed          = errors.New("failed to unlike")
 	ErrUpdateLikeCountFailed = errors.New("failed to update like count")
@@ -66,20 +66,15 @@ func (a *APIEnv) PostLike(ctx *gin.Context) {
 
 	newLikeCount, err := a.LikesCacheHandler.SetCacheVal(ctx, postID)
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrUpdateLikeCountFailed)
 		return
 	}
 
-	notif := models.Notification{
-		SenderId:   userID,
-		CreatedAt:  time.Now(),
-		ReceiverId: like.Post.UserID,
-		Content:    like.User.Username + " liked your post",
-	}
+	notif := helpers.GenerateLikeNotification(&like.User, like.Post.UserID)
 
 	// Even if there is an error in creating the notification server-side,
 	// this should not throw an error client-side
-	a.NotificationPoster.PostNotificationFromEvent(ctx, &notif)
+	a.NotificationPoster.PostNotificationFromEvent(ctx, notif)
 
 	output := models.LikeUpdate{
 		Like:      *like,
@@ -116,7 +111,7 @@ func (a *APIEnv) DeleteLike(ctx *gin.Context) {
 	err = a.LikeDBHandler.DeleteLike(userID, postID)
 
 	if err == gorm.ErrRecordNotFound {
-		helpers.OutputError(ctx, http.StatusBadRequest, ErrPostNotFound)
+		helpers.OutputError(ctx, http.StatusNotFound, ErrLikeNotFound)
 		return
 	} else if err != nil {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrUnlikeFailed)
@@ -125,7 +120,7 @@ func (a *APIEnv) DeleteLike(ctx *gin.Context) {
 
 	newLikeCount, err := a.LikesCacheHandler.SetCacheVal(ctx, postID)
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrUpdateLikeCountFailed)
 		return
 	}
 

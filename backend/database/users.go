@@ -64,14 +64,19 @@ func (db *UserDB) GetUserByUsername(username string) (*models.User, error) {
 // Updates user's profile.
 func (db *UserDB) UpdateUser(user *models.User, id string) (*models.User, error) {
 	resUser := &models.User{}
-	result := db.DB.Model(resUser).Clauses(clause.Returning{}).Where("id = ?", id).Updates(user)
-	err := result.Error
-	return resUser, err
+	result := db.DB.Model(resUser).Clauses(clause.Returning{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"name":          user.Name,
+		"title":         user.Title,
+		"about_me":      user.AboutMe,
+		"show_about_me": user.ShowAboutMe,
+		"show_title":    user.ShowTitle,
+	})
+	return resUser, result.Error
 }
 
 func (db *UserDB) QueryUser(searchTerm string, limit int) ([]models.SearchResult, error) {
 
-	results := []models.SearchResult{}
+	results := []models.UserSearchResult{}
 	lowerCaseSearchTerm := strings.ToLower(searchTerm) + ":*"
 	tableName := "users" // replace this with your actual table name
 	query := fmt.Sprintf("to_tsquery('english', '%s') @@ to_tsvector('english', lower(username))", lowerCaseSearchTerm)
@@ -86,5 +91,9 @@ func (db *UserDB) QueryUser(searchTerm string, limit int) ([]models.SearchResult
 		Order("score DESC").
 		Scan(&results)
 
-	return results, nil
+	convertedResults := []models.SearchResult{}
+	for _, usr := range results {
+		convertedResults = append(convertedResults, *usr.ToSearchResult())
+	}
+	return convertedResults, nil
 }

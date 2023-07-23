@@ -7,7 +7,7 @@ import {
   Button
 } from '@chakra-ui/react';
 
-export default function AboutMe({ aboutMe }: { aboutMe?: string }) {
+export default function AboutMe({ aboutMe }: { aboutMe: string }) {
     const [showMore, setShowMore] = useState(false);
     const [height, setHeight] = useState("200px");
     const handleClick = () => {

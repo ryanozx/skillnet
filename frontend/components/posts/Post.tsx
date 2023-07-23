@@ -65,7 +65,7 @@ export default function Post(post : PostView) {
                                     size="sm"
                                     _hover={{textDecoration: "underline"}}
                                     >
-                                    <a href={currPost.User.URL}>{currPost.User.Name == "" ? "Anonymous User" : currPost.User.Name}</a>
+                                    <a href={currPost.User.URL}>{(currPost.User.Name == "" || !currPost.User.Name) ? "Anonymous User" : currPost.User.Name}</a>
                                 </Heading>
                                 <Text fontSize="15px">{notEdited ? `Posted on ${timeStamp}` : `Last edited on ${timeStamp}`}</Text>
                             </Box>

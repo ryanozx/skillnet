@@ -11,7 +11,7 @@ const FormButtons: React.FC<{handleSubmit: () => void}> = ({handleSubmit}) => {
     }
 
     return (
-        <Stack isInline justifyContent="flex-end">
+        <Stack justifyContent="flex-end">
             <Button variant="outline" mr={2} onClick={handleSkip}>
                 Skip
             </Button>

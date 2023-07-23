@@ -22,14 +22,6 @@ type ParamGetter interface {
 	Param(string) string
 }
 
-// Retrieves username from context; the username is inserted into the context
-// by the router when parsing ("/users/:username")
-func GetUsernameFromContext(ctx ParamGetter) string {
-	const usernameKey = "username"
-	username := getParamFromContext(ctx, usernameKey)
-	return username
-}
-
 func AddParamsToContext(ctx AddParamer, key string, val interface{}) {
 	ctx.AddParam(key, fmt.Sprintf("%v", val))
 }
@@ -111,4 +103,12 @@ func validateUnsignedOrEmptyQuery(ctx DefaultQueryer, key string) (*NullableUint
 
 func GetCutoffFromQuery(ctx DefaultQueryer) (*NullableUint, error) {
 	return validateUnsignedOrEmptyQuery(ctx, CutoffKey)
+}
+
+func generateNextPageURL(backendURL string, path string, newCutoff uint, additionalParams map[string]interface{}) string {
+	nextPageURL := fmt.Sprintf("%s/auth%s?%s=%d", backendURL, path, CutoffKey, newCutoff)
+	for paramKey, paramVal := range additionalParams {
+		nextPageURL += fmt.Sprintf("&%s=%v", paramKey, paramVal)
+	}
+	return nextPageURL
 }

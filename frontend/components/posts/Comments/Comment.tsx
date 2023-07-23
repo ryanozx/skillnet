@@ -68,7 +68,6 @@ export default function Comment(currComment : CommentView) {
         .then(res => {
                 setCommentText(res.data["data"]["Comment"]["Text"]);
                 setEditedTime(res.data["data"]["Comment"]["UpdatedAt"]);
-                console.log("Successfully updated comment")
                 exitEditMode();
         })
         .catch(err => {

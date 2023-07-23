@@ -29,11 +29,15 @@ func (pvArray *PostViewArray) TestFormat() *PostViewArray {
 // Post is the database representation of a post object
 type Post struct {
 	gorm.Model
-	UserID   string    `json:"-" gorm:"<-:create; not null"`
-	User     User      `json:"-"`
-	Content  string    `gorm:"not null"`
-	Likes    []Like    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
-	Comments []Comment `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	UserID      string    `json:"-" gorm:"<-:create; not null"`
+	User        User      `json:"-"`
+	Content     string    `gorm:"not null"`
+	ProjectID   uint      `gorm:"<-:create; not null"`
+	Project     Project   `json:"-"`
+	CommunityID uint      `gorm:"<-:create; not null"`
+	Community   Community `json:"-"`
+	Likes       []Like    `json:"-" gorm:"constraint:OnDelete:CASCADE"`
+	Comments    []Comment `json:"-" gorm:"constraint:OnDelete:CASCADE"`
 }
 
 func (post *Post) TestFormat() *Post {
@@ -89,7 +93,7 @@ type PostViewParams struct {
 func (post *Post) PostView(params *PostViewParams) *PostView {
 	postView := PostView{
 		Post:         *post,
-		UserMinimal:  *post.User.UserMinimal(),
+		UserMinimal:  *post.User.GetUserMinimal(),
 		IsEditable:   params.UserID == post.UserID,
 		Liked:        len(post.Likes) > 0 && post.Likes[0].UserID == params.UserID,
 		LikeCount:    params.LikeCount,

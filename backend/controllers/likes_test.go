@@ -5,10 +5,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/redis/go-redis/v9"
+	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
-	"github.com/stretchr/testify/suite"
 	"gorm.io/gorm"
+)
+
+const (
+	likeCountLiked   = 1
+	likeCountUnliked = 0
 )
 
 var (
@@ -20,48 +26,12 @@ var (
 		Like: models.Like{
 			PostID: testPostID,
 		},
-		LikeCount: 1,
+		LikeCount: likeCountLiked,
 	}
 	defaultDeleteLikeUpdate = models.LikeUpdate{
-		LikeCount: 0,
+		LikeCount: likeCountUnliked,
 	}
 )
-
-type LikeControllerTestSuite struct {
-	suite.Suite
-	api                APIEnv
-	dbHandler          *LikeDBTestHandler
-	cacheHandler       *helpers.TestCache
-	store              *helpers.MockSessionStore
-	notificationPoster *helpers.TestNotificationCreator
-}
-
-func (s *LikeControllerTestSuite) SetupSuite() {
-	dbHandler := LikeDBTestHandler{}
-	cacheHandler := helpers.TestCache{}
-	notificationCreator := helpers.TestNotificationCreator{}
-	api := APIEnv{
-		LikeDBHandler:      &dbHandler,
-		LikesCacheHandler:  &cacheHandler,
-		NotificationPoster: &notificationCreator,
-	}
-	s.api = api
-	s.dbHandler = &dbHandler
-	s.cacheHandler = &cacheHandler
-	s.store = helpers.MakeMockStore()
-	s.notificationPoster = &notificationCreator
-}
-
-func (s *LikeControllerTestSuite) TearDownTest() {
-	s.dbHandler.ResetFuncs()
-	s.store.Reset()
-	s.notificationPoster.ResetFuncs()
-}
-
-func TestLikeControllerSuite(t *testing.T) {
-	helpers.SetEnvVars(t)
-	suite.Run(t, new(LikeControllerTestSuite))
-}
 
 // Mock DB Handler
 type LikeDBTestHandler struct {
@@ -111,338 +81,399 @@ func (h *LikeDBTestHandler) SetMockGetLikeByIDFunc(like *models.Like, err error)
 	}
 }
 
-func (h *LikeDBTestHandler) ResetFuncs() {
-	h.CreateLikeFunc = nil
-	h.DeleteLikeFunc = nil
-}
+func TestAPIEnv_InitialiseLikeHandler(t *testing.T) {
+	type fields struct {
+		DB     *gorm.DB
+		client *redis.Client
+	}
+	tests := []struct {
+		name               string
+		fields             fields
+		expectedDBEmpty    bool
+		expectedCacheEmpty bool
+	}{
+		{
+			"Initialise Likes DB and Cache OK",
+			fields{
+				DB:     &gorm.DB{},
+				client: &redis.Client{},
+			},
+			false,
+			false,
+		},
+		{
+			"Initialise Likes DB OK, cache empty",
+			fields{
+				DB: &gorm.DB{},
+			},
+			false,
+			true,
+		},
+		{
+			"Initialise Likes DB empty, cache OK",
+			fields{
+				client: &redis.Client{},
+			},
+			true,
+			false,
+		},
+		{
+			"Initialise Likes DB empty, cache empty",
+			fields{},
+			true,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &APIEnv{
+				DB: tt.fields.DB,
+			}
+			a.InitialiseLikeHandler(tt.fields.client)
+			likesDB, ok := a.LikeDBHandler.(*database.LikeDB)
+			if ok {
+				if tt.expectedDBEmpty && likesDB.DB != nil {
+					t.Error("Likes DB contains unexpected DB instance")
+				} else if !tt.expectedDBEmpty && likesDB.DB != tt.fields.DB {
+					t.Error("LikesDBHandler not initialised correctly")
+				}
+			} else {
+				t.Error("LikesDBHandler is nil!")
+			}
 
-// Create Likes
-func (s *LikeControllerTestSuite) Test_CreateLike_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
-	s.cacheHandler.SetMockSetCacheValFunc(1, nil)
-	s.notificationPoster.SetMockPostNotificationFromEventFunc(nil)
-	s.api.PostLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.LikeUpdate](m, &defaultCreateLikeUpdate); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_CreateLike_InvalidPostIDString() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, invalidPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
-	s.api.PostLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_CreateLike_NegativePostID() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, negativePostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
-	s.api.PostLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
+			if likesCache, ok := a.LikesCacheHandler.(*Cache); ok {
+				if tt.expectedCacheEmpty && likesCache.redisDB != nil {
+					t.Error("Likes cache contains unexpected cache instance")
+				} else if !tt.expectedCacheEmpty && (likesCache.redisDB != tt.fields.client || likesCache.DBHandler != a.LikeDBHandler) {
+					t.Error("Likes cache not initialised correctly")
+				}
+			} else {
+				t.Error("Likes cache is nil!")
+			}
+		})
 	}
 }
 
-func (s *LikeControllerTestSuite) Test_CreateLike_DuplicateKey() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
+func TestAPIEnv_PostLike(t *testing.T) {
+	type args struct {
+		ContextParams     map[string]interface{}
+		LikeDBOutput      *models.Like
+		LikeDBError       error
+		LikeCacheOutput   uint64
+		LikeCacheError    error
+		NotificationError error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.LikeUpdate]
+	}{
+		{
+			"Create Like OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBOutput:      &defaultLike,
+				LikeDBError:       nil,
+				LikeCacheOutput:   likeCountLiked,
+				LikeCacheError:    nil,
+				NotificationError: nil,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data:       &defaultCreateLikeUpdate,
+			},
+		},
+		{
+			"Create Like invalid Post ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: invalidPostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Create Like negative Post ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: negativePostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Create Like already liked",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBOutput: &defaultLike,
+				LikeDBError:  gorm.ErrDuplicatedKey,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrAlreadyLiked,
+			},
+		},
+		{
+			"Create Like cannot create like",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBOutput: &defaultLike,
+				LikeDBError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrLikeNotRegistered,
+			},
+		},
+		{
+			"Create Like cannot set cache count",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBOutput:    &defaultLike,
+				LikeDBError:     nil,
+				LikeCacheOutput: likeCountLiked,
+				LikeCacheError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrUpdateLikeCountFailed,
+			},
+		},
+		{
+			// Errors from the notification API should not throw an error back to the client
+			"Create Like notification error OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBOutput:      &defaultLike,
+				LikeDBError:       nil,
+				LikeCacheOutput:   likeCountLiked,
+				LikeCacheError:    nil,
+				NotificationError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data:       &defaultCreateLikeUpdate,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &LikeDBTestHandler{}
+			cacheTestHandler := &helpers.TestCache{}
+			notifPoster := &helpers.TestNotificationCreator{}
+			a := &APIEnv{
+				LikeDBHandler:      dbTestHandler,
+				LikesCacheHandler:  cacheTestHandler,
+				NotificationPoster: notifPoster,
+			}
 
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, gorm.ErrDuplicatedKey)
-	s.api.PostLike(c)
+			c, w := helpers.CreateTestContextAndRecorder()
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrAlreadyLiked); !isEqual {
-		s.T().Error(errStr)
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
+
+			req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
+			if err != nil {
+				t.Error(err)
+			}
+			c.Request = req
+
+			dbTestHandler.SetMockCreateLikeFunc(tt.args.LikeDBOutput, tt.args.LikeDBError)
+			cacheTestHandler.SetMockSetCacheValFunc(tt.args.LikeCacheOutput, tt.args.LikeCacheError)
+			notifPoster.SetMockPostNotificationFromEventFunc(tt.args.NotificationError)
+			a.PostLike(c)
+
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
+
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }
 
-func (s *LikeControllerTestSuite) Test_CreateLike_CannotCreate() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
+func TestAPIEnv_DeleteLike(t *testing.T) {
+	type args struct {
+		ContextParams   map[string]interface{}
+		LikeDBError     error
+		LikeCacheOutput uint64
+		LikeCacheError  error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		expected helpers.ExpectedJSONOutput[models.LikeUpdate]
+	}{
+		{
+			"Delete Like OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBError:     nil,
+				LikeCacheOutput: likeCountUnliked,
+				LikeCacheError:  nil,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data:       &defaultDeleteLikeUpdate,
+			},
+		},
+		{
+			"Delete Like invalid PostID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: invalidPostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Create Like negative Post ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: negativePostID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Delete Like not found",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBError: gorm.ErrRecordNotFound,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusNotFound,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrLikeNotFound,
+			},
+		},
+		{
+			"Delete Like cannot delete like",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrUnlikeFailed,
+			},
+		},
+		{
+			"Delete Like cannot set cache count",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+					helpers.PostIDKey: testPostID,
+				},
+				LikeDBError:     nil,
+				LikeCacheOutput: likeCountUnliked,
+				LikeCacheError:  ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.LikeUpdate]{
+				StatusCode: http.StatusInternalServerError,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrUpdateLikeCountFailed,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dbTestHandler := &LikeDBTestHandler{}
+			cacheTestHandler := &helpers.TestCache{}
+			a := &APIEnv{
+				LikeDBHandler:     dbTestHandler,
+				LikesCacheHandler: cacheTestHandler,
+			}
 
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, ErrTest)
-	s.api.PostLike(c)
+			c, w := helpers.CreateTestContextAndRecorder()
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrLikeNotRegistered); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			for paramKey, paramVal := range tt.args.ContextParams {
+				helpers.AddParamsToContext(c, paramKey, paramVal)
+			}
 
-func (s *LikeControllerTestSuite) Test_CreateLike_CannotSetCount() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
+			req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
+			if err != nil {
+				t.Error(err)
+			}
+			c.Request = req
 
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodPost, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockCreateLikeFunc(&defaultLike, nil)
-	s.cacheHandler.SetMockSetCacheValFunc(1, ErrTest)
-	s.api.PostLike(c)
+			dbTestHandler.SetMockDeleteLikeFunc(tt.args.LikeDBError)
+			cacheTestHandler.SetMockSetCacheValFunc(tt.args.LikeCacheOutput, tt.args.LikeCacheError)
+			a.DeleteLike(c)
 
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrTest); !isEqual {
-		s.T().Error(errStr)
-	}
-}
+			b, _ := io.ReadAll(w.Body)
+			if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(tt.expected.StatusCode, w.Code); !isEqual {
+				t.Error(errStr)
+			}
 
-// Delete Likes
-func (s *LikeControllerTestSuite) Test_DeleteLike_OK() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
+			m, err := helpers.ParseJSONString(b)
+			if err != nil {
+				t.Error(err)
+			}
 
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockDeleteLikeFunc(nil)
-	s.cacheHandler.SetMockSetCacheValFunc(0, nil)
-	s.api.DeleteLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusOK, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedDataEqualsActual[models.LikeUpdate](m, &defaultDeleteLikeUpdate); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_DeleteLike_InvalidPostIDString() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, invalidPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockDeleteLikeFunc(nil)
-	s.api.DeleteLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_DeleteLike_NegativePostID() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, negativePostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockDeleteLikeFunc(nil)
-	s.api.PostLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_DeleteLike_NotFound() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockDeleteLikeFunc(gorm.ErrRecordNotFound)
-	s.api.DeleteLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusBadRequest, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrPostNotFound); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_DeleteLike_CannotDelete() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockDeleteLikeFunc(ErrTest)
-	s.api.DeleteLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrUnlikeFailed); !isEqual {
-		s.T().Error(errStr)
-	}
-}
-
-func (s *LikeControllerTestSuite) Test_DeleteLike_CannotSetCount() {
-	c, w := helpers.CreateTestContextAndRecorder()
-	helpers.AddStoreToContext(c, s.store)
-	helpers.AddParamsToContext(c, helpers.UserIDKey, testUserID)
-	helpers.AddParamsToContext(c, helpers.PostIDKey, testPostID)
-
-	req, err := helpers.GenerateHttpJSONRequest(http.MethodDelete, nil)
-	if err != nil {
-		s.T().Error(err)
-	}
-	c.Request = req
-	s.dbHandler.SetMockDeleteLikeFunc(nil)
-	s.cacheHandler.SetMockSetCacheValFunc(0, ErrTest)
-	s.api.DeleteLike(c)
-
-	b, _ := io.ReadAll(w.Body)
-	if errStr, isEqual := helpers.CheckExpectedStatusCodeEqualsActual(http.StatusInternalServerError, w.Code); !isEqual {
-		s.T().Error(errStr)
-	}
-	m, err := helpers.ParseJSONString(b)
-	if err != nil {
-		s.T().Error(err)
-	}
-	if errStr, isEqual := helpers.CheckExpectedErrorEqualsActual(m, ErrTest); !isEqual {
-		s.T().Error(errStr)
+			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
+				t.Error(errStr)
+			}
+		})
 	}
 }

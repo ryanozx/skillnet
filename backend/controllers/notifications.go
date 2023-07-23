@@ -129,7 +129,6 @@ func (a *APIEnv) PostNotification(context *gin.Context) {
 	context.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
-
 func (a *APIEnv) PatchNotification(context *gin.Context) {
 
 }

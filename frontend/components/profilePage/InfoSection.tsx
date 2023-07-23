@@ -5,22 +5,18 @@ import { User } from '../../types';
 
 interface InfoSectionProps {
     user: User;
+    username: string;
     setUser?: React.Dispatch<React.SetStateAction<User>>;
 }
 
-
-
-export default function InfoSection({user, setUser}: InfoSectionProps) {
+export default function InfoSection(props : InfoSectionProps) {
     return (
         <>
             <BasicInfo 
-                name={user.Name}
-                username={user.Username}
-                title={user.Title}
-                profilePic={user.ProfilePic}
-                aboutMe={user.AboutMe}
-                setUser={setUser}/>
-            <AboutMe aboutMe={user.AboutMe}></AboutMe>
+                user={props.user}
+                username={props.username}
+                setUser={props.setUser}/>
+            <AboutMe aboutMe={props.user.AboutMe}></AboutMe>
         </>
     )
 }

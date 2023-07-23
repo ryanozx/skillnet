@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ryanozx/skillnet/helpers"
-	"github.com/ryanozx/skillnet/models"
 )
 
 func (a *APIEnv) GetSearchResults(ctx *gin.Context) {
@@ -25,9 +24,21 @@ func (a *APIEnv) GetSearchResults(ctx *gin.Context) {
 		return
 	}
 
-	projectResults := []models.SearchResult{}
-	communityResults := []models.SearchResult{}
-	results := append(userResults, append(projectResults, communityResults...)...)
+	results := userResults
+
+	projectResults, err := a.ProjectDBHandler.QueryProject(searchTerm, limitInt)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	results = append(results, projectResults...)
+	communityResults, err := a.CommunityDBHandler.QueryCommunity(searchTerm, limitInt)
+	if err != nil {
+		helpers.OutputError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	results = append(results, communityResults...)
 
 	// Sort the results by score
 	sort.Slice(results, func(i, j int) bool {
