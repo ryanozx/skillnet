@@ -52,7 +52,7 @@ func (s *serverConfig) setupRoutes() {
 func (s *serverConfig) configureCors() {
 	// Get address of frontend app from environmental variables
 	env := helpers.RetrieveClientEnv()
-	localClientAddress := env.Address()
+	localClientAddress := env.Host
 
 	// Set up configuration and apply it to the router
 	corsConfig := cors.DefaultConfig()
