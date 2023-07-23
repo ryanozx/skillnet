@@ -4,13 +4,14 @@ import {
 } from '@chakra-ui/react';
 import { EditIcon} from '@chakra-ui/icons';
 import EditInfoModal from './EditInfoModal';
-import { User } from '../../types';
+import { User, EditableUserInfo } from '../../types';
 
 interface EditInfoBtnProps {
+    user: EditableUserInfo;
     setUser: React.Dispatch<React.SetStateAction<User>>;
 }
 
-export default function EditInfoBtn ({setUser}: EditInfoBtnProps) {
+export default function EditInfoBtn ({user, setUser}: EditInfoBtnProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleOpen = () => setIsOpen(true);
@@ -25,6 +26,7 @@ export default function EditInfoBtn ({setUser}: EditInfoBtnProps) {
                 aria-label="Edit profile"
             />
             <EditInfoModal
+                user={user}
                 handleOpen={handleOpen}
                 handleClose={handleClose}
                 isOpen={isOpen}

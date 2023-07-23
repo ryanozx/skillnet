@@ -16,7 +16,7 @@ import {
 import { CloseIcon, CheckIcon } from '@chakra-ui/icons';
 import BasicInfoForm from './BasicInfoForm';
 import PrivacyForm from './PrivacyForm';
-import { User } from '../../types';
+import { User, EditableUserInfo } from '../../types';
 
 interface FormType {
     name: string;
@@ -28,6 +28,7 @@ interface FormType {
 }
 
 interface EditProfileModalProps {
+    user: EditableUserInfo;
     setUser: React.Dispatch<React.SetStateAction<User>>;
     handleOpen: () => void;
     handleClose: () => void;
@@ -36,13 +37,13 @@ interface EditProfileModalProps {
 }  
 
 export default function EditProfileModal(props: EditProfileModalProps) {
-    const { handleOpen, handleClose, isOpen, setIsOpen, setUser } = props;
+    const { handleOpen, handleClose, isOpen, setIsOpen, setUser, user } = props;
     const toast = useToast();
     const [activeTab, setActiveTab] = useState(0);
     const [form, setForm] = useState<FormType>({
-        name: "",
-        title: "",
-        about: "",
+        name: user.name,
+        title: user.title,
+        about: user.aboutMe,
         privacySettings: {
             tagline: false,
             about: false,
@@ -111,9 +112,9 @@ export default function EditProfileModal(props: EditProfileModalProps) {
                 const { AboutMe, Name, Title } = res.data.data;
                 setUser((prevUser: User) => ({
                     ...prevUser,
-                    AboutMe: AboutMe ? AboutMe : "No description available",
-                    Name: Name ? Name :  "No display name",
-                    Title: Title ? Title : "No title available",
+                    AboutMe: AboutMe,
+                    Name: Name,
+                    Title: Title
                 }));
                 toast({
                     title: "Profile updated.",

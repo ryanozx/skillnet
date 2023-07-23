@@ -17,11 +17,13 @@ interface BasicInfoProps {
     username: string;
     title?: string;
     profilePic?: string;
+    aboutMe?: string;
     setUser?: React.Dispatch<React.SetStateAction<User>>;
 }
 
 export default function BasicInfo(props: BasicInfoProps) {
-    const { name, username, title, profilePic, setUser } = props;
+    const { name="", username="", title="", profilePic="", aboutMe="", setUser } = props;
+    const User = { name, username, title, profilePic, aboutMe };
     return (
         <Box w="100%" px={10}>
             <Flex justifyContent={"space-between"} alignItems="flex-start">
@@ -32,13 +34,13 @@ export default function BasicInfo(props: BasicInfoProps) {
                     <Avatar size="2xl" src={profilePic} />
                 )}
                 <VStack align="start">
-                    <Heading size="md">{name}</Heading>
+                    <Heading size="md">{name ? name : "No display name"}</Heading>
                     <Text>{username}</Text>
-                    <Text>{title}</Text>
+                    <Text>{title ? title : "No title available"}</Text>
                 </VStack>
                 </HStack>
                 <Flex alignSelf="flex-start">
-                    {setUser && <EditInfoBtn setUser={setUser}/>}
+                    {setUser && <EditInfoBtn user={User} setUser={setUser}/>}
                 </Flex>
                 
             </Flex>

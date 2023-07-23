@@ -27,3 +27,11 @@ export interface UserMinimal {
     URL: string,
     ProfilePic: string,
 }
+
+export interface EditableUserInfo {
+    name: string;
+    username: string;
+    title: string;
+    profilePic: string;
+    aboutMe: string;
+}
