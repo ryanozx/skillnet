@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/redis/go-redis/v9"
+	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
@@ -109,6 +111,79 @@ func (h *CommentsDBTestHandler) SetMockUpdateCommentFunc(updatedComment *models.
 func (h *CommentsDBTestHandler) SetMockGetValueFunc(count uint64, err error) {
 	h.GetValueFunc = func(postID uint) (uint64, error) {
 		return count, err
+	}
+}
+
+func TestAPIEnv_InitialiseCommentHandler(t *testing.T) {
+	type fields struct {
+		DB     *gorm.DB
+		client *redis.Client
+	}
+	tests := []struct {
+		name               string
+		fields             fields
+		expectedDBEmpty    bool
+		expectedCacheEmpty bool
+	}{
+		{
+			"Initialise Comments DB and Cache OK",
+			fields{
+				DB:     &gorm.DB{},
+				client: &redis.Client{},
+			},
+			false,
+			false,
+		},
+		{
+			"Initialise Comments DB OK, cache empty",
+			fields{
+				DB: &gorm.DB{},
+			},
+			false,
+			true,
+		},
+		{
+			"Initialise Comments DB empty, cache OK",
+			fields{
+				client: &redis.Client{},
+			},
+			true,
+			false,
+		},
+		{
+			"Initialise Comments DB empty, cache empty",
+			fields{},
+			true,
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &APIEnv{
+				DB: tt.fields.DB,
+			}
+			a.InitialiseCommentHandler(tt.fields.client)
+			commentDB, ok := a.CommentDBHandler.(*database.CommentDB)
+			if ok {
+				if tt.expectedDBEmpty && commentDB.DB != nil {
+					t.Error("Comment DB contains unexpected DB instance")
+				} else if !tt.expectedDBEmpty && commentDB.DB != tt.fields.DB {
+					t.Error("CommentDBHandler not initialised correctly")
+				}
+			} else {
+				t.Error("CommentDBHandler is nil!")
+			}
+
+			if commentCache, ok := a.CommentsCacheHandler.(*Cache); ok {
+				if tt.expectedCacheEmpty && commentCache.redisDB != nil {
+					t.Error("Comment cache contains unexpected cache instance")
+				} else if !tt.expectedCacheEmpty && (commentCache.redisDB != tt.fields.client || commentCache.DBHandler != a.CommentDBHandler) {
+					t.Error("Comment cache not initialised correctly")
+				}
+			} else {
+				t.Error("Comment cache is nil!")
+			}
+		})
 	}
 }
 

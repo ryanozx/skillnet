@@ -95,18 +95,21 @@ func (a *APIEnv) GetPosts(ctx *gin.Context) {
 	cutoff, err := helpers.GetCutoffFromQuery(ctx)
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)
+		return
 	}
 
 	// Ensure that community ID is an unsigned integer or empty
 	communityID, err := helpers.GetCommunityIDFromQuery(ctx)
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)
+		return
 	}
 
 	// Ensure that project ID is an unsigned integer or empty
 	projectID, err := helpers.GetProjectIDFromQuery(ctx)
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)
+		return
 	}
 
 	posts, err := a.PostDBHandler.GetPosts(cutoff, communityID, projectID, userID)

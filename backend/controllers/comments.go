@@ -184,7 +184,7 @@ func (a *APIEnv) UpdateComment(ctx *gin.Context) {
 
 	var inputUpdate models.Comment
 
-	// If unable to bind JSON in request to the Post object, return status
+	// If unable to bind JSON in request to the Comment object, return status
 	// code 400 Bad Request
 	if err := helpers.BindInput(ctx, &inputUpdate); err != nil {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadBinding)

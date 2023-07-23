@@ -43,6 +43,8 @@ func (s *serverConfig) setupRoutes() {
 	setupLikeAPI(routerGroup, apiEnv, s.likesRedis)
 	setupCommentAPI(routerGroup, apiEnv, s.commentsRedis)
 	setupNotificationAPI(routerGroup, apiEnv, s.notifRedis)
+	setupCommunityAPI(routerGroup, apiEnv)
+	setupProjectAPI(routerGroup, apiEnv)
 }
 
 // Sets up CORS to allow the frontend app to access resources
@@ -118,15 +120,14 @@ type PostAPIer interface {
 }
 
 func registerPostRoutes(rg RouterGrouper, api PostAPIer) {
-	const postRoute = "/posts"
-	const postRouteWithID = postRoute + "/:" + helpers.PostIDKey
+	const postPathWithID = helpers.PostPath + "/:" + helpers.PostIDKey
 
 	// Private routes
-	rg.Private().GET(postRoute, api.GetPosts)
-	rg.Private().GET(postRouteWithID, api.GetPostByID)
-	rg.Private().POST(postRoute, api.CreatePost)
-	rg.Private().PATCH(postRouteWithID, api.UpdatePost)
-	rg.Private().DELETE(postRouteWithID, api.DeletePost)
+	rg.Private().GET(helpers.PostPath, api.GetPosts)
+	rg.Private().GET(postPathWithID, api.GetPostByID)
+	rg.Private().POST(helpers.PostPath, api.CreatePost)
+	rg.Private().PATCH(postPathWithID, api.UpdatePost)
+	rg.Private().DELETE(postPathWithID, api.DeletePost)
 }
 
 // Sets up User API
@@ -148,11 +149,12 @@ type UserAPIer interface {
 }
 
 func registerUserRoutes(rg RouterGrouper, api UserAPIer) {
-	rg.Public().GET("/users/:username", api.GetProfile)
+	const userPath = "/user"
 	rg.Public().POST("/signup", api.CreateUser)
 
-	rg.Private().GET("/user", api.GetSelfProfile)
-	rg.Private().PATCH("/user", api.UpdateUser)
+	rg.Private().GET("/users/:username", api.GetProfile)
+	rg.Private().GET(userPath, api.GetSelfProfile)
+	rg.Private().PATCH(userPath, api.UpdateUser)
 }
 
 // Sets up Auth API
@@ -204,10 +206,10 @@ type LikeAPIer interface {
 }
 
 func registerLikeRoutes(rg RouterGrouper, api LikeAPIer) {
-	const likeRouteWithID = "/likes/:" + helpers.PostIDKey
+	const likePathWithID = "/likes/:" + helpers.PostIDKey
 
-	rg.Private().POST(likeRouteWithID, api.PostLike)
-	rg.Private().DELETE(likeRouteWithID, api.DeleteLike)
+	rg.Private().POST(likePathWithID, api.PostLike)
+	rg.Private().DELETE(likePathWithID, api.DeleteLike)
 }
 
 func setupCommentAPI(rg RouterGrouper, api CommentAPIer, client *redis.Client) {
@@ -225,12 +227,11 @@ type CommentAPIer interface {
 }
 
 func registerCommentRoutes(rg RouterGrouper, api CommentAPIer) {
-	const commentRoute = "/comments"
-	const commentRouteWithID = commentRoute + "/:" + helpers.CommentIDKey
+	const commentRouteWithID = helpers.CommentPath + "/:" + helpers.CommentIDKey
 
 	// Private routes
-	rg.Private().GET(commentRoute, api.GetComments)
-	rg.Private().POST(commentRoute, api.CreateComment)
+	rg.Private().GET(helpers.CommentPath, api.GetComments)
+	rg.Private().POST(helpers.CommentPath, api.CreateComment)
 	rg.Private().PATCH(commentRouteWithID, api.UpdateComment)
 	rg.Private().DELETE(commentRouteWithID, api.DeleteComment)
 }
@@ -247,4 +248,48 @@ type NotificationAPIer interface {
 
 func registerNotificationRoutes(rg RouterGrouper, api NotificationAPIer) {
 	rg.Private().GET("/notifications", api.GetNotifications)
+}
+
+type CommunityAPIer interface {
+	InitialiseCommunityHandler()
+	CreateCommunity(*gin.Context)
+	GetCommunities(*gin.Context)
+	GetCommunityByName(*gin.Context)
+	UpdateCommunity(*gin.Context)
+}
+
+func setupCommunityAPI(rg RouterGrouper, api CommunityAPIer) {
+	api.InitialiseCommunityHandler()
+	registerCommunityRoutes(rg, api)
+}
+
+func registerCommunityRoutes(rg RouterGrouper, api CommunityAPIer) {
+	const communityPathWithName = helpers.CommunityPath + "/:" + helpers.CommunityNameKey
+	rg.Private().GET(helpers.CommunityPath, api.GetCommunities)
+	rg.Private().GET(communityPathWithName, api.GetCommunityByName)
+	rg.Private().POST(helpers.CommunityPath, api.CreateCommunity)
+	rg.Private().PATCH(communityPathWithName, api.UpdateCommunity)
+}
+
+type ProjectAPIer interface {
+	InitialiseProjectHandler()
+	CreateProject(*gin.Context)
+	DeleteProject(*gin.Context)
+	GetProjects(*gin.Context)
+	GetProjectByID(*gin.Context)
+	UpdateProject(*gin.Context)
+}
+
+func setupProjectAPI(rg RouterGrouper, api ProjectAPIer) {
+	api.InitialiseProjectHandler()
+	registerProjectRoutes(rg, api)
+}
+
+func registerProjectRoutes(rg RouterGrouper, api ProjectAPIer) {
+	const projectPathWithID = helpers.ProjectPath + "/:" + helpers.ProjectIDKey
+	rg.Private().GET(helpers.ProjectPath, api.GetProjects)
+	rg.Private().GET(projectPathWithID, api.GetProjectByID)
+	rg.Private().POST(helpers.ProjectPath, api.CreateProject)
+	rg.Private().DELETE(projectPathWithID, api.DeleteProject)
+	rg.Private().PATCH(projectPathWithID, api.UpdateProject)
 }

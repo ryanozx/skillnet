@@ -93,7 +93,7 @@ type PostViewParams struct {
 func (post *Post) PostView(params *PostViewParams) *PostView {
 	postView := PostView{
 		Post:         *post,
-		UserMinimal:  *post.User.UserMinimal(),
+		UserMinimal:  *post.User.GetUserMinimal(),
 		IsEditable:   params.UserID == post.UserID,
 		Liked:        len(post.Likes) > 0 && post.Likes[0].UserID == params.UserID,
 		LikeCount:    params.LikeCount,

@@ -6,7 +6,7 @@ import ProfilePageContainer from "../../components/profilePage/ProfilePageContai
 
 export default function ProfilePage() { 
     const router = useRouter();
-    const {isReady, query} = router;
+    const {query} = router;
     
     return (
         <ProfilePageContainer username={query.username as string}/>

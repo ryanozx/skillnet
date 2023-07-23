@@ -7,7 +7,7 @@ import {
   Button
 } from '@chakra-ui/react';
 
-export default function AboutMe({ aboutMe }: { aboutMe?: string }) {
+export default function AboutMe({ aboutMe }: { aboutMe: string }) {
     const [showMore, setShowMore] = useState(false);
     const [height, setHeight] = useState("200px");
     const handleClick = () => {
@@ -30,7 +30,7 @@ export default function AboutMe({ aboutMe }: { aboutMe?: string }) {
                     h={height}
                     overflow="hidden"
                 >
-                    <Text>{aboutMe}</Text>
+                    <Text>{aboutMe === "" ? "About Me not available" : aboutMe}</Text>
                 </Box>
                 {aboutMe && aboutMe.length > 100 && (
                     <Button onClick={handleClick} size="sm" alignSelf="flex-end">

@@ -5,32 +5,56 @@ import Post, {PostView} from "./Post";
 import InfiniteScroll from "react-infinite-scroll-component";
 import CreatePostCard from "./CreatePostCard";
 
-export default function Feed() {
+interface FeedProps {
+    AllowPostAdd: boolean
+    CommunityID?: number
+    ProjectID?: number
+}
+
+export default function Feed(props: FeedProps) {
     const [posts, setPosts] = useState<React.JSX.Element[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const base_url = process.env.BACKEND_BASE_URL;
     const [url, setURL] = useState(base_url + "/auth/posts")
+    const [noMorePosts, setNoMorePosts] = useState<boolean>(false);
+    const [initialUrlUpdated, setInitialUrlUpdated] = useState<boolean>(false);
 
     useEffect(() => {
-        updateFeed();
+        if (props.ProjectID) {
+            setURL(url + "?project=" + props.ProjectID)
+        }
+        else if (props.CommunityID) {
+            setURL(url + "?community=" + props.CommunityID)
+        }
+        setInitialUrlUpdated(true);
     }, [])
+
+    useEffect(() => {
+        if (initialUrlUpdated)
+        {
+            updateFeed();
+        }
+    }, [initialUrlUpdated])
 
     const updateFeed = async() => {
         if (!isLoading) {
-            console.log("Fetching data");
             setIsLoading(true);
             setError(null);
-
+            
             const fetchData = axios.get(url, {withCredentials: true});
             fetchData
             .then((response) => {
                 if (response.data["data"]["Posts"] != null)
                 {
+                    if (response.data["data"]["Posts"].length == 0) {
+                        setNoMorePosts(true);
+                    }
                     setPosts([...posts, ...response.data["data"]["Posts"].map((postdata : PostView) => <Post key={postdata.Post.ID} {...postdata}/>)]);
+                } else {
+                    setNoMorePosts(true);
                 }
                 setURL(response.data["data"]["NextPageURL"]);
-                console.log(url);
             })
             .catch((error) => {
                 console.log(error);
@@ -47,11 +71,11 @@ export default function Feed() {
     }
 
     return (<Box>
-        <CreatePostCard addPostHandler={addPost}/>
+        {props.AllowPostAdd && props.CommunityID && props.ProjectID && <CreatePostCard addPostHandler={addPost} communityID={props.CommunityID} projectID={props.ProjectID}/>}
         <InfiniteScroll
             dataLength={posts.length}
             next={updateFeed}
-            hasMore={url != (base_url + "/auth/posts?cutoff=0")}
+            hasMore={!noMorePosts}
             loader={
                 <Box paddingBlock="10px">
                     <Text textAlign="center">Loading...</Text>

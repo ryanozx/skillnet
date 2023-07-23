@@ -6,6 +6,8 @@ import {PostView} from "./Post";
 
 interface CreatePostProps {
     addPostHandler: (post : PostView) => void;
+    projectID: number,
+    communityID: number,
 }
 
 export default function CreatePostCard(props : CreatePostProps) {
@@ -22,7 +24,11 @@ export default function CreatePostCard(props : CreatePostProps) {
     const onSubmit = async() => {
         const base_url = process.env.BACKEND_BASE_URL;
         setSubmitting(true);
-        axios.post(base_url + "/auth/posts", {"content": text}, {withCredentials: true})
+        axios.post(base_url + "/auth/posts", {
+            "content": text,
+            "communityID": props.communityID,
+            "projectID": props.projectID,
+    }, {withCredentials: true})
         .then(res => {
             props.addPostHandler(res.data["data"]);
             toast({
@@ -71,7 +77,7 @@ export default function CreatePostCard(props : CreatePostProps) {
                             colorScheme="telegram" 
                             mr={3} 
                             onClick={onSubmit}
-                            isDisabled={text == ""}
+                            isDisabled={text === ""}
                             isLoading={submitting}
                             loadingText="Submitting..."
                             >

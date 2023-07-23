@@ -17,7 +17,6 @@ export default function SideBar() {
                 <Heading size="md">Search Communities</Heading>
                 <Searchbar/>
                 <PopularCommunitiesList/>
-                <FollowedCommunitiesList/>
                 <CreateCommunityBtn/>                
             </VStack>
         </Box>

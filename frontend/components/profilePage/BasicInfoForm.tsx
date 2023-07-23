@@ -2,14 +2,10 @@ import React from 'react';
 import {
     ModalHeader,
     ModalBody,
-    ModalFooter,
     FormControl,
     FormLabel,
     Input,
     Textarea,
-    IconButton,
-    Button,
-    Switch
 } from '@chakra-ui/react';
 
 

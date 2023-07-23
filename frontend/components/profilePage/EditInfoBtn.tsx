@@ -7,10 +7,11 @@ import EditInfoModal from './EditInfoModal';
 import { User } from '../../types';
 
 interface EditInfoBtnProps {
+    user: User;
     setUser: React.Dispatch<React.SetStateAction<User>>;
 }
 
-export default function EditInfoBtn ({setUser}: EditInfoBtnProps) {
+export default function EditInfoBtn (props: EditInfoBtnProps) {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleOpen = () => setIsOpen(true);
@@ -25,11 +26,12 @@ export default function EditInfoBtn ({setUser}: EditInfoBtnProps) {
                 aria-label="Edit profile"
             />
             <EditInfoModal
+                user={props.user}
                 handleOpen={handleOpen}
                 handleClose={handleClose}
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
-                setUser={setUser}/>
+                setUser={props.setUser}/>
         </>
     );
 

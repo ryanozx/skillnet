@@ -13,32 +13,29 @@ import EditInfoBtn from './EditInfoBtn';
 import { User } from '../../types';
 
 interface BasicInfoProps {
-    name?: string;
+    user: User;
     username: string;
-    title?: string;
-    profilePic?: string;
     setUser?: React.Dispatch<React.SetStateAction<User>>;
 }
 
 export default function BasicInfo(props: BasicInfoProps) {
-    const { name, username, title, profilePic, setUser } = props;
     return (
         <Box w="100%" px={10}>
             <Flex justifyContent={"space-between"} alignItems="flex-start">
                 <HStack spacing={"10"}>
-                {setUser ? (
-                    <CropperComponent profilePic={profilePic} setUser={setUser} />
+                {props.setUser ? (
+                    <CropperComponent profilePic={props.user.ProfilePic} setUser={props.setUser} />
                     ) : (
-                    <Avatar size="2xl" src={profilePic} />
+                    <Avatar size="2xl" src={props.user.ProfilePic} />
                 )}
                 <VStack align="start">
-                    <Heading size="md">{name}</Heading>
-                    <Text>{username}</Text>
-                    <Text>{title}</Text>
+                    <Heading size="md">{props.user.Name == "" ? "Anonymous User" : props.user.Name}</Heading>
+                    <Text>{props.username}</Text>
+                    <Text>{props.user.Title === "" ? "Title not available" : props.user.Title}</Text>
                 </VStack>
                 </HStack>
                 <Flex alignSelf="flex-start">
-                    {setUser && <EditInfoBtn setUser={setUser}/>}
+                    {props.setUser && <EditInfoBtn user={props.user} setUser={props.setUser}/>}
                 </Flex>
                 
             </Flex>

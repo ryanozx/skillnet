@@ -46,20 +46,15 @@ func (db *CommentDB) DeleteComment(commentID uint, userID string) (uint, error) 
 func (db *CommentDB) GetComments(postID uint, cutoff *helpers.NullableUint) ([]models.Comment, error) {
 	var comments []models.Comment
 
-	if cutoff.IsNull() {
-		// Retrieve all comments from database
-		query := db.DB.Where("comments.post_id = ?", postID).Limit(commentsToReturn).Joins("User").Order("comments.id desc").Find(&comments)
-		if err := query.Find(&comments).Error; err != nil {
-			return comments, err
-		}
-	} else {
+	query := db.DB.Where("comments.post_id = ?", postID)
+
+	if !cutoff.IsNull() {
 		cutoffVal, _ := cutoff.GetValue()
-		query := db.DB.Where("comments.post_id = ? AND comments.id < ?", postID, cutoffVal).Joins("User").Limit(commentsToReturn).Order("comments.id desc").Find(&comments)
-		if err := query.Find(&comments).Error; err != nil {
-			return comments, err
-		}
+		query = query.Where("comments.id < ?", cutoffVal)
 	}
-	return comments, nil
+
+	query = query.Joins("User").Order("comments.id desc").Limit(commentsToReturn).Find(&comments)
+	return comments, query.Error
 }
 
 func (db *CommentDB) GetCommentByID(commentID uint) (*models.Comment, error) {

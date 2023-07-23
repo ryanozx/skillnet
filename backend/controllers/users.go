@@ -21,6 +21,9 @@ const (
 
 // Messages
 var (
+	ErrBadEmail                 = errors.New("invalid email")
+	ErrBadPassword              = errors.New("password must have at least 8 characters, one uppercase letter, one lowercase letter, one number, and one special character")
+	ErrCannotDeleteUser         = errors.New("cannot delete user")
 	ErrCannotUpdateUser         = errors.New("cannot update user")
 	ErrCreateAccountNoCookie    = errors.New("account successfully created but cookie not set, please login later")
 	ErrMissingSignupCredentials = errors.New("missing username, password, or email")
@@ -42,6 +45,18 @@ func (a *APIEnv) CreateUser(ctx *gin.Context) {
 	// If request is badly formatted, return status code 400 Bad Request
 	if helpers.IsSignupUserCredsEmpty(userCredentials) {
 		helpers.OutputError(ctx, http.StatusBadRequest, ErrMissingSignupCredentials)
+		return
+	}
+
+	// If password does not meet requirements, return status code 400 Bad Request
+	if !helpers.ValidatePassword(userCredentials.Password) {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadPassword)
+		return
+	}
+
+	// If email is not validated, return status code 400 Bad Request
+	if !helpers.ValidateEmail(userCredentials.Email) {
+		helpers.OutputError(ctx, http.StatusBadRequest, ErrBadEmail)
 		return
 	}
 
@@ -81,9 +96,9 @@ func (a *APIEnv) DeleteUser(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrUserNotFound)
 		return
 	}
-	// If user cannot be deleted for any other reason, return status code 403 Bad Request
+	// If user cannot be deleted for any other reason, return status code 501 Internal ServerError
 	if err != nil {
-		helpers.OutputError(ctx, http.StatusBadRequest, err)
+		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotDeleteUser)
 		return
 	}
 	// If unable to invalidate the session on the server side, return with a status code
@@ -100,6 +115,7 @@ func (a *APIEnv) DeleteUser(ctx *gin.Context) {
 // Returns user's profile as seen by visitor
 func (a *APIEnv) GetProfile(ctx *gin.Context) {
 	username := helpers.GetUsernameFromContext(ctx)
+	viewerID := helpers.GetUserIDFromContext(ctx)
 
 	user, err := a.UserDBHandler.GetUserByUsername(username)
 	// If cannot find user in database, return status code 404 Not Found
@@ -107,7 +123,7 @@ func (a *APIEnv) GetProfile(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrUserNotFound)
 		return
 	}
-	profile := user.GetUserView()
+	profile := user.GetUserView(viewerID)
 	helpers.OutputData(ctx, profile)
 }
 

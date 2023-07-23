@@ -29,6 +29,8 @@ type APIEnv struct {
 	AuthDBHandler        database.AuthDBHandler
 	LikeDBHandler        database.LikeAPIHandler
 	CommentDBHandler     database.CommentsDBHandler
+	CommunityDBHandler   database.CommunityDBHandler
+	ProjectDBHandler     database.ProjectDBHandler
 	GoogleCloud          *storage.Client
 	LikesCacheHandler    CacheHandler
 	CommentsCacheHandler CacheHandler

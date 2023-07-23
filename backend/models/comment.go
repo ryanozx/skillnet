@@ -56,7 +56,7 @@ func (c *Comment) GetUserID() string {
 func (comment *Comment) CommentView(userID string) *CommentView {
 	commentView := CommentView{
 		Comment:     *comment,
-		UserMinimal: *comment.User.UserMinimal(),
+		UserMinimal: *comment.User.GetUserMinimal(),
 		IsEditable:  userID == comment.UserID,
 	}
 	return &commentView

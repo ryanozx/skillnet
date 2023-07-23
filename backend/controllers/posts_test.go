@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/ryanozx/skillnet/database"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/gorm"
@@ -15,8 +16,8 @@ const (
 	testDiffCutoffPostID = 10
 	invalidPostID        = "badpostid"
 	negativePostID       = -234
-	testCommunityID      = 1
 	testProjectID        = 1
+	invalidProjectID     = "badprojectid"
 )
 
 var (
@@ -50,29 +51,24 @@ type PostDBTestHandler struct {
 }
 
 func (h *PostDBTestHandler) CreatePost(newPost *models.Post) (*models.Post, error) {
-	post, err := h.CreatePostFunc(newPost)
-	return post, err
+	return h.CreatePostFunc(newPost)
 }
 
 func (h *PostDBTestHandler) DeletePost(postID uint, userid string) error {
-	err := h.DeletePostFunc(postID, userid)
-	return err
+	return h.DeletePostFunc(postID, userid)
 }
 
 func (h *PostDBTestHandler) GetPosts(cutoff *helpers.NullableUint, communityID *helpers.NullableUint,
 	projectID *helpers.NullableUint, userID string) ([]models.Post, error) {
-	posts, err := h.GetPostsFunc(cutoff, communityID, projectID, userID)
-	return posts, err
+	return h.GetPostsFunc(cutoff, communityID, projectID, userID)
 }
 
 func (h *PostDBTestHandler) GetPostByID(postID uint, userID string) (*models.Post, error) {
-	post, err := h.GetPostByIDFunc(postID, userID)
-	return post, err
+	return h.GetPostByIDFunc(postID, userID)
 }
 
 func (h *PostDBTestHandler) UpdatePost(post *models.Post, postID uint, userID string) (*models.Post, error) {
-	updatedPost, err := h.UpdatePostFunc(post, postID, userID)
-	return updatedPost, err
+	return h.UpdatePostFunc(post, postID, userID)
 }
 
 func (h *PostDBTestHandler) SetMockCreatePostFunc(post *models.Post, err error) {
@@ -103,6 +99,47 @@ func (h *PostDBTestHandler) SetMockGetPostByIDFunc(post *models.Post, err error)
 func (h *PostDBTestHandler) SetMockUpdatePostFunc(outputPost *models.Post, err error) {
 	h.UpdatePostFunc = func(post *models.Post, postID uint, userID string) (*models.Post, error) {
 		return outputPost, err
+	}
+}
+
+func TestAPIEnv_InitialisePostHandler(t *testing.T) {
+	type fields struct {
+		DB *gorm.DB
+	}
+	tests := []struct {
+		name          string
+		fields        fields
+		expectedEmpty bool
+	}{
+		{
+			"Initialise Post DB OK",
+			fields{
+				DB: &gorm.DB{},
+			},
+			false,
+		},
+		{
+			"No DB OK",
+			fields{},
+			true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &APIEnv{
+				DB: tt.fields.DB,
+			}
+			a.InitialisePostHandler()
+			if postDB, ok := a.PostDBHandler.(*database.PostDB); ok {
+				if tt.expectedEmpty && postDB.DB != nil {
+					t.Error("Post DB contains unexpected DB instance")
+				} else if !tt.expectedEmpty && postDB.DB != tt.fields.DB {
+					t.Error("PostDBHandler not initialised correctly")
+				}
+			} else {
+				t.Error("PostDBHandler is nil!")
+			}
+		})
 	}
 }
 
@@ -214,7 +251,6 @@ func TestAPIEnv_CreatePost(t *testing.T) {
 			if errStr, isEqual := helpers.CheckExpectedJSONEqualsActual(m, tt.expected); !isEqual {
 				t.Error(errStr)
 			}
-
 		})
 	}
 }
@@ -496,6 +532,54 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 			},
 		},
 		{
+			"Get posts - invalid cutoff",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				QueryParams: map[string]interface{}{
+					helpers.CutoffKey: invalidCutoff,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrBadBinding,
+			},
+		},
+		{
+			"Get posts - invalid community ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				QueryParams: map[string]interface{}{
+					helpers.CommunityIDQueryKey: invalidCommunityID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrBadBinding,
+			},
+		},
+		{
+			"Get posts - invalid project ID",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				QueryParams: map[string]interface{}{
+					helpers.ProjectIDQueryKey: invalidProjectID,
+				},
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusBadRequest,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrBadBinding,
+			},
+		},
+		{
 			"Get posts - not found",
 			args{
 				ContextParams: map[string]interface{}{
@@ -508,6 +592,48 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 				StatusCode: http.StatusNotFound,
 				JSONType:   helpers.ExpectedError,
 				Error:      ErrPostNotFound,
+			},
+		},
+		{
+			"Get posts likes cache error OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostDBOutput:    []models.Post{defaultPost},
+				PostDBError:     nil,
+				LikesCacheVal:   1,
+				LikesCacheError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts:       []models.PostView{},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+				},
+			},
+		},
+		{
+			"Get posts comments cache error OK",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				PostDBOutput:       []models.Post{defaultPost},
+				PostDBError:        nil,
+				LikesCacheVal:      1,
+				LikesCacheError:    nil,
+				CommentsCacheVal:   2,
+				CommentsCacheError: ErrTest,
+			},
+			helpers.ExpectedJSONOutput[models.PostViewArray]{
+				StatusCode: http.StatusOK,
+				JSONType:   helpers.ExpectedData,
+				Data: &models.PostViewArray{
+					Posts:       []models.PostView{},
+					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+				},
 			},
 		},
 	}

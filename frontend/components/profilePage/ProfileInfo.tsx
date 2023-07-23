@@ -1,57 +1,55 @@
 import {
-    Text,
     Box,
     VStack,
 } from '@chakra-ui/react';
 import InfoSection from './InfoSection';
-import ProjectDisplay from './ProjectDisplay';
+import ProjectDisplay from '../ProjectDisplay/ProjectDisplay';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { User, ProjectView } from '../../types';
-import { useUser } from '../../userContext';
+import { User } from '../../types';
 
 
 export default function ProfileInfo({username}: {username: string}) {
    
     const [user, setUser] = useState<User>({
-        AboutMe: "",
+        AboutMe: "AboutMe not available",
         Email: "",
-        Name: "",
-        Title: "",
+        Name: "Anonymous User",
+        Title: "Title not available",
         ProfilePic: "",
         Username: "",
-        Projects: [] as ProjectView[],
+        ShowAboutMe: false,
+        ShowTitle: false,
     });
     const [profileState, setProfileState] = useState<string>("loading");
+    const [loadedUser, setLoadedUser] = useState<boolean>(false);
 
     useEffect(() => {
         const base_url = process.env.BACKEND_BASE_URL;
         const currentUrl = base_url + "/auth/user";
-        const profileUrl = base_url + "/users/" + username;
+        const profileUrl = base_url + "/auth/users/" + username;
         if (username) {
             axios.get(currentUrl, { withCredentials: true })
             .then((res) => {
                 const currentUser = res.data.data.Username;
-                axios.get(profileUrl).then((res) => {
-                    const { AboutMe, Email, Name, Title, ProfilePic, Projects } = res.data.data;
-                    setUser({
-                        AboutMe: AboutMe ? AboutMe : "No description available",
-                        Email: Email,
-                        Name: Name ? Name : "No display name",
-                        Title: Title ? Title : "No title available",
-                        ProfilePic: ProfilePic,
-                        Username: username,
-                        Projects: Projects,
+                const isMyProfile = currentUser === username;
+                axios.get(profileUrl, {withCredentials: true}).then((res) => {
+                    console.log("Get", res.data.data);
+                    setUser({...res.data.data, 
+                        AboutMe: (res.data.data["ShowAboutMe"] || isMyProfile)? res.data.data["AboutMe"] : "",
+                        Title: (res.data.data["ShowTitle"] || isMyProfile)? res.data.data["Title"] : "",
                     });
                     // Compare profile user to current user
                     
-                    if (currentUser === username) {
+                    if (isMyProfile) {
                         setProfileState("self");
                     } else {
                         setProfileState("other");
                     }
+                    setLoadedUser(true);
                 }).catch((err) => {    
                     setProfileState("invalid")
+                    console.log(err)
                 });
             })
             .catch((err) => {
@@ -72,10 +70,11 @@ export default function ProfileInfo({username}: {username: string}) {
           <VStack spacing={10} align="start">
             <InfoSection
               user={user}
+              username={username}
               {...(profileState === "self" && { setUser })}
             />
-            <ProjectDisplay projects={ user.Projects }/>
           </VStack>
+          {loadedUser && <ProjectDisplay username={user.Username} />}
         </Box>
       );
 };

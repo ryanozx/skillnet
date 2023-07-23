@@ -59,7 +59,12 @@ func (db *UserDB) GetUserByUsername(username string) (*models.User, error) {
 // Updates user's profile.
 func (db *UserDB) UpdateUser(user *models.User, id string) (*models.User, error) {
 	resUser := &models.User{}
-	result := db.DB.Model(resUser).Clauses(clause.Returning{}).Where("id = ?", id).Updates(user)
-	err := result.Error
-	return resUser, err
+	result := db.DB.Model(resUser).Clauses(clause.Returning{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"name":          user.Name,
+		"title":         user.Title,
+		"about_me":      user.AboutMe,
+		"show_about_me": user.ShowAboutMe,
+		"show_title":    user.ShowTitle,
+	})
+	return resUser, result.Error
 }

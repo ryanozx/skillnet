@@ -10,14 +10,20 @@ import {
   ModalHeader,
 } from "@chakra-ui/react";
 import ProjectDisplayCard from './ProjectDisplayCard';
+import { ProjectMinimal } from "../../types";
 
+interface ProjectDisplayProps {
+    isOpen: boolean,
+    onClose: () => void,
+    projects: ProjectMinimal[],
+    updateProjects: () => Promise<void>,
+}
 
-export default function ProjectDisplay (props: any) {
-    const { isOpen, onClose, projects } = props;
+export default function ProjectDisplay (props: ProjectDisplayProps) {
     return (
         <Modal 
-            isOpen={isOpen} 
-            onClose={onClose}
+            isOpen={props.isOpen} 
+            onClose={props.onClose}
             size = {{base: "full", md:"6xl"}}
         >
             <ModalOverlay />
@@ -30,14 +36,9 @@ export default function ProjectDisplay (props: any) {
                         gap={6} 
                         mb={4}
                     >
-                        {projects.map((project: any, index: any) => (
-                            <Box key={index}>
-                                <ProjectDisplayCard
-                                    logo={project.logo}
-                                    name={project.name}
-                                    category={project.category}
-                                    backdrop={project.backdrop}
-                                />
+                        {props.projects.map((project: ProjectMinimal) => (
+                            <Box key={project.ID}>
+                                <ProjectDisplayCard {...project}/>
                             </Box>
                         ))}
                     </Grid>
