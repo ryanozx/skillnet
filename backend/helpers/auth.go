@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"log"
+	"net/http"
 	"regexp"
 	"strings"
 	"unicode"
@@ -15,6 +16,7 @@ import (
 const (
 	UserIDKey         = "userID"
 	RouteIfSuccessful = "/posts"
+	MaxAge            = 24 * 60 * 60
 )
 
 func IsEmptyUserPass(user *models.UserCredentials) bool {
@@ -101,6 +103,13 @@ func ExtractSignupUserCredentials(ctx postFormer) *models.SignupUserCredentials 
 
 func SaveSession(ctx *gin.Context, user *models.User) error {
 	session := sessions.Default(ctx)
+	session.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   MaxAge,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
 	session.Set(UserIDKey, user.ID)
 	log.Printf("Saving userID: %v", user.ID)
 	if err := session.Save(); err != nil {
