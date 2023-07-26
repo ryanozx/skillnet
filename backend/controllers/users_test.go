@@ -149,7 +149,6 @@ func TestAPIEnv_InitialiseUserHandler(t *testing.T) {
 }
 
 func TestAPIEnv_CreateUser(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		Username     string
 		Password     string
@@ -382,7 +381,6 @@ func TestAPIEnv_DeleteUser(t *testing.T) {
 }
 
 func TestAPIEnv_GetProfile(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams map[string]interface{}
 		UserDBOutput  *models.User
@@ -406,7 +404,7 @@ func TestAPIEnv_GetProfile(t *testing.T) {
 			helpers.ExpectedJSONOutput[models.UserView]{
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
-				Data:       defaultUser.GetUserView(testUserID),
+				Data:       defaultUser.GetUserView(testUserID, testClientAddress),
 			},
 		},
 		{
@@ -422,7 +420,7 @@ func TestAPIEnv_GetProfile(t *testing.T) {
 			helpers.ExpectedJSONOutput[models.UserView]{
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
-				Data:       defaultUser.GetUserView(diffUserID),
+				Data:       defaultUser.GetUserView(diffUserID, testClientAddress),
 			},
 		},
 		{
@@ -447,6 +445,7 @@ func TestAPIEnv_GetProfile(t *testing.T) {
 			dbTestHandler := &UserDBTestHandler{}
 			a := &APIEnv{
 				UserDBHandler: dbTestHandler,
+				ClientAddress: testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -475,7 +474,6 @@ func TestAPIEnv_GetProfile(t *testing.T) {
 }
 
 func TestAPIEnv_GetSelfProfile(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams map[string]interface{}
 		UserDBOutput  *models.User
@@ -551,7 +549,6 @@ func TestAPIEnv_GetSelfProfile(t *testing.T) {
 }
 
 func TestAPIEnv_UpdateUser(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams map[string]interface{}
 		UserUpdate    *models.User

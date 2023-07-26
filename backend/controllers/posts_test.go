@@ -144,7 +144,6 @@ func TestAPIEnv_InitialisePostHandler(t *testing.T) {
 }
 
 func TestAPIEnv_CreatePost(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams map[string]interface{}
 		QueryParams   map[string]interface{}
@@ -172,7 +171,8 @@ func TestAPIEnv_CreatePost(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: defaultPost.PostView(&models.PostViewParams{
 					UserID: testUserID,
-				}),
+				},
+					testClientAddress),
 			},
 		},
 		{
@@ -214,6 +214,7 @@ func TestAPIEnv_CreatePost(t *testing.T) {
 				PostDBHandler:        dbTestHandler,
 				LikesCacheHandler:    likesCacheTestHandler,
 				CommentsCacheHandler: commentsCacheTestHandler,
+				ClientAddress:        testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -367,8 +368,6 @@ func TestAPIEnv_DeletePost(t *testing.T) {
 }
 
 func TestAPIEnv_GetPosts(t *testing.T) {
-	helpers.SetEnvVars(t)
-
 	type args struct {
 		ContextParams      map[string]interface{}
 		QueryParams        map[string]interface{}
@@ -405,8 +404,8 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 						UserID:       testUserID,
 						LikeCount:    1,
 						CommentCount: 2,
-					})},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+					}, testClientAddress)},
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testPostID, map[string]interface{}{}),
 				},
 			},
 		},
@@ -431,8 +430,8 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 						UserID:       testUserID,
 						LikeCount:    1,
 						CommentCount: 2,
-					})},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testDiffCutoffPostID, map[string]interface{}{}),
+					}, testClientAddress)},
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testDiffCutoffPostID, map[string]interface{}{}),
 				},
 			},
 		},
@@ -460,8 +459,8 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 						UserID:       testUserID,
 						LikeCount:    1,
 						CommentCount: 2,
-					})},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{
+					}, testClientAddress)},
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testPostID, map[string]interface{}{
 						helpers.CommunityIDQueryKey: testCommunityID,
 					}),
 				},
@@ -491,8 +490,8 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 						UserID:       testUserID,
 						LikeCount:    1,
 						CommentCount: 2,
-					})},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{
+					}, testClientAddress)},
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testPostID, map[string]interface{}{
 						helpers.ProjectIDQueryKey: testProjectID,
 					}),
 				},
@@ -520,14 +519,14 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 							UserID:       testUserID,
 							LikeCount:    1,
 							CommentCount: 2,
-						}),
+						}, testClientAddress),
 						*defaultPost.PostView(&models.PostViewParams{
 							UserID:       testUserID,
 							LikeCount:    1,
 							CommentCount: 2,
-						}),
+						}, testClientAddress),
 					},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testPostID, map[string]interface{}{}),
 				},
 			},
 		},
@@ -610,7 +609,7 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: &models.PostViewArray{
 					Posts:       []models.PostView{},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testPostID, map[string]interface{}{}),
 				},
 			},
 		},
@@ -632,7 +631,7 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: &models.PostViewArray{
 					Posts:       []models.PostView{},
-					NextPageURL: helpers.GeneratePostNextPageURL(models.BackendAddress, testPostID, map[string]interface{}{}),
+					NextPageURL: helpers.GeneratePostNextPageURL(testBackendAddress, testPostID, map[string]interface{}{}),
 				},
 			},
 		},
@@ -646,6 +645,8 @@ func TestAPIEnv_GetPosts(t *testing.T) {
 				PostDBHandler:        dbTestHandler,
 				LikesCacheHandler:    likesCacheTestHandler,
 				CommentsCacheHandler: commentsCacheTestHandler,
+				BackendAddress:       testBackendAddress,
+				ClientAddress:        testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -723,7 +724,7 @@ func TestAPIEnv_GetPostByID(t *testing.T) {
 					UserID:       testUserID,
 					LikeCount:    1,
 					CommentCount: 2,
-				}),
+				}, testClientAddress),
 			},
 		},
 		{
@@ -804,6 +805,7 @@ func TestAPIEnv_GetPostByID(t *testing.T) {
 				PostDBHandler:        dbTestHandler,
 				LikesCacheHandler:    likesCacheTestHandler,
 				CommentsCacheHandler: commentsCacheTestHandler,
+				ClientAddress:        testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -879,7 +881,7 @@ func TestAPIEnv_UpdatePost(t *testing.T) {
 					UserID:       testUserID,
 					LikeCount:    1,
 					CommentCount: 2,
-				}),
+				}, testClientAddress),
 			},
 		},
 		{
@@ -1011,6 +1013,7 @@ func TestAPIEnv_UpdatePost(t *testing.T) {
 				PostDBHandler:        dbTestHandler,
 				LikesCacheHandler:    likesCacheTestHandler,
 				CommentsCacheHandler: commentsCacheTestHandler,
+				ClientAddress:        testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()

@@ -5,8 +5,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-
-	"github.com/ryanozx/skillnet/models"
 )
 
 type BaseEnv struct {
@@ -124,16 +122,6 @@ func (env *DBEnv) DataSourceName() string {
 	return dataSourceName
 }
 
-func RetrieveClientEnv() *BaseEnv {
-	host := os.Getenv("CLIENT_HOST")
-	port := os.Getenv("CLIENT_PORT")
-	env := BaseEnv{
-		Host: host,
-		Port: port,
-	}
-	return &env
-}
-
 func RetrieveBackendEnv() *BaseEnv {
 	host := os.Getenv("BACKEND_HOST")
 	port := os.Getenv("BACKEND_PORT")
@@ -144,14 +132,27 @@ func RetrieveBackendEnv() *BaseEnv {
 	return &env
 }
 
-func SetModelClientAddress() {
-	clientEnv := RetrieveClientEnv()
-	models.ClientAddress = clientEnv.Address()
-	log.Println("Set client address to:", models.ClientAddress)
+func RetrieveClientAddress() string {
+	clientAddress := os.Getenv("FRONTEND_BASE_URL")
+	log.Println("Client address is:", clientAddress)
+	return clientAddress
 }
 
-func SetModelBackendAddress() {
-	backendEnv := RetrieveBackendEnv()
-	models.BackendAddress = backendEnv.Address()
-	log.Println("Set backend address to:", models.BackendAddress)
+func RetrieveBackendAddress() string {
+	backendAddress := os.Getenv("BACKEND_BASE_URL")
+	log.Println("Set backend address to:", backendAddress)
+	return backendAddress
+}
+
+func getBoolEnvVar(key string) bool {
+	envVar := os.Getenv(key)
+	val, err := strconv.ParseBool(envVar)
+	if err != nil {
+		return false
+	}
+	return val
+}
+
+func RetrieveDevMode() bool {
+	return getBoolEnvVar("IS_RELEASE")
 }

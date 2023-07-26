@@ -1,10 +1,12 @@
 package database
 
 import (
+	"errors"
 	"log"
 	"os"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/ryanozx/skillnet/helpers"
 	"github.com/ryanozx/skillnet/models"
 	"gorm.io/driver/postgres"
@@ -93,4 +95,20 @@ func initialiseGormConfigurations(timezoneLocation string) *gorm.Config {
 		Plugins:                                  map[string]gorm.Plugin{},
 	}
 	return options
+}
+
+func isDuplicatedKeyError(err error) bool {
+	const postgresDuplicateErrCode = "23505"
+	var perr *pgconn.PgError
+	if errors.As(err, &perr) {
+		return perr.Code == postgresDuplicateErrCode
+	}
+	return false
+}
+
+func handleDuplicatedKeyError(err error) error {
+	if isDuplicatedKeyError(err) {
+		return gorm.ErrDuplicatedKey
+	}
+	return err
 }

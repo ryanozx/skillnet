@@ -90,10 +90,10 @@ type PostViewParams struct {
 }
 
 // Creates a PostView object
-func (post *Post) PostView(params *PostViewParams) *PostView {
+func (post *Post) PostView(params *PostViewParams, clientAddress string) *PostView {
 	postView := PostView{
 		Post:         *post,
-		UserMinimal:  *post.User.GetUserMinimal(),
+		UserMinimal:  *post.User.GetUserMinimal(clientAddress),
 		IsEditable:   params.UserID == post.UserID,
 		Liked:        len(post.Likes) > 0 && post.Likes[0].UserID == params.UserID,
 		LikeCount:    params.LikeCount,

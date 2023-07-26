@@ -72,7 +72,6 @@ func TestAPIEnv_InitialiseAuthHandler(t *testing.T) {
 }
 
 func TestAPIEnv_GetLogin(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		StoreParams map[string]interface{}
 	}
@@ -138,7 +137,6 @@ func TestAPIEnv_GetLogin(t *testing.T) {
 }
 
 func TestAPIEnv_PostLogin(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		StoreParams  map[string]interface{}
 		UserCreds    *models.UserCredentials

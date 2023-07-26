@@ -19,20 +19,21 @@ import (
 // Sets up the routes on the server router
 func (s *serverConfig) setupRoutes() {
 	log.Println("Setting up routes...")
-	s.configureCors()
+
+	backendAddress := helpers.RetrieveBackendAddress()
+	clientAddress := helpers.RetrieveClientAddress()
+
+	s.configureCors(clientAddress)
 	s.router.Use(sessions.Sessions("skillnet", s.store))
 
 	routerGroup := s.RouterGroups()
 	apiEnv := &controllers.APIEnv{
-		DB:          s.db,
-		GoogleCloud: s.GoogleCloud,
-		NotifRedis:  s.notifRedis,
+		DB:             s.db,
+		GoogleCloud:    s.GoogleCloud,
+		NotifRedis:     s.notifRedis,
+		BackendAddress: backendAddress,
+		ClientAddress:  clientAddress,
 	}
-
-	// Sets the ClientAddress and BackendAddress global variables in the models package so that the env file
-	// does not need to be read everytime we require the client address or backend address
-	helpers.SetModelClientAddress()
-	helpers.SetModelBackendAddress()
 
 	// Register routes - routes are grouped by features for greater
 	// modularity
@@ -49,14 +50,10 @@ func (s *serverConfig) setupRoutes() {
 }
 
 // Sets up CORS to allow the frontend app to access resources
-func (s *serverConfig) configureCors() {
-	// Get address of frontend app from environmental variables
-	env := helpers.RetrieveClientEnv()
-	localClientAddress := env.Address()
-
+func (s *serverConfig) configureCors(clientAddress string) {
 	// Set up configuration and apply it to the router
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowOrigins = []string{localClientAddress}
+	corsConfig.AllowOrigins = []string{clientAddress}
 	corsConfig.AllowCredentials = true
 	s.router.Use(cors.New(corsConfig))
 }

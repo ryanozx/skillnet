@@ -53,10 +53,10 @@ func (c *Comment) GetUserID() string {
 	return c.UserID
 }
 
-func (comment *Comment) CommentView(userID string) *CommentView {
+func (comment *Comment) CommentView(userID string, clientAddress string) *CommentView {
 	commentView := CommentView{
 		Comment:     *comment,
-		UserMinimal: *comment.User.GetUserMinimal(),
+		UserMinimal: *comment.User.GetUserMinimal(clientAddress),
 		IsEditable:  userID == comment.UserID,
 	}
 	return &commentView

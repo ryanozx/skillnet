@@ -10,7 +10,6 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strings"
-	"testing"
 
 	gcs "github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -239,13 +238,4 @@ func (nc *TestNotificationCreator) SetMockPostNotificationFromEventFunc(err erro
 
 func (nc *TestNotificationCreator) ResetFuncs() {
 	nc.PostNotificationFromEventFunc = nil
-}
-
-func SetEnvVars(t *testing.T) {
-	t.Setenv("CLIENT_HOST", "http://localhost")
-	t.Setenv("CLIENT_PORT", "3000")
-	t.Setenv("BACKEND_HOST", "http://localhost")
-	t.Setenv("BACKEND_PORT", "8080")
-	SetModelClientAddress()
-	SetModelBackendAddress()
 }

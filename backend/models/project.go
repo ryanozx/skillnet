@@ -65,18 +65,18 @@ type ProjectView struct {
 	IsOwner       bool
 }
 
-func (p *Project) ProjectView(userID string) *ProjectView {
+func (p *Project) ProjectView(userID string, clientAddress string) *ProjectView {
 	output := ProjectView{
-		ProjectMinimal: *p.GetProjectMinimal(),
-		Owner:          *p.User.GetUserMinimal(),
+		ProjectMinimal: *p.GetProjectMinimal(clientAddress),
+		Owner:          *p.User.GetUserMinimal(clientAddress),
 		PublicCanPost:  p.PublicCanPost,
 		IsOwner:        userID == p.OwnerID,
 	}
 	return &output
 }
 
-func (p *Project) GetProjectMinimal() *ProjectMinimal {
-	p.URL = GenerateProjectURL(p)
+func (p *Project) GetProjectMinimal(clientAddress string) *ProjectMinimal {
+	p.URL = GenerateProjectURL(p, clientAddress)
 	p.CommunityName = p.Community.Name
 	return &p.ProjectMinimal
 }
@@ -92,7 +92,7 @@ type ProjectMembership struct {
 	Project   Project
 }
 
-func GenerateProjectURL(project *Project) string {
-	url := fmt.Sprintf("%s/projects/%d", ClientAddress, project.ID)
+func GenerateProjectURL(project *Project, clientAddress string) string {
+	url := fmt.Sprintf("%s/projects/%d", clientAddress, project.ID)
 	return url
 }

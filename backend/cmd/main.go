@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"cloud.google.com/go/storage"
@@ -39,6 +40,13 @@ type serverConfig struct {
 // Returns a server configuration with the production database (as defined
 // by environmental variables) set as the database
 func initialiseProdServer() *serverConfig {
+	isRelease := helpers.RetrieveDevMode()
+	if isRelease {
+		gin.SetMode(gin.ReleaseMode)
+		fmt.Println("Release Mode")
+	} else {
+		fmt.Println("Development Mode")
+	}
 	router := gin.Default()
 	db := database.ConnectProdDatabase()
 	store := setupSessionStore()

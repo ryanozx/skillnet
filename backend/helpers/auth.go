@@ -19,6 +19,16 @@ const (
 	MaxAge            = 24 * 60 * 60
 )
 
+var (
+	SessionOptions = sessions.Options{
+		Path:     "/",
+		MaxAge:   MaxAge,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	}
+)
+
 func IsEmptyUserPass(user *models.UserCredentials) bool {
 	return strings.Trim(user.Username, " ") == "" || strings.Trim(user.Password, " ") == ""
 }
@@ -103,13 +113,7 @@ func ExtractSignupUserCredentials(ctx postFormer) *models.SignupUserCredentials 
 
 func SaveSession(ctx *gin.Context, user *models.User) error {
 	session := sessions.Default(ctx)
-	session.Options(sessions.Options{
-		Path:     "/",
-		MaxAge:   MaxAge,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteNoneMode,
-	})
+	session.Options(SessionOptions)
 	session.Set(UserIDKey, user.ID)
 	log.Printf("Saving userID: %v", user.ID)
 	if err := session.Save(); err != nil {

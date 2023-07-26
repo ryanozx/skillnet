@@ -105,11 +105,6 @@ func (user *User) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-func (user *User) AfterFind(tx *gorm.DB) error {
-	user.URL = GenerateProfileURL(user)
-	return nil
-}
-
 func (user *User) BeforeUpdate(tx *gorm.DB) error {
 	if err := user.whiteSpaceCheck(tx); err != nil {
 		return err
@@ -117,9 +112,9 @@ func (user *User) BeforeUpdate(tx *gorm.DB) error {
 	return nil
 }
 
-func (user *User) GetUserView(viewerID string) *UserView {
+func (user *User) GetUserView(viewerID string, clientAddress string) *UserView {
 	output := UserView{
-		UserMinimal: *user.GetUserMinimal(),
+		UserMinimal: *user.GetUserMinimal(clientAddress),
 		ShowTitle:   user.ShowTitle,
 		ShowAboutMe: user.ShowAboutMe,
 	}
@@ -134,13 +129,13 @@ func (user *User) GetUserView(viewerID string) *UserView {
 	return &output
 }
 
-func (user *User) GetUserMinimal() *UserMinimal {
-	user.URL = GenerateProfileURL(user)
+func (user *User) GetUserMinimal(clientAddress string) *UserMinimal {
+	user.URL = GenerateProfileURL(user, clientAddress)
 	return &user.UserMinimal
 }
 
-func GenerateProfileURL(user *User) string {
-	url := fmt.Sprintf("%s/profile/%s", ClientAddress, user.Username)
+func GenerateProfileURL(user *User, clientAddress string) string {
+	url := fmt.Sprintf("%s/profile/%s", clientAddress, user.Username)
 	return url
 }
 

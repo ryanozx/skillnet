@@ -84,7 +84,7 @@ func (a *APIEnv) CreateComment(ctx *gin.Context) {
 	a.NotificationPoster.PostNotificationFromEvent(ctx, notif)
 
 	output := models.CommentUpdate{
-		Comment:      *comment.CommentView(userID),
+		Comment:      *comment.CommentView(userID, a.ClientAddress),
 		CommentCount: newCommentCount,
 	}
 
@@ -160,13 +160,13 @@ func (a *APIEnv) GetComments(ctx *gin.Context) {
 	// Fill in user details for each comment using userID of comment creator
 	for _, comment := range comments {
 		smallestID = comment.ID
-		commentView := comment.CommentView(userID)
+		commentView := comment.CommentView(userID, a.ClientAddress)
 		commentViews = append(commentViews, *commentView)
 	}
 
 	commentViewArray := models.CommentViewsArray{
 		Comments:    commentViews,
-		NextPageURL: helpers.GenerateCommentNextPageURL(models.BackendAddress, postID, smallestID),
+		NextPageURL: helpers.GenerateCommentNextPageURL(a.BackendAddress, postID, smallestID),
 	}
 	helpers.OutputData(ctx, commentViewArray)
 }
@@ -208,5 +208,5 @@ func (a *APIEnv) UpdateComment(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotUpdateComment)
 		return
 	}
-	helpers.OutputData(ctx, comment.CommentView(userID))
+	helpers.OutputData(ctx, comment.CommentView(userID, a.ClientAddress))
 }

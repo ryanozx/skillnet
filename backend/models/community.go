@@ -7,7 +7,7 @@ import (
 
 type Community struct {
 	gorm.Model
-	Name     string `gorm:"<-:create; not null"`
+	Name     string `gorm:"<-:create; not null; unique"`
 	OwnerID  string `json:"-" gorm:"<-:create; not null"`
 	User     User   `json:"-" gorm:"foreignKey:OwnerID"`
 	About    null.String

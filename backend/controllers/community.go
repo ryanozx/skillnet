@@ -16,9 +16,10 @@ import (
 
 // Errors
 var (
-	ErrCannotCreateCommunity = errors.New("cannot create community")
-	ErrCannotUpdateCommunity = errors.New("cannot update community")
-	ErrCommunityNotFound     = errors.New("community not found")
+	ErrCannotCreateCommunity  = errors.New("cannot create community")
+	ErrCannotUpdateCommunity  = errors.New("cannot update community")
+	ErrCommunityAlreadyExists = errors.New("community name already taken")
+	ErrCommunityNotFound      = errors.New("community not found")
 )
 
 func (a *APIEnv) InitialiseCommunityHandler() {
@@ -45,6 +46,11 @@ func (a *APIEnv) CreateCommunity(ctx *gin.Context) {
 
 	community, err := a.CommunityDBHandler.CreateCommunity(&newCommunity)
 
+	// If community name is already taken, return status code 409 Conflict
+	if err == gorm.ErrDuplicatedKey {
+		helpers.OutputError(ctx, http.StatusConflict, ErrCommunityAlreadyExists)
+		return
+	}
 	// If community cannot be created, return status code 500 Internal Service Error
 	if err != nil {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotCreateCommunity)
@@ -81,7 +87,7 @@ func (a *APIEnv) GetCommunities(ctx *gin.Context) {
 
 	communitiesArray := models.CommunityArray{
 		Communities: communityViews,
-		NextPageURL: helpers.GenerateCommunitiesNextPageURL(models.BackendAddress, smallestID),
+		NextPageURL: helpers.GenerateCommunitiesNextPageURL(a.BackendAddress, smallestID),
 	}
 	helpers.OutputData(ctx, communitiesArray)
 }

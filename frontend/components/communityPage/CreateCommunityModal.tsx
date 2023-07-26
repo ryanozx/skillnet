@@ -66,7 +66,7 @@ export default function CreateCommunityModal(props : CreateCommunityModalProps) 
                 handleClose();
                 toast({
                     title: "Community not created.",
-                    description: "we encountered an error: " + error.message + ".",
+                    description: "We encountered an error: " + error.response.data.error + ".",
                     status: "error",
                     duration: 5000,
                     isClosable: true,

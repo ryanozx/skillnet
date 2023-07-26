@@ -35,6 +35,8 @@ type APIEnv struct {
 	LikesCacheHandler    CacheHandler
 	CommentsCacheHandler CacheHandler
 	NotificationPoster   NotificationPoster
+	ClientAddress        string
+	BackendAddress       string
 }
 
 // General

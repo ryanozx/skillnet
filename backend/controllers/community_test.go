@@ -152,7 +152,6 @@ func TestAPIEnv_InitialiseCommunityHandler(t *testing.T) {
 }
 
 func TestAPIEnv_CreateCommunity(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams     map[string]interface{}
 		CommunityData     *models.Community
@@ -191,6 +190,21 @@ func TestAPIEnv_CreateCommunity(t *testing.T) {
 				StatusCode: http.StatusBadRequest,
 				JSONType:   helpers.ExpectedError,
 				Error:      ErrBadBinding,
+			},
+		},
+		{
+			"Create Community name already taken",
+			args{
+				ContextParams: map[string]interface{}{
+					helpers.UserIDKey: testUserID,
+				},
+				CommunityData:    &newCommunity,
+				CommunityDBError: gorm.ErrDuplicatedKey,
+			},
+			helpers.ExpectedJSONOutput[models.CommunityView]{
+				StatusCode: http.StatusConflict,
+				JSONType:   helpers.ExpectedError,
+				Error:      ErrCommunityAlreadyExists,
 			},
 		},
 		{
@@ -251,7 +265,6 @@ func TestAPIEnv_CreateCommunity(t *testing.T) {
 }
 
 func TestAPIEnv_GetCommunities(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams     map[string]interface{}
 		QueryParams       map[string]interface{}
@@ -277,7 +290,7 @@ func TestAPIEnv_GetCommunities(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommunityArray{
 					Communities: []models.CommunityView{*testCommunity.CommunityView(testUserID)},
-					NextPageURL: helpers.GenerateCommunitiesNextPageURL(models.BackendAddress, testCommunityID),
+					NextPageURL: helpers.GenerateCommunitiesNextPageURL(testBackendAddress, testCommunityID),
 				},
 			},
 		},
@@ -298,7 +311,7 @@ func TestAPIEnv_GetCommunities(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommunityArray{
 					Communities: []models.CommunityView{*testCommunity.CommunityView(testUserID)},
-					NextPageURL: helpers.GenerateCommunitiesNextPageURL(models.BackendAddress, testCommunityID),
+					NextPageURL: helpers.GenerateCommunitiesNextPageURL(testBackendAddress, testCommunityID),
 				},
 			},
 		},
@@ -316,7 +329,7 @@ func TestAPIEnv_GetCommunities(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommunityArray{
 					Communities: []models.CommunityView{*diffCommunity.CommunityView(testUserID), *testCommunity.CommunityView(testUserID)},
-					NextPageURL: helpers.GenerateCommunitiesNextPageURL(models.BackendAddress, testCommunityID),
+					NextPageURL: helpers.GenerateCommunitiesNextPageURL(testBackendAddress, testCommunityID),
 				},
 			},
 		},
@@ -359,6 +372,7 @@ func TestAPIEnv_GetCommunities(t *testing.T) {
 			dbTestHandler := CommunityDBTestHandler{}
 			a := &APIEnv{
 				CommunityDBHandler: &dbTestHandler,
+				BackendAddress:     testBackendAddress,
 			}
 			c, w := helpers.CreateTestContextAndRecorder()
 
@@ -398,7 +412,6 @@ func TestAPIEnv_GetCommunities(t *testing.T) {
 }
 
 func TestAPIEnv_GetCommunityByName(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams     map[string]interface{}
 		CommunityDBOutput *models.Community
@@ -482,7 +495,6 @@ func TestAPIEnv_GetCommunityByName(t *testing.T) {
 }
 
 func TestAPIEnv_UpdateCommunity(t *testing.T) {
-	helpers.SetEnvVars(t)
 	type args struct {
 		ContextParams     map[string]interface{}
 		CommunityData     *models.Community

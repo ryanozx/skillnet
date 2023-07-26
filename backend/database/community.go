@@ -29,7 +29,7 @@ type CommunityDB struct {
 func (db *CommunityDB) CreateCommunity(community *models.Community) (*models.Community, error) {
 	result := db.DB.Create(community)
 	if result.Error != nil {
-		return community, result.Error
+		return community, handleDuplicatedKeyError(result.Error)
 	}
 	return db.GetCommunityByID(community.ID)
 }

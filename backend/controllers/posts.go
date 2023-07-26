@@ -56,7 +56,7 @@ func (a *APIEnv) CreatePost(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotCreatePost)
 		return
 	}
-	helpers.OutputData(ctx, post.PostView(&models.PostViewParams{UserID: userID}))
+	helpers.OutputData(ctx, post.PostView(&models.PostViewParams{UserID: userID}, a.ClientAddress))
 }
 
 func (a *APIEnv) DeletePost(ctx *gin.Context) {
@@ -134,7 +134,7 @@ func (a *APIEnv) GetPosts(ctx *gin.Context) {
 			UserID:       userID,
 			LikeCount:    likeCount,
 			CommentCount: commentCount,
-		})
+		}, a.ClientAddress)
 		postViews = append(postViews, *postView)
 	}
 
@@ -147,7 +147,7 @@ func (a *APIEnv) GetPosts(ctx *gin.Context) {
 		additionalURLParams[helpers.ProjectIDQueryKey] = val
 	}
 
-	nextPageURL := helpers.GeneratePostNextPageURL(models.BackendAddress, smallestID, additionalURLParams)
+	nextPageURL := helpers.GeneratePostNextPageURL(a.BackendAddress, smallestID, additionalURLParams)
 
 	postViewArray := models.PostViewArray{
 		Posts:       postViews,
@@ -189,7 +189,7 @@ func (a *APIEnv) GetPostByID(ctx *gin.Context) {
 		UserID:       userID,
 		LikeCount:    likeCount,
 		CommentCount: commentCount,
-	})
+	}, a.ClientAddress)
 	helpers.OutputData(ctx, postView)
 }
 
@@ -246,5 +246,5 @@ func (a *APIEnv) UpdatePost(ctx *gin.Context) {
 		UserID:       userID,
 		LikeCount:    likeCount,
 		CommentCount: commentCount,
-	}))
+	}, a.ClientAddress))
 }

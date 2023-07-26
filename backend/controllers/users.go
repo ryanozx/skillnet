@@ -123,7 +123,7 @@ func (a *APIEnv) GetProfile(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusNotFound, ErrUserNotFound)
 		return
 	}
-	profile := user.GetUserView(viewerID)
+	profile := user.GetUserView(viewerID, a.ClientAddress)
 	helpers.OutputData(ctx, profile)
 }
 

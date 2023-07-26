@@ -188,8 +188,6 @@ func TestAPIEnv_InitialiseCommentHandler(t *testing.T) {
 }
 
 func TestAPIEnv_CreateComment(t *testing.T) {
-	helpers.SetEnvVars(t)
-
 	type args struct {
 		ContextParams      map[string]interface{}
 		QueryParams        map[string]interface{}
@@ -223,7 +221,7 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommentUpdate{
-					Comment:      *defaultComment.CommentView(testUserID),
+					Comment:      *defaultComment.CommentView(testUserID, testClientAddress),
 					CommentCount: 1,
 				},
 			},
@@ -335,6 +333,7 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 				CommentDBHandler:     dbTestHandler,
 				CommentsCacheHandler: cacheTestHandler,
 				NotificationPoster:   notifPoster,
+				ClientAddress:        testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -378,8 +377,6 @@ func TestAPIEnv_CreateComment(t *testing.T) {
 }
 
 func TestAPIEnv_DeleteComment(t *testing.T) {
-	helpers.SetEnvVars(t)
-
 	type args struct {
 		ContextParams      map[string]interface{}
 		CommentDBOutput    uint
@@ -530,8 +527,6 @@ func TestAPIEnv_DeleteComment(t *testing.T) {
 }
 
 func TestAPIEnv_GetComments(t *testing.T) {
-	helpers.SetEnvVars(t)
-
 	type args struct {
 		ContextParams   map[string]interface{}
 		QueryParams     map[string]interface{}
@@ -559,8 +554,8 @@ func TestAPIEnv_GetComments(t *testing.T) {
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommentViewsArray{
-					Comments:    []models.CommentView{*defaultComment.CommentView(testUserID)},
-					NextPageURL: helpers.GenerateCommentNextPageURL(models.BackendAddress, testPostID, testCommentID),
+					Comments:    []models.CommentView{*defaultComment.CommentView(testUserID, testClientAddress)},
+					NextPageURL: helpers.GenerateCommentNextPageURL(testBackendAddress, testPostID, testCommentID),
 				},
 			},
 		},
@@ -581,7 +576,7 @@ func TestAPIEnv_GetComments(t *testing.T) {
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommentViewsArray{
 					Comments:    []models.CommentView{},
-					NextPageURL: helpers.GenerateCommentNextPageURL(models.BackendAddress, testPostID, 0),
+					NextPageURL: helpers.GenerateCommentNextPageURL(testBackendAddress, testPostID, 0),
 				},
 			},
 		},
@@ -601,8 +596,8 @@ func TestAPIEnv_GetComments(t *testing.T) {
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommentViewsArray{
-					Comments:    []models.CommentView{*diffCutoffComment.CommentView(testUserID)},
-					NextPageURL: helpers.GenerateCommentNextPageURL(models.BackendAddress, testPostID, 10),
+					Comments:    []models.CommentView{*diffCutoffComment.CommentView(testUserID, testClientAddress)},
+					NextPageURL: helpers.GenerateCommentNextPageURL(testBackendAddress, testPostID, 10),
 				},
 			},
 		},
@@ -622,8 +617,8 @@ func TestAPIEnv_GetComments(t *testing.T) {
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommentViewsArray{
-					Comments:    []models.CommentView{*defaultComment.CommentView(diffUserID)},
-					NextPageURL: helpers.GenerateCommentNextPageURL(models.BackendAddress, testPostID, testCommentID),
+					Comments:    []models.CommentView{*defaultComment.CommentView(diffUserID, testClientAddress)},
+					NextPageURL: helpers.GenerateCommentNextPageURL(testBackendAddress, testPostID, testCommentID),
 				},
 			},
 		},
@@ -644,8 +639,8 @@ func TestAPIEnv_GetComments(t *testing.T) {
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
 				Data: &models.CommentViewsArray{
-					Comments:    []models.CommentView{*defaultComment.CommentView(testUserID)},
-					NextPageURL: helpers.GenerateCommentNextPageURL(models.BackendAddress, testPostID, testCommentID),
+					Comments:    []models.CommentView{*defaultComment.CommentView(testUserID, testClientAddress)},
+					NextPageURL: helpers.GenerateCommentNextPageURL(testBackendAddress, testPostID, testCommentID),
 				},
 			},
 		},
@@ -728,6 +723,8 @@ func TestAPIEnv_GetComments(t *testing.T) {
 			dbTestHandler := &CommentsDBTestHandler{}
 			a := &APIEnv{
 				CommentDBHandler: dbTestHandler,
+				ClientAddress:    testClientAddress,
+				BackendAddress:   testBackendAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()
@@ -768,8 +765,6 @@ func TestAPIEnv_GetComments(t *testing.T) {
 }
 
 func TestAPIEnv_UpdateComment(t *testing.T) {
-	helpers.SetEnvVars(t)
-
 	type args struct {
 		ContextParams   map[string]interface{}
 		CommentUpdate   *models.Comment
@@ -795,7 +790,7 @@ func TestAPIEnv_UpdateComment(t *testing.T) {
 			helpers.ExpectedJSONOutput[models.CommentView]{
 				StatusCode: http.StatusOK,
 				JSONType:   helpers.ExpectedData,
-				Data:       defaultComment.CommentView(testUserID),
+				Data:       defaultComment.CommentView(testUserID, testClientAddress),
 			},
 		},
 		{
@@ -907,6 +902,7 @@ func TestAPIEnv_UpdateComment(t *testing.T) {
 			a := &APIEnv{
 				CommentDBHandler:     dbTestHandler,
 				CommentsCacheHandler: cacheTestHandler,
+				ClientAddress:        testClientAddress,
 			}
 
 			c, w := helpers.CreateTestContextAndRecorder()

@@ -58,7 +58,7 @@ func (a *APIEnv) CreateProject(ctx *gin.Context) {
 		return
 	}
 
-	helpers.OutputData(ctx, project.ProjectView(userID))
+	helpers.OutputData(ctx, project.ProjectView(userID, a.ClientAddress))
 }
 
 func (a *APIEnv) DeleteProject(ctx *gin.Context) {
@@ -120,13 +120,13 @@ func (a *APIEnv) GetProjects(ctx *gin.Context) {
 	// Set next cutoff value
 	for _, project := range projects {
 		smallestID = project.ID
-		projectMinimal := project.GetProjectMinimal()
+		projectMinimal := project.GetProjectMinimal(a.ClientAddress)
 		projectMinimals = append(projectMinimals, *projectMinimal)
 	}
 
 	projectsArray := models.ProjectsArray{
 		Projects:    projectMinimals,
-		NextPageURL: helpers.GenerateProjectsNextPageURL(models.BackendAddress, smallestID, communityID, username),
+		NextPageURL: helpers.GenerateProjectsNextPageURL(a.BackendAddress, smallestID, communityID, username),
 	}
 	helpers.OutputData(ctx, projectsArray)
 }
@@ -148,7 +148,7 @@ func (a *APIEnv) GetProjectByID(ctx *gin.Context) {
 		return
 	}
 
-	projectView := project.ProjectView(userID)
+	projectView := project.ProjectView(userID, a.ClientAddress)
 	helpers.OutputData(ctx, projectView)
 }
 
@@ -189,5 +189,5 @@ func (a *APIEnv) UpdateProject(ctx *gin.Context) {
 		helpers.OutputError(ctx, http.StatusInternalServerError, ErrCannotUpdateProject)
 		return
 	}
-	helpers.OutputData(ctx, project.ProjectView(userID))
+	helpers.OutputData(ctx, project.ProjectView(userID, a.ClientAddress))
 }

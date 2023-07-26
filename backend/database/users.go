@@ -29,7 +29,7 @@ func (db *UserDB) CreateUser(userCreds NewUser) (*models.User, error) {
 	newUser := userCreds.NewUser()
 	result := db.DB.Model(models.User{}).Create(newUser)
 	err := result.Error
-	return newUser, err
+	return newUser, handleDuplicatedKeyError(err)
 }
 
 type NewUser interface {

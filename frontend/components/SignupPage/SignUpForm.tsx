@@ -78,9 +78,10 @@ export default function SignUpForm() {
                 });
             })
             .catch((error) => {
+                console.log(error);
                 toast({
                     title: "Signup unsuccessful",
-                    description: error.response.data.message,
+                    description: error.response.data.error,
                     status: "error",
                     duration: 5000,
                     isClosable: true,
